@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<emperor-config>
+    <modules>
+        <load name="basic_columns"/>
+        <load name="sort"/>
+    </modules>
+    <user-interface>
+        <file-pane>
+            <style>
+                <!--
+                <cursor pane="active" bg="gtk:background-color:selected" fg="gtk:color:selected"/>
+                <cursor pane="passive" bg="gtk:background-color:prelight"/>
+                -->
+                <selected fg="#ff0000"/>
+            </style>
+            <columns>
+                <column title="Name">
+                    <cell data="icon"/>
+                    <cell data="filename" sort="filename-collation"/>
+                </column>
+            </columns>
+        </file-pane>
+    </user-interface>
+</emperor-config>
