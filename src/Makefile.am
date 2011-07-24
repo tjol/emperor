@@ -1,2 +1,2 @@
-SUBDIRS = interfaces application modules
+SUBDIRS = config interfaces application modules
 

@@ -1,7 +1,7 @@
 AM_CFLAGS=@GLOBAL_CFLAGS@
 
-noinst_LIBRARIES=libemperorext.a
+noinst_LIBRARIES=libemperor_ext.a
 
-libemperorext_a_SOURCES=file_info_column.vala sort.vala module_registry.vala
-libemperorext_a_VALAFLAGS=@VALAFLAGS@ --vapi=emperorext.vapi --header=emperorext.h
+libemperor_ext_a_SOURCES=file_info_column.vala sort.vala module_registry.vala
+libemperor_ext_a_VALAFLAGS=@VALAFLAGS@ --vapi=emperor_ext.vapi --header=emperor_ext.h
 

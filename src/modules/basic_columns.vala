@@ -91,7 +91,6 @@ namespace Emperor.Modules {
 
 public void load_module (ModuleRegistry reg)
 {
-    stdout.printf("in basic_columns load_module!\n");
     reg.register_column("icon", new Emperor.Modules.IconColumn());
     reg.register_column("filename", new Emperor.Modules.FilenameColumn());
 }

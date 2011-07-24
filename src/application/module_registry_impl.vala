@@ -25,10 +25,13 @@ namespace Emperor.Application {
         private HashMap<string,FileInfoColumn> m_columns;
         private HashMap<string,CompareFuncWrapper> m_cmp_funcs;
 
-        public ModuleRegistryImpl ()
+        private string? m_module_location;
+
+        public ModuleRegistryImpl (string? module_location)
         {
             m_columns = new HashMap<string,FileInfoColumn>();
             m_cmp_funcs = new HashMap<string,CompareFuncWrapper>();
+            m_module_location = module_location;
         }
 
         public void register_column (string name, FileInfoColumn col)
@@ -84,7 +87,12 @@ namespace Emperor.Application {
         private void load_module (string name)
                     throws ConfigurationError
         {
-            var filename = Module.build_path ("modules/", name);
+            string filename;
+            if (m_module_location != null) {
+                filename = Module.build_path (m_module_location, name);
+            } else {
+                filename = Module.build_path (Config.MODULE_DIR, name);
+            }
             var module = Module.open (filename, ModuleFlags.BIND_LAZY);
             if (module == null) {
                 throw new ConfigurationError.MODULE_ERROR (Module.error());

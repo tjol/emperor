@@ -29,18 +29,17 @@ namespace Emperor.Application {
         public ModuleRegistryImpl modules { get; private set; }
         public UserInterfaceManager ui_manager { get; private set; }
 
-        public EmperorCore () throws ConfigurationError
+        public EmperorCore (string? module_location, string? config_fname)
+                throws ConfigurationError
         {
-            modules = new ModuleRegistryImpl ();
-
-            // TODO: modules.
-            //basic_columns_load_module (modules);
-            //sort_load_module (modules);
+            modules = new ModuleRegistryImpl (module_location);
 
             ui_manager = new UserInterfaceManager (this);
 
             // read the XML configuration.
-            var config_fname = get_config_file_name ("config.xml");
+            if (config_fname == null) {
+                config_fname = "config.xml";
+            }
             
             Xml.Parser.init ();
             Xml.Doc* document = Xml.Parser.read_file (config_fname);
@@ -90,23 +89,38 @@ namespace Emperor.Application {
             Gtk.main ();
         }
 
-        public string get_data_file_name (string base_name)
-        {
-            return base_name;
-        }
-
-        public string get_config_file_name (string base_name)
-        {
-            return get_data_file_name(base_name);
-        }
-
         public static int main (string[] argv)
         {
-            Gtk.init(ref argv);
+            string? module_location = null;
+            string? config_file = null;
+            void* p_module_location = & module_location;
+            void* p_config_file = & config_file;
+
+            OptionEntry[] options = {
+                OptionEntry() {
+                    long_name = "module-path", 
+                    short_name = 0,
+                    flags = 0,
+                    arg = OptionArg.FILENAME,
+                    arg_data = p_module_location, 
+                    description = "Location of Emperor modules",
+                    arg_description = "Location of Emperor modules" },
+                OptionEntry () {
+                    long_name = "config",
+                     short_name = 'c',
+                     flags = 0,
+                     arg = OptionArg.FILENAME,
+                     arg_data = p_config_file,
+                     description = "Configuration file",
+                     arg_description = "XML file to read configuration from" }
+            };
+
+            Gtk.init_with_args(ref argv, "Orthodox file manager for GNOME",
+                               options, null);
 
             EmperorCore app;
             try {
-                app = new EmperorCore ();
+                app = new EmperorCore (module_location, config_file);
             } catch (ConfigurationError e) {
                 if (e is ConfigurationError.PARSE_ERROR) {
                     stderr.printf("ERROR: Cannot parse file \"%s\"\n", e.message);
