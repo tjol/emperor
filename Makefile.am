@@ -11,7 +11,7 @@ dist-hook:
 	    then \
 		echo Creating ChangeLog && \
 		( cd "$(srcdir)" && \
-		  config/missing --run git log ) > ChangeLog.tmp && \
+		  config/missing --run perl config/gitlog-to-changelog ) > ChangeLog.tmp && \
 		mv -f ChangeLog.tmp $(distdir)/ChangeLog \
 		|| ( rm -f ChangeLog.tmp ; \
 		     echo Failed to generate ChangeLog >&2 ); \

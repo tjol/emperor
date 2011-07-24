@@ -1,7 +1,5 @@
 #!/bin/sh
 
-echo +++ Creating config/ ... &&
-mkdir -p config &&
 echo +++ Running aclocal ... &&
 aclocal &&
 echo +++ Running libtoolize ... &&

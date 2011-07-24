@@ -6,3 +6,7 @@ Emperor was written by:
 
  Thomas Jollans <t@jollybox.de> - http://www.jollybox.de/
 
+
+The file config/gitlog-to-changelog is part of Gnulib, the GNU portability
+library.
+
