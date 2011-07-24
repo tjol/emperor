@@ -20,14 +20,14 @@ using Gee;
 
 namespace Emperor.Application {
 
-    public class ModuleRegistryImpl : Object, ModuleRegistry
+    public class ModuleRegistry : Object
     {
         private HashMap<string,FileInfoColumn> m_columns;
         private HashMap<string,CompareFuncWrapper> m_cmp_funcs;
 
         private string? m_module_location;
 
-        public ModuleRegistryImpl (string? module_location)
+        public ModuleRegistry (string? module_location)
         {
             m_columns = new HashMap<string,FileInfoColumn>();
             m_cmp_funcs = new HashMap<string,CompareFuncWrapper>();

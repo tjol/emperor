@@ -26,13 +26,13 @@ namespace Emperor.Application {
     public class EmperorCore : Object
     {
 
-        public ModuleRegistryImpl modules { get; private set; }
+        public ModuleRegistry modules { get; private set; }
         public UserInterfaceManager ui_manager { get; private set; }
 
         public EmperorCore (string? module_location, string? config_fname)
                 throws ConfigurationError
         {
-            modules = new ModuleRegistryImpl (module_location);
+            modules = new ModuleRegistry (module_location);
 
             ui_manager = new UserInterfaceManager (this);
 

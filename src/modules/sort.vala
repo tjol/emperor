@@ -17,6 +17,7 @@
 
 using GLib;
 using Emperor;
+using Emperor.Application;
 
 namespace Emperor.Modules {
     public int cmp_filename_collation(Value a, Value b)
