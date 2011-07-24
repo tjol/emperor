@@ -46,14 +46,26 @@ namespace Emperor.Application {
             m_panes.pack1 (m_left_pane, true, true);
             m_panes.pack2 (m_right_pane, true, true);
 
+            this.map_event.connect (on_paned_map);
+
             m_main_box.pack_start (m_panes, true, true, 0);
 
             add (m_main_box);
 
-            set_default_size (800, 400);
+            set_default_size (900, 500);
             this.title = "Emperor";
 
             destroy.connect (on_destroy);
+        }
+
+        bool on_paned_map (Gdk.Event e)
+        {
+            // make sure the HPaned is split in the middle at the start.
+            int w = m_panes.get_allocated_width ();
+            m_panes.position = w / 2;
+            m_right_pane.activate ();
+            m_left_pane.activate ();
+            return false;
         }
 
         void on_destroy ()

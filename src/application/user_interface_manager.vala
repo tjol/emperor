@@ -50,9 +50,17 @@ namespace Emperor.Application {
 
         private Gdk.RGBA m_default_foreground;
         private Gdk.RGBA m_default_background;
+        private Gdk.RGBA m_selected_foreground;
+        private Gdk.RGBA m_selected_background;
+        private Gdk.RGBA m_label_foreground;
+        private Gdk.RGBA m_label_background;
 
         internal Gdk.RGBA default_foreground { get { return m_default_foreground; } }
         internal Gdk.RGBA default_background { get { return m_default_background; } }
+        internal Gdk.RGBA selected_foreground { get { return m_selected_foreground; } }
+        internal Gdk.RGBA selected_background { get { return m_selected_background; } }
+        internal Gdk.RGBA label_foreground { get { return m_label_foreground; } }
+        internal Gdk.RGBA label_background { get { return m_label_background; } }
 
         internal Value default_foreground_value { get; private set; }
         internal Value default_background_value { get; private set; }
@@ -235,6 +243,17 @@ namespace Emperor.Application {
             m_style_context.get_background_color(StateFlags.NORMAL, m_default_background);
             default_background_value = Value(typeof(Gdk.RGBA));
             default_background_value.set_boxed(&m_default_background);
+
+            m_style_context.get_color(StateFlags.SELECTED, m_selected_foreground);
+            m_style_context.get_background_color(StateFlags.SELECTED, m_selected_background);
+
+            path = new WidgetPath();
+            path.append_type(typeof(Label));
+            path.iter_add_class(-1, STYLE_CLASS_DEFAULT);
+            m_style_context.set_path(path);
+
+            m_style_context.get_color(StateFlags.NORMAL, m_label_foreground);
+            m_style_context.get_background_color(StateFlags.NORMAL, m_label_background);
         }
 
         public Gdk.RGBA? make_color(string? spec)
