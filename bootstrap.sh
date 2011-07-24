@@ -11,7 +11,7 @@ autoconf &&
 echo +++ Running automake --add-missing ... &&
 automake --add-missing --copy --gnu &&
 echo +++ Running automake ... &&
-automake --foreign Makefile src/Makefile &&
+automake Makefile src/Makefile &&
 echo You may now run ./configure ||
 ( echo ERROR.; false )
 
