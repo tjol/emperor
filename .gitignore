@@ -18,3 +18,4 @@ Makefile.in
 /m4
 /config
 /autom4te.cache
+/INSTALL
