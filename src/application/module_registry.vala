@@ -20,6 +20,9 @@ using Gee;
 
 namespace Emperor.Application {
 
+    /**
+     * Handles modules.
+     */
     public class ModuleRegistry : Object
     {
         private HashMap<string,FileInfoColumn> m_columns;
@@ -34,6 +37,10 @@ namespace Emperor.Application {
             m_module_location = module_location;
         }
 
+        /**
+         * Register a FileInfoColumn. It can then be used in the UI
+         * configuration.
+         */
         public void register_column (string name, FileInfoColumn col)
         {
             m_columns[name] = col;
@@ -48,6 +55,10 @@ namespace Emperor.Application {
             }
         }
 
+        /**
+         * Register a sorting function. It can then be used in the UI
+         * configuration.
+         */
         public void register_sort_function (string name, CompareFunc func)
         {
             m_cmp_funcs[name] = new CompareFuncWrapper(func);
@@ -82,6 +93,10 @@ namespace Emperor.Application {
             }
         }
 
+        /**
+         * Signature of the public function "load_module" every module
+         * must expose.
+         */
         public delegate void LoadFunction (ModuleRegistry reg); 
 
         private void load_module (string name)
@@ -109,6 +124,10 @@ namespace Emperor.Application {
             }
         }
 
+        /**
+         * Utility class needed because Vala does not yet fully support using
+         * delegates as generic type parametres.
+         */
         internal class CompareFuncWrapper : Object {
             public CompareFuncWrapper (CompareFunc f) {
                 this.func = f;

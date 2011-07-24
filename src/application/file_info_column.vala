@@ -21,12 +21,33 @@ using Gee;
 
 namespace Emperor {
 
+    /**
+     * Module interface type providing a column in the file listing.
+     * 
+     * @see ModuleRegistry.register_column
+     */
     public interface FileInfoColumn : Object
     {
+        /**
+         * Extract the value to be displayed (and stored in the TreeModel)
+         * from a GIO FileInfo object.
+         */
         public abstract Value get_value (FileInfo fi);
+
+        /**
+         * The type of the values returned by get_value
+         */
         public abstract Type column_type { get; }
+
+        /**
+         * The file attributes to be queried. If get_value expects an
+         * attribute to be present, it should be included here.
+         */
         public abstract Collection<string> file_attributes { get; }
 
+        /**
+         * Install a CellRenderer to display the data queried.
+         */
         public abstract void add_to_column (TreeViewColumn column,
                                             int idx_data,
                                             int idx_fg_rgba,

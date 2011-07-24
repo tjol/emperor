@@ -190,6 +190,11 @@ namespace Emperor.Application {
         }
 
         File m_pwd;
+
+        /**
+         * The directory currently being listed. Setting the property changes
+         * directory asynchronously
+         */
         public File pwd {
             get { return m_pwd; }
             set {
@@ -368,6 +373,9 @@ namespace Emperor.Application {
             return false;
         }
 
+        /**
+         * Attempt to grab focus.
+         */
         public void activate ()
         {
             m_list.grab_focus ();
@@ -577,7 +585,7 @@ namespace Emperor.Application {
         }
 
 
-        internal class TreeIterCompareFuncWrapper : Object
+        private class TreeIterCompareFuncWrapper : Object
         {
             int m_col;
             CompareFunc m_cmp;
