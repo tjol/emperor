@@ -1,0 +1,40 @@
+Emperor
+=======
+
+An orthodox file manager for the GNOME desktop.
+
+Installation
+------------
+
+To build Emperor from source, you will need:
+
+ * A working C compiler, make, and a bourne-compatible /bin/sh
+ * GTK+3 and dependencies
+ * libxml2
+ * Gee, the Vala collections library.
+
+Configure the package with `./configure', build with `make', and install
+with `make install` (usually as root). Type `./configure --help' for a 
+full list of configuration options. See the file `INSTALL' for details.
+
+To run Emperor from the source tree without installing, use `make run'.
+
+If you got the source with git, you will also need:
+
+ * Vala (version 0.10.0 or newer is supported)
+ * GNU Autoconf, Automake, and Libtool
+
+To generate the `./configure' script from a git clone, run `./bootstrap.sh'
+
+Copyright
+---------
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+For details, refer to the file COPYING.
+
+See also: AUTHORS
+
