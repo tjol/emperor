@@ -34,6 +34,8 @@ namespace Emperor.Application {
         TreeView m_list;
         Label m_pane_title;
         EventBox m_pane_title_bg;
+        Label m_error_message;
+        EventBox m_error_message_bg;
         ListStore m_liststore;
         TreePath m_cursor_path;
         FileInfoColumn[] m_store_cells;
@@ -187,6 +189,29 @@ namespace Emperor.Application {
             var scrwnd = new ScrolledWindow (null, null);
             scrwnd.add(m_list);
             pack_start (scrwnd, true, true);
+
+            m_error_message = new Label ("");
+            m_error_message_bg = new EventBox ();
+            m_error_message.margin = 10;
+            var black = RGBA();
+            black.parse("#000000");
+            m_error_message.override_color (0, black);
+            var red = RGBA();
+            red.parse("#ff8888");
+            m_error_message_bg.override_background_color (0, red);
+            m_error_message_bg.add(m_error_message);
+            pack_start (m_error_message_bg, false, false);
+        }
+
+        public void display_error (string message)
+        {
+            m_error_message.set_text(message);
+            m_error_message_bg.visible = true;
+        }
+
+        public void hide_error ()
+        {
+            m_error_message_bg.visible = false;
         }
 
         File m_pwd;
@@ -198,9 +223,7 @@ namespace Emperor.Application {
         public File pwd {
             get { return m_pwd; }
             set {
-                m_pwd = value;
-                
-                chdir.begin(m_pwd, null);
+                chdir.begin(value, null);
             }
         }
 
@@ -219,18 +242,32 @@ namespace Emperor.Application {
                 store.set_sort_func(e.key, e.value.compare_treeiter);
             }
 
-            var enumerator = yield pwd.enumerate_children_async (
-                                        m_file_attributes_str,
-                                        FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+            FileEnumerator enumerator;
+            try {
+                enumerator = yield pwd.enumerate_children_async (
+                                            m_file_attributes_str,
+                                            FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+            } catch {
+                display_error ("Error reading directory: %s".printf(pwd.get_parse_name()));
+                return;
+            }
 
             TreeIter iter;
             TreeIter? prev_iter = null;
 
             // Add [..]
             var parent = pwd.get_parent();
+            FileInfo parent_info = null;
             if (parent != null) {
-                var parent_info = yield parent.query_info_async(m_file_attributes_str,
-                                            FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+                try {
+                    parent_info = yield parent.query_info_async(m_file_attributes_str,
+                                                FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+                } catch {
+                    display_error ("Error querying parent directory: %s".printf(
+                                        parent.get_parse_name()));
+                }
+            }
+            if (parent_info != null) {
                 parent_info.set_display_name("..");
                 parent_info.set_name("..");
 
@@ -255,7 +292,13 @@ namespace Emperor.Application {
 
             // Add the rest.
             while (true) {
-                var fileinfos = yield enumerator.next_files_async(20);
+                GLib.List<FileInfo> fileinfos;
+                try {
+                    fileinfos = yield enumerator.next_files_async(20);
+                } catch {
+                    display_error ("Error querying some files.");
+                    continue;
+                }
                 if (fileinfos == null) break;
 
                 foreach (var file in fileinfos) {
@@ -282,6 +325,7 @@ namespace Emperor.Application {
             m_liststore = store;
             m_cursor_path = null;
             m_list.set_model(store);
+            m_pwd = pwd;
 
             if (is_sorted) {
                 m_liststore.set_sort_column_id (sort_column, sort_type);
@@ -328,6 +372,7 @@ namespace Emperor.Application {
             }
 
             if (e.type == EventType.BUTTON_PRESS) {
+                hide_error ();
                 switch (e.button) {
                 case 1:
                     // left-click
@@ -376,8 +421,9 @@ namespace Emperor.Application {
         /**
          * Attempt to grab focus.
          */
-        public void activate ()
+        public void activate_pane ()
         {
+            hide_error ();
             m_list.grab_focus ();
         }
 
@@ -399,6 +445,7 @@ namespace Emperor.Application {
         private bool on_key_event (EventKey e)
         {
             if (e.type == EventType.KEY_PRESS) {
+                hide_error ();
                 switch (e.keyval) {
                 case 0x0020: // GDK_KEY_space
                     if (m_cursor_path != null) {
@@ -452,14 +499,20 @@ namespace Emperor.Application {
                 var old_name = file_info.get_name() == ".." 
                                     ? m_pwd.get_basename ()
                                     : "..";
-                m_pwd = dir;
                 yield chdir(dir, old_name);
 
                 break;
             case FileType.SYMBOLIC_LINK:
                 var target_s = file_info.get_symlink_target ();
                 var target = m_pwd.resolve_relative_path(target_s);
-                var info = yield target.query_info_async (m_file_attributes_str, 0);
+                FileInfo info;
+                try {
+                    info = yield target.query_info_async (m_file_attributes_str, 0);
+                } catch {
+                    display_error ("Could not resolve symbolic link: %s"
+                                    .printf(target_s));
+                    return;
+                }
                 yield activate_file (info, target);
                 break;
             }
@@ -481,12 +534,18 @@ namespace Emperor.Application {
         private bool on_focus_event (EventFocus e)
         {
             // focus has changed. Restyle every line.
+            restyle_complete_list ();
+            return false;
+        }
+
+        private void restyle_complete_list ()
+        {
 
             bool active = m_list.has_focus;
 
             TreeIter iter = TreeIter();
             if (m_liststore == null || !m_liststore.get_iter_first(out iter)) {
-                return false;
+                return;
             }
 
             do {
@@ -509,8 +568,6 @@ namespace Emperor.Application {
                 m_pane_title_bg.override_background_color(StateFlags.NORMAL,
                             m_app.ui_manager.label_background);
             }
-
-            return false;
         }
 
         private void restyle_path (TreePath path, bool cursor=false, bool? focus=null)

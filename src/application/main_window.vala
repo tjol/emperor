@@ -63,8 +63,8 @@ namespace Emperor.Application {
             // make sure the HPaned is split in the middle at the start.
             int w = m_panes.get_allocated_width ();
             m_panes.position = w / 2;
-            m_right_pane.activate ();
-            m_left_pane.activate ();
+            m_right_pane.activate_pane ();
+            m_left_pane.activate_pane ();
             return false;
         }
 
