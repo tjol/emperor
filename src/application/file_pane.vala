@@ -280,7 +280,7 @@ namespace Emperor.Application {
 
                 foreach (var col_ in m_store_cells) {
                     if (col_ != null) {
-                        store.set_value(iter, idx, col_.get_value(parent_info));
+                        store.set_value(iter, idx, col_.get_value(pwd, parent_info));
                     }
                     idx++;
                 }
@@ -311,7 +311,7 @@ namespace Emperor.Application {
 
                     foreach (var col in m_store_cells) {
                         if (col != null) {
-                            store.set_value(iter, idx, col.get_value(file));
+                            store.set_value(iter, idx, col.get_value(pwd, file));
                         }
                         idx++;
                     }
@@ -342,6 +342,7 @@ namespace Emperor.Application {
              */
             m_pane_title.set_markup("<b>%s</b>".printf(title));
 
+            restyle_complete_list ();
         }
 
         private void cursor_changed ()

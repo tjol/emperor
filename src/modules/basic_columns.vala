@@ -33,7 +33,7 @@ namespace Emperor.Modules {
             m_attrs.add(FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME);
         }
 
-        public override Value get_value (FileInfo fi)
+        public override Value get_value (File dir, FileInfo fi)
         {
             var v = Value(typeof(string));
             v.set_string(fi.get_display_name());
@@ -56,10 +56,21 @@ namespace Emperor.Modules {
             m_attrs.add(FILE_ATTRIBUTE_STANDARD_ICON);
         }
 
-        public Value get_value (FileInfo fi)
+        public Value get_value (File dir, FileInfo fi)
         {
             var v = Value(typeof(Icon));
-            var icon = fi.get_icon();
+            var icon = fi.get_icon ();
+
+            if (fi.get_file_type() == FileType.SYMBOLIC_LINK) {
+                try {
+                    var symlink_file = dir.get_child (fi.get_name());
+                    var info = symlink_file.query_info (FILE_ATTRIBUTE_STANDARD_ICON, 0);
+                    icon = info.get_icon ();
+                } catch {
+                    // keep the symlink's (non-)icon
+                }
+            }
+
             v.set_object(icon);
             return v;
         }

@@ -32,7 +32,7 @@ namespace Emperor {
          * Extract the value to be displayed (and stored in the TreeModel)
          * from a GIO FileInfo object.
          */
-        public abstract Value get_value (FileInfo fi);
+        public abstract Value get_value (File dir, FileInfo fi);
 
         /**
          * The type of the values returned by get_value
@@ -62,7 +62,7 @@ namespace Emperor {
 
     public abstract class TextFileInfoColumn : Object, FileInfoColumn
     {
-        public abstract Value get_value (FileInfo fi);
+        public abstract Value get_value (File dir, FileInfo fi);
         public abstract Type column_type { get; }
         public abstract Collection<string> file_attributes { get; }
 
