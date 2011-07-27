@@ -69,7 +69,8 @@ namespace Emperor.Application {
             m_pane_title.margin = 3;
             m_pane_title_bg = new EventBox();
             m_pane_title_bg.margin = 2;
-            m_pane_title_bg.add(m_pane_title);
+            m_pane_title_bg.add (m_pane_title);
+            m_pane_title_bg.button_press_event.connect (on_title_click);
             pack_start(m_pane_title_bg, false, false);
 
             /*
@@ -416,6 +417,63 @@ namespace Emperor.Application {
                 }
             }
 
+            return false;
+        }
+        
+        
+        private bool m_editing_title = false;
+                
+        private bool on_title_click (EventButton e)
+        {
+            if (e.type == EventType.BUTTON_PRESS) {
+                switch (e.button) {
+                case 1:
+                    // left-click!
+                    if (m_editing_title) return false;
+                    
+                    m_editing_title = true;
+                    
+                    var dir_text = new Entry();
+                    dir_text.text = m_pane_title.get_text ();
+                    
+                    dir_text.focus_out_event.connect ((e) => {
+                            // Remove the Entry, switch back to plain title.
+                            if (m_editing_title) {
+                                m_pane_title_bg.remove (dir_text);
+                                m_pane_title_bg.add (m_pane_title);
+                                m_pane_title_bg.show_all ();
+                                //activate_pane ();
+                                m_editing_title = false;
+                            }
+                            return true;
+                        });
+                        
+                    dir_text.key_press_event.connect ((e) => {
+                            if (e.keyval == 0xff1b) { // Escape
+                                //end_edit ();
+                                activate_pane ();
+                                return true;
+                            }
+                            return false;
+                        });
+                        
+                    dir_text.activate.connect (() => {
+                            // Try to chdir to the new location
+                            string dirpath = dir_text.text;
+                            var f = File.parse_name (dirpath);
+                            chdir.begin (f, null);
+                            activate_pane ();
+                        });
+                    
+                    m_pane_title_bg.remove (m_pane_title);
+                    m_pane_title_bg.add (dir_text);
+                    dir_text.show ();
+                    dir_text.grab_focus ();
+                    
+                    break;
+                }
+            }
+            
             return false;
         }
 
