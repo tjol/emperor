@@ -378,7 +378,9 @@ namespace Emperor.Application {
                 switch (e.button) {
                 case 1:
                     // left-click
-                    m_list.set_cursor (path, null, false);
+                    if (path != null) {
+                        m_list.set_cursor (path, null, false);
+                    }
                     m_list.grab_focus ();
                     return true;
                 case 3:
