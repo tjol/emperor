@@ -27,9 +27,22 @@ namespace Emperor.Application {
         VBox m_main_box;
         HPaned m_panes;
 
-        FilePane m_left_pane;
-        FilePane m_right_pane;
-        
+        public FilePane left_pane { get; private set; }
+        public FilePane right_pane { get; private set; }
+
+        public FilePane active_pane {
+            get { 
+                if (left_pane.active) {
+                    return left_pane;
+                } else {
+                    return right_pane;
+                }
+            }
+            set {
+                value.active = true;
+            }
+        }
+
         public MainWindow (EmperorCore app)
         {
             m_app = app;
@@ -38,13 +51,13 @@ namespace Emperor.Application {
             m_main_box = new VBox (false, 0);
             m_panes = new HPaned ();
 
-            m_left_pane = new FilePane(m_app);
-            m_right_pane = new FilePane(m_app);
-            m_left_pane.pwd = File.new_for_path(".");
-            m_right_pane.pwd = File.new_for_path("/");
+            left_pane = new FilePane(m_app);
+            right_pane = new FilePane(m_app);
+            left_pane.pwd = File.new_for_path(".");
+            right_pane.pwd = File.new_for_path("/");
 
-            m_panes.pack1 (m_left_pane, true, true);
-            m_panes.pack2 (m_right_pane, true, true);
+            m_panes.pack1 (left_pane, true, true);
+            m_panes.pack2 (right_pane, true, true);
 
             this.map_event.connect (on_paned_map);
 
@@ -63,8 +76,8 @@ namespace Emperor.Application {
             // make sure the HPaned is split in the middle at the start.
             int w = m_panes.get_allocated_width ();
             m_panes.position = w / 2;
-            m_right_pane.activate_pane ();
-            m_left_pane.activate_pane ();
+            active_pane = right_pane;
+            active_pane = left_pane;
             return false;
         }
 

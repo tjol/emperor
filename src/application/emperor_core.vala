@@ -28,6 +28,7 @@ namespace Emperor.Application {
 
         public ModuleRegistry modules { get; private set; }
         public UserInterfaceManager ui_manager { get; private set; }
+        public MainWindow main_window { get; private set; }
 
         public EmperorCore (string? module_location, string? config_fname)
                 throws ConfigurationError
@@ -55,7 +56,7 @@ namespace Emperor.Application {
                 Xml.Parser.cleanup ();
             }
 
-            var main_window = new MainWindow (this);
+            main_window = new MainWindow (this);
             main_window.show_all ();
         }
 

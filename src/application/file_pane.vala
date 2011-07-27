@@ -80,8 +80,6 @@ namespace Emperor.Application {
             var selector = m_list.get_selection();
             selector.set_mode(SelectionMode.NONE);
 
-            m_list.focus_in_event.connect (on_focus_event);
-            m_list.focus_out_event.connect (on_focus_event);
             m_list.cursor_changed.connect (cursor_changed);
 
             m_list.button_press_event.connect (on_mouse_event);
@@ -167,7 +165,8 @@ namespace Emperor.Application {
                                         COL_STYLE, COL_STYLE_SET);
                     if (cell == col.sort_column) {
                         tvcol.set_sort_column_id(idx);
-                        m_cmp_funcs[idx] = new TreeIterCompareFuncWrapper(idx, col.cmp_function);
+                        m_cmp_funcs[idx] = new TreeIterCompareFuncWrapper(idx,
+                                                    col.cmp_function);
                     }
                     idx++;
                 }
@@ -386,7 +385,7 @@ namespace Emperor.Application {
                     if (path != null) {
                         m_list.set_cursor (path, null, false);
                     }
-                    m_list.grab_focus ();
+                    this.active = true;
                     return true;
                 case 3:
                     // right-click
@@ -427,9 +426,7 @@ namespace Emperor.Application {
             return false;
         }
         
-        
         private bool m_editing_title = false;
-                
         private bool on_title_click (EventButton e)
         {
             if (e.type == EventType.BUTTON_PRESS) {
@@ -443,7 +440,7 @@ namespace Emperor.Application {
             
             return false;
         }
-        
+
         private void edit_tite ()
         {
             if (m_editing_title) return;
@@ -459,7 +456,6 @@ namespace Emperor.Application {
                         m_pane_title_bg.remove (dir_text);
                         m_pane_title_bg.add (m_pane_title);
                         m_pane_title_bg.show_all ();
-                        //activate_pane ();
                         m_editing_title = false;
                     }
                     return true;
@@ -468,7 +464,7 @@ namespace Emperor.Application {
             dir_text.key_press_event.connect ((e) => {
                     if (e.keyval == 0xff1b) { // Escape
                         //end_edit ();
-                        activate_pane ();
+                        this.active = true;
                         return true;
                     }
                     return false;
@@ -479,7 +475,7 @@ namespace Emperor.Application {
                     string dirpath = dir_text.text;
                     var f = File.parse_name (dirpath);
                     chdir.begin (f, null);
-                    activate_pane ();
+                    this.active = true;
                 });
             
             m_pane_title_bg.remove (m_pane_title);
@@ -488,13 +484,39 @@ namespace Emperor.Application {
             dir_text.grab_focus ();
         }
 
+
+        private bool m_active = false;
         /**
-         * Attempt to grab focus.
+         * Whether or not this pane is active. Setting this property
+         * will change the other pane's state accordingly.
          */
-        public void activate_pane ()
-        {
-            hide_error ();
-            m_list.grab_focus ();
+        public bool active {
+            get { return m_active; }
+            set {
+                if (m_active != value) {
+                    m_active = value;
+                    hide_error ();
+                    if (m_active && !m_list.has_focus) {
+                        m_list.grab_focus ();
+                    }
+                    restyle_complete_list ();
+                    other_pane.active = !m_active;
+                }
+            }
+        }
+
+        private FilePane m_other_pane = null;
+        public FilePane other_pane {
+            get {
+                if (m_other_pane == null) {
+                    if (this == m_app.main_window.left_pane) {
+                        m_other_pane = m_app.main_window.right_pane;
+                    } else {
+                        m_other_pane = m_app.main_window.left_pane;
+                    }
+                }
+                return m_other_pane;
+            }
         }
 
         private bool on_motion_notify (EventMotion e)
@@ -517,6 +539,10 @@ namespace Emperor.Application {
             if (e.type == EventType.KEY_PRESS) {
                 hide_error ();
                 switch (e.keyval) {
+                case 0xff09: // GDK_KEY_Tab
+                    // activate other panel.
+                    active = false;
+                    return true;
                 case 0x0020: // GDK_KEY_space
                     if (m_cursor_path != null) {
                         toggle_selected (m_cursor_path);
@@ -608,17 +634,8 @@ namespace Emperor.Application {
             }
         }
 
-        private bool on_focus_event (EventFocus e)
-        {
-            // focus has changed. Restyle every line.
-            restyle_complete_list ();
-            return false;
-        }
-
         private void restyle_complete_list ()
         {
-
-            bool active = m_list.has_focus;
 
             TreeIter iter = TreeIter();
             if (m_liststore == null || !m_liststore.get_iter_first(out iter)) {
@@ -626,15 +643,15 @@ namespace Emperor.Application {
             }
 
             do {
-                restyle (iter, false, active);
+                restyle (iter, false);
             } while (m_liststore.iter_next(ref iter));
 
             if (m_cursor_path != null) {
-                restyle_path (m_cursor_path, true, active);
+                restyle_path (m_cursor_path, true);
             }
 
             // restyle the header
-            if (active) {
+            if (m_active) {
                 m_pane_title.override_color(StateFlags.NORMAL,
                             m_app.ui_manager.selected_foreground);
                 m_pane_title_bg.override_background_color(StateFlags.NORMAL,
@@ -647,25 +664,19 @@ namespace Emperor.Application {
             }
         }
 
-        private void restyle_path (TreePath path, bool cursor=false, bool? focus=null)
+        private void restyle_path (TreePath path, bool cursor=false)
         {
             if (path != null) {
                 TreeIter? iter;
                 m_liststore.get_iter (out iter, path);
                 if (iter != null) {
-                    restyle (iter, cursor, focus);
+                    restyle (iter, cursor);
                 }
             }
         }
 
-        private void restyle (TreeIter iter, bool cursor=false, bool? focus=null)
+        private void restyle (TreeIter iter, bool cursor=false)
         {
-            bool active;
-            if (focus == null) {
-                active = m_list.has_focus;
-            } else {
-                active = focus;
-            }
             var falsevalue = Value(typeof(bool));
             falsevalue.set_boolean(false);
             var truevalue = Value(typeof(bool));
@@ -683,9 +694,9 @@ namespace Emperor.Application {
             //m_liststore.set_value(iter, COL_STYLE_SET, falsevalue);
 
             foreach (var style in m_app.ui_manager.style_directives) {
-                if (style.pane == FilePaneState.ACTIVE && !active) {
+                if (style.pane == FilePaneState.ACTIVE && !m_active) {
                     continue;
-                } else if (style.pane == FilePaneState.PASSIVE && active) {
+                } else if (style.pane == FilePaneState.PASSIVE && m_active) {
                     continue;
                 }
 
