@@ -436,52 +436,56 @@ namespace Emperor.Application {
                 switch (e.button) {
                 case 1:
                     // left-click!
-                    if (m_editing_title) return false;
-                    
-                    m_editing_title = true;
-                    
-                    var dir_text = new Entry();
-                    dir_text.text = m_pane_title.get_text ();
-                    
-                    dir_text.focus_out_event.connect ((e) => {
-                            // Remove the Entry, switch back to plain title.
-                            if (m_editing_title) {
-                                m_pane_title_bg.remove (dir_text);
-                                m_pane_title_bg.add (m_pane_title);
-                                m_pane_title_bg.show_all ();
-                                //activate_pane ();
-                                m_editing_title = false;
-                            }
-                            return true;
-                        });
-                        
-                    dir_text.key_press_event.connect ((e) => {
-                            if (e.keyval == 0xff1b) { // Escape
-                                //end_edit ();
-                                activate_pane ();
-                                return true;
-                            }
-                            return false;
-                        });
-                        
-                    dir_text.activate.connect (() => {
-                            // Try to chdir to the new location
-                            string dirpath = dir_text.text;
-                            var f = File.parse_name (dirpath);
-                            chdir.begin (f, null);
-                            activate_pane ();
-                        });
-                    
-                    m_pane_title_bg.remove (m_pane_title);
-                    m_pane_title_bg.add (dir_text);
-                    dir_text.show ();
-                    dir_text.grab_focus ();
-                    
+                    edit_tite ();
                     break;
                 }
             }
             
             return false;
+        }
+        
+        private void edit_tite ()
+        {
+            if (m_editing_title) return;
+                    
+            m_editing_title = true;
+            
+            var dir_text = new Entry();
+            dir_text.text = m_pane_title.get_text ();
+            
+            dir_text.focus_out_event.connect ((e) => {
+                    // Remove the Entry, switch back to plain title.
+                    if (m_editing_title) {
+                        m_pane_title_bg.remove (dir_text);
+                        m_pane_title_bg.add (m_pane_title);
+                        m_pane_title_bg.show_all ();
+                        //activate_pane ();
+                        m_editing_title = false;
+                    }
+                    return true;
+                });
+                
+            dir_text.key_press_event.connect ((e) => {
+                    if (e.keyval == 0xff1b) { // Escape
+                        //end_edit ();
+                        activate_pane ();
+                        return true;
+                    }
+                    return false;
+                });
+                
+            dir_text.activate.connect (() => {
+                    // Try to chdir to the new location
+                    string dirpath = dir_text.text;
+                    var f = File.parse_name (dirpath);
+                    chdir.begin (f, null);
+                    activate_pane ();
+                });
+            
+            m_pane_title_bg.remove (m_pane_title);
+            m_pane_title_bg.add (dir_text);
+            dir_text.show ();
+            dir_text.grab_focus ();
         }
 
         /**
@@ -526,6 +530,13 @@ namespace Emperor.Application {
                 case 0xff67: // GDK_KEY_Menu
                     if (m_cursor_path != null) {
                         popup_menu_for (m_cursor_path);
+                    }
+                    return true;
+                case 0x006c: // GDK_KEY_l
+                case 0x004c: // GDK_KEY_L
+                    if ((e.state & ModifierType.CONTROL_MASK) != 0) {
+                        // C-L => edit location.
+                        edit_tite ();
                     }
                     return true;
                 }
