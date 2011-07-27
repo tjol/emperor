@@ -194,6 +194,7 @@ namespace Emperor.Application {
             m_error_message = new Label ("");
             m_error_message_bg = new EventBox ();
             m_error_message.margin = 10;
+            m_error_message.wrap = true;
             var black = RGBA();
             black.parse("#000000");
             m_error_message.override_color (0, black);
@@ -248,8 +249,10 @@ namespace Emperor.Application {
                 enumerator = yield pwd.enumerate_children_async (
                                             m_file_attributes_str,
                                             FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-            } catch {
-                display_error ("Error reading directory: %s".printf(pwd.get_parse_name()));
+            } catch (Error err1) {
+                display_error ("Error reading directory: %s (%s)"
+                               .printf(pwd.get_parse_name(),
+                                       err1.message));
                 return;
             }
 
@@ -263,9 +266,10 @@ namespace Emperor.Application {
                 try {
                     parent_info = yield parent.query_info_async(m_file_attributes_str,
                                                 FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-                } catch {
-                    display_error ("Error querying parent directory: %s".printf(
-                                        parent.get_parse_name()));
+                } catch (Error err2) {
+                    display_error ("Error querying parent directory: %s (%s)"
+                                    .printf(parent.get_parse_name(),
+                                            err2.message));
                 }
             }
             if (parent_info != null) {
@@ -296,8 +300,9 @@ namespace Emperor.Application {
                 GLib.List<FileInfo> fileinfos;
                 try {
                     fileinfos = yield enumerator.next_files_async(20);
-                } catch {
-                    display_error ("Error querying some files.");
+                } catch (Error err3) {
+                    display_error ("Error querying some files. (%s)"
+                                    .printf(err3.message));
                     continue;
                 }
                 if (fileinfos == null) break;
