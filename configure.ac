@@ -1,9 +1,10 @@
 dnl This needs some file it can stat
-AC_INIT(README)
+AC_INIT([emperor], [0.1], [], [emperor])
+AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE(emperor, 0.1)
+AM_INIT_AUTOMAKE
 LT_INIT([disable-static])
 
 AC_PROG_CC
@@ -54,9 +55,10 @@ AC_SUBST([GLOBAL_CFLAGS])
 
 AC_SUBST([VALAFLAGS])
 
-AC_OUTPUT(Makefile
-          src/Makefile
-          src/config/Makefile
-          src/application/Makefile
-          src/modules/Makefile)
+AC_CONFIG_FILES([Makefile
+                 src/Makefile
+                 src/config/Makefile
+                 src/application/Makefile
+                 src/modules/Makefile])
+AC_OUTPUT
 
