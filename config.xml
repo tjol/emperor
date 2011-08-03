@@ -4,6 +4,7 @@
     <modules>
         <load name="basic_columns"/>
         <load name="sort"/>
+        <load name="commands"/>
     </modules>
     <user-interface>
         <file-pane>
@@ -21,5 +22,18 @@
                 </column>
             </columns>
         </file-pane>
+        <command-bar>
+            <command-button title="Rename" key="F2" command="rename"/>
+            <!--
+            <command-button title="View" key="F3" command="view"/>
+            <command-button title="Edit" key="F4" command="edit"/>
+            <command-button title="Copy" key="F5" command="copy"/>
+            <command-button title="Move" key="F6" command="move"/>
+            <command-button title="New Directory" key="F7" command="mkdir"/>
+            <command-button title="Delete" key="F8" command="delete"/>
+            <command-button title="Menu" key="F9" command="pulldn"/>
+            <command-button title="Quit" key="F10" command="quit"/>
+            -->
+        </command-bar>
     </user-interface>
 </emperor-config>

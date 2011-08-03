@@ -230,9 +230,6 @@ namespace Emperor.Application {
 
         private async void chdir (File pwd, string? prev_name)
         {
-            int idx;
-            Value file_value;
-
             int sort_column = -1;
             SortType sort_type = 0;
             bool is_sorted = (m_liststore != null
@@ -275,19 +272,9 @@ namespace Emperor.Application {
                 parent_info.set_display_name("..");
                 parent_info.set_name("..");
 
-                store.append(out iter);
-                idx = 0;
+                store.append (out iter);
 
-                file_value = Value(typeof(FileInfo));
-                file_value.set_object(parent_info);
-                store.set_value(iter, COL_FILEINFO, file_value); 
-
-                foreach (var col_ in m_store_cells) {
-                    if (col_ != null) {
-                        store.set_value(iter, idx, col_.get_value(pwd, parent_info));
-                    }
-                    idx++;
-                }
+                update_row (iter, parent_info, store, pwd);
 
                 if (prev_name == "..") {
                     prev_iter = iter;
@@ -307,19 +294,9 @@ namespace Emperor.Application {
                 if (fileinfos == null) break;
 
                 foreach (var file in fileinfos) {
-                    store.append(out iter);
-                    idx = 0;
+                    store.append (out iter);
 
-                    file_value = Value(typeof(FileInfo));
-                    file_value.set_object(file);
-                    store.set_value(iter, COL_FILEINFO, file_value); 
-
-                    foreach (var col in m_store_cells) {
-                        if (col != null) {
-                            store.set_value(iter, idx, col.get_value(pwd, file));
-                        }
-                        idx++;
-                    }
+                    update_row (iter, file, store, pwd);
 
                     if (prev_name == file.get_name()) {
                         prev_iter = iter;
@@ -348,6 +325,61 @@ namespace Emperor.Application {
             m_pane_title.set_markup("<b>%s</b>".printf(title));
 
             restyle_complete_list ();
+        }
+
+        private void update_row (TreeIter iter, FileInfo file,
+                                 ListStore? store=null, File? pwd=null)
+        {
+            if (store == null) {
+                store = m_liststore;
+            }
+            if (pwd == null) {
+                pwd = m_pwd;
+            }
+
+            var idx = 0;
+
+            var file_value = Value(typeof(FileInfo));
+            file_value.set_object(file);
+            store.set_value(iter, COL_FILEINFO, file_value); 
+
+            foreach (var col in m_store_cells) {
+                if (col != null) {
+                    store.set_value(iter, idx, col.get_value(pwd, file));
+                }
+                idx++;
+            }
+        }
+
+        private async void query_and_update (TreeIter iter, File file)
+        {
+            var fileinfo = yield file.query_info_async (
+                    m_file_attributes_str,
+                    FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+
+            update_row (iter, fileinfo, m_liststore);
+        }
+
+        public TreePath cursor_path {
+            get {
+                return m_cursor_path;
+            }
+        }
+
+        public FileInfo get_fileinfo (TreePath path)
+        {
+            Value finfo_val;
+            TreeIter iter;
+            m_liststore.get_iter (out iter, path);
+            m_liststore.get_value (iter, COL_FILEINFO, out finfo_val);
+            return (FileInfo) finfo_val.get_object ();
+        }
+
+        public void update_line (TreePath path, File file)
+        {
+            TreeIter iter;
+            m_liststore.get_iter (out iter, path);
+            query_and_update.begin (iter, file);
         }
 
         private void cursor_changed ()
@@ -433,7 +465,7 @@ namespace Emperor.Application {
                 switch (e.button) {
                 case 1:
                     // left-click!
-                    edit_tite ();
+                    edit_title ();
                     break;
                 }
             }
@@ -441,7 +473,7 @@ namespace Emperor.Application {
             return false;
         }
 
-        private void edit_tite ()
+        private void edit_title ()
         {
             if (m_editing_title) return;
                     
@@ -496,11 +528,11 @@ namespace Emperor.Application {
                 if (m_active != value) {
                     m_active = value;
                     hide_error ();
-                    if (m_active && !m_list.has_focus) {
-                        m_list.grab_focus ();
-                    }
                     restyle_complete_list ();
                     other_pane.active = !m_active;
+                }
+                if (m_active && !m_list.has_focus) {
+                    m_list.grab_focus ();
                 }
             }
         }
@@ -539,30 +571,30 @@ namespace Emperor.Application {
             if (e.type == EventType.KEY_PRESS) {
                 hide_error ();
                 switch (e.keyval) {
-                case 0xff09: // GDK_KEY_Tab
+                case KeySym.Tab:
                     // activate other panel.
                     active = false;
                     return true;
-                case 0x0020: // GDK_KEY_space
+                case KeySym.space:
                     if (m_cursor_path != null) {
                         toggle_selected (m_cursor_path);
                     }
                     return true;
-                case 0xff0d: // GDK_KEY_Return
+                case KeySym.Return:
                     if (m_cursor_path != null) {
                         activate_row (m_cursor_path);
                     }
                     return true;
-                case 0xff67: // GDK_KEY_Menu
+                case KeySym.Menu:
                     if (m_cursor_path != null) {
                         popup_menu_for (m_cursor_path);
                     }
                     return true;
-                case 0x006c: // GDK_KEY_l
-                case 0x004c: // GDK_KEY_L
+                case KeySym.l:
+                case KeySym.L:
                     if ((e.state & ModifierType.CONTROL_MASK) != 0) {
                         // C-L => edit location.
-                        edit_tite ();
+                        edit_title ();
                     }
                     return true;
                 }

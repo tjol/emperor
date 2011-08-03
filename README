@@ -23,6 +23,7 @@ If you got the source with git, you will also need:
 
  * Vala (version 0.10.0 or newer is supported)
  * GNU Autoconf, Automake, and Libtool
+ * Python 3.x, with "python3" in your PATH
 
 To generate the `./configure' script from a git clone, run `./bootstrap.sh'
 

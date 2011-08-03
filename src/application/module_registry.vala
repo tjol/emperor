@@ -27,14 +27,20 @@ namespace Emperor.Application {
     {
         private HashMap<string,FileInfoColumn> m_columns;
         private HashMap<string,CompareFuncWrapper> m_cmp_funcs;
+        private HashMap<string,CommandWrapper> m_commands;
 
         private string? m_module_location;
 
-        public ModuleRegistry (string? module_location)
+        public EmperorCore application { get; private set; }
+
+        public ModuleRegistry (EmperorCore app, string? module_location)
         {
             m_columns = new HashMap<string,FileInfoColumn>();
             m_cmp_funcs = new HashMap<string,CompareFuncWrapper>();
+            m_commands = new HashMap<string,CommandWrapper>();
             m_module_location = module_location;
+
+            application = app;
         }
 
         /**
@@ -72,6 +78,24 @@ namespace Emperor.Application {
                 return null;
             }
         }
+
+        /**
+         * Register an Command. It can then be used in the UI configuration for command buttons
+         */
+        public void register_command (string name, Command command)
+        {
+            m_commands[name] = new CommandWrapper (command);
+        }
+
+        public Command? get_command (string name)
+        {
+            if (m_commands.has_key(name)) {
+                return m_commands[name].func;
+            } else {
+                return null;
+            }
+        }
+
 
         internal void handle_config_xml_nodes (Xml.Node* parent)
                         throws ConfigurationError
@@ -134,6 +158,18 @@ namespace Emperor.Application {
             }
             public CompareFunc func { get; private set; }
         }
+
+        /**
+         * Utility class needed because Vala does not yet fully support using
+         * delegates as generic type parametres.
+         */
+        internal class CommandWrapper : Object {
+            public CommandWrapper (Command f) {
+                this.func = f;
+            }
+            public Command func { get; private set; }
+        }
+
 
     }
 

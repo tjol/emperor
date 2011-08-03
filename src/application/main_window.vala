@@ -26,6 +26,7 @@ namespace Emperor.Application {
 
         VBox m_main_box;
         HPaned m_panes;
+        HButtonBox m_command_buttons;
 
         public FilePane left_pane { get; private set; }
         public FilePane right_pane { get; private set; }
@@ -62,6 +63,20 @@ namespace Emperor.Application {
             this.map_event.connect (on_paned_map);
 
             m_main_box.pack_start (m_panes, true, true, 0);
+
+            m_command_buttons = new HButtonBox ();
+            foreach (var cmd in m_app.ui_manager.command_buttons) {
+                var btn = new Button.with_label ("%s %s".printf(cmd.keystring, cmd.title));
+                btn.clicked.connect (() => {
+                        cmd.cmd (new string[0]);
+                    });
+                m_command_buttons.pack_start (btn, false, false);
+            }
+            m_command_buttons.halign = Align.START;
+            m_command_buttons.margin = 3;
+            m_command_buttons.spacing = 3;
+
+            m_main_box.pack_start (m_command_buttons, false, false, 0);
 
             add (m_main_box);
 

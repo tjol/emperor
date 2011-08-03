@@ -19,5 +19,6 @@ using GLib;
 
 namespace Emperor {
     public delegate int CompareFunc (Value a, Value b);
+    public delegate void Command (string[] args);
 }
 

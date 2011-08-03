@@ -23,7 +23,7 @@ namespace Emperor.Application {
 
     public class UserInterfaceManager : Object
     {
-        internal class FilePanelColumn
+        internal class FilePaneColumn
         {
             internal string title;
             internal LinkedList<FileInfoColumn> cells;
@@ -44,9 +44,25 @@ namespace Emperor.Application {
             internal Gdk.RGBA? bg;
         }
 
+        internal class KeyBinding
+        {
+            internal Gdk.KeySym keyval; 
+            internal Gdk.ModifierType mod = 0;
+            internal Command cmd;
+        }
+
+        internal class CommandButton
+        {
+            internal string title;
+            internal string keystring;
+            internal Command cmd;
+        }
+
         EmperorCore m_app;
-        internal LinkedList<FilePanelColumn> panel_columns { get; private set; }
+        internal LinkedList<FilePaneColumn> panel_columns { get; private set; }
         internal LinkedList<StyleDirective> style_directives { get; private set; }
+        internal LinkedList<KeyBinding> key_bindings { get; private set; }
+        internal LinkedList<CommandButton> command_buttons { get; private set; }
 
         private Gdk.RGBA m_default_foreground;
         private Gdk.RGBA m_default_background;
@@ -71,11 +87,13 @@ namespace Emperor.Application {
             m_app = app;
             create_style_context ();
             style_directives = new LinkedList<StyleDirective> ();
-            panel_columns = new LinkedList<FilePanelColumn> ();
+            panel_columns = new LinkedList<FilePaneColumn> ();
+            key_bindings = new LinkedList<KeyBinding> ();
+            command_buttons = new LinkedList<CommandButton> ();
 
         }
 
-        FilePanelColumn? _current_column = null;
+        FilePaneColumn? _current_column = null;
 
         internal void handle_config_xml_nodes (Xml.Node* parent)
                         throws ConfigurationError
@@ -85,7 +103,7 @@ namespace Emperor.Application {
 
                 case "user-interface":
                     if (node->type == Xml.ElementType.ELEMENT_NODE) {
-                        if (node->name == "file-pane") {
+                        if (node->name == "file-pane" || node->name == "command-bar") {
                             handle_config_xml_nodes (node);
                         } else {
                             throw new ConfigurationError.INVALID_ERROR(
@@ -112,7 +130,7 @@ namespace Emperor.Application {
                     if (node->type == Xml.ElementType.ELEMENT_NODE) {
                         if (node->name == "column") {
                             
-                            _current_column = new FilePanelColumn();
+                            _current_column = new FilePaneColumn();
 
                             var title = node->get_prop("title");
                             if (title == null) {
@@ -212,12 +230,96 @@ namespace Emperor.Application {
                     }
                     break;
 
+                case "command-bar":
+                    if (node->type == Xml.ElementType.ELEMENT_NODE) {
+                        if (node->name == "command-button") {
+                            var title = node->get_prop ("title");
+                            var key = node->get_prop ("key");
+                            var commandname = node->get_prop ("command");
+                            Command commandfunc = null;
+
+                            if (title == null) {
+                                throw new ConfigurationError.INVALID_ERROR (
+                                    "Each command button must have a title.");
+                            }
+                            if (commandname == null) {
+                                throw new ConfigurationError.INVALID_ERROR (
+                                    "Each command button must an associated action.");
+                            } else {
+                                commandfunc = m_app.modules.get_command (commandname);
+                                if (commandfunc == null) {
+                                    throw new ConfigurationError.MODULE_ERROR (
+                                        "Unknown command: " + commandname);
+                                }
+                            }
+
+                            key_bindings.add (make_key_binding(key, commandfunc));
+
+                            var cbtn = new CommandButton ();
+                            cbtn.title = title;
+                            cbtn.keystring = key;
+                            cbtn.cmd = commandfunc;
+
+                            command_buttons.add (cbtn);
+
+                        } else {
+                            throw new ConfigurationError.INVALID_ERROR(
+                                        "Unexpected element: " + node->name);
+                        }
+                    }
+                    break;
+
                 default:
                     throw new ConfigurationError.INVALID_ERROR(
                                 "Unexpected element: " + parent->name);
 
                 }
             }
+        }
+
+        private KeyBinding make_key_binding (string key_descr, Command cmd)
+            throws ConfigurationError
+        {
+            KeyBinding bdg = new KeyBinding ();
+
+            string[] parts = key_descr.split_set("-+");
+            foreach (string mod_s in parts[0:-1]) {
+                switch (mod_s) {
+                case "Ctrl":
+                case "C":
+                    bdg.mod |= Gdk.ModifierType.CONTROL_MASK;
+                    break;
+                case "Alt":
+                case "A":
+                    bdg.mod |= Gdk.ModifierType.MOD1_MASK;
+                    break;
+                case "Meta":
+                case "M":
+                    bdg.mod |= Gdk.ModifierType.META_MASK;
+                    break;
+                case "Super":
+                    bdg.mod |= Gdk.ModifierType.SUPER_MASK;
+                    break;
+                case "Hyper":
+                    bdg.mod |= Gdk.ModifierType.HYPER_MASK;
+                    break;
+                case "Shift":
+                case "S":
+                    bdg.mod |= Gdk.ModifierType.SHIFT_MASK;
+                    break;
+                default:
+                    throw new ConfigurationError.INVALID_ERROR ("Unknown modifier key: "+mod_s);
+                }
+            }
+
+            bdg.keyval = get_keysym_from_name (parts[parts.length-1]);
+            if (bdg.keyval == -1) {
+                throw new ConfigurationError.INVALID_ERROR ("Unknown key: "+parts[-1]);
+            }
+
+            bdg.cmd = cmd;
+
+            return bdg;
         }
 
         private StyleContext m_style_context;

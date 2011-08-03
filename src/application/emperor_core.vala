@@ -33,7 +33,7 @@ namespace Emperor.Application {
         public EmperorCore (string? module_location, string? config_fname)
                 throws ConfigurationError
         {
-            modules = new ModuleRegistry (module_location);
+            modules = new ModuleRegistry (this, module_location);
 
             ui_manager = new UserInterfaceManager (this);
 
