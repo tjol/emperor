@@ -137,7 +137,6 @@ namespace Emperor.Application {
 
         private bool on_map (Gdk.Event e)
         {
-            stdout.printf("dialog mapped.\n");
             m_dialog.show_all ();
             if (m_focus_widget != null) {
                 m_focus_widget.grab_focus ();
