@@ -36,7 +36,8 @@ namespace Emperor.Application {
         EventBox m_pane_title_bg;
         Label m_error_message;
         EventBox m_error_message_bg;
-        ListStore m_liststore;
+        ListStore m_internal_liststore = null;
+        TreeModelSort m_liststore = null;
         TreePath m_cursor_path;
         FileInfoColumn[] m_store_cells;
         Type[] m_store_types;
@@ -215,7 +216,7 @@ namespace Emperor.Application {
             m_error_message_bg.visible = false;
         }
 
-        File m_pwd;
+        File m_pwd = null;
 
         /**
          * The directory currently being listed. Setting the property changes
@@ -230,90 +231,104 @@ namespace Emperor.Application {
 
         private async void chdir (File pwd, string? prev_name)
         {
+            TreeIter? prev_iter = null;
+
             int sort_column = -1;
             SortType sort_type = 0;
             bool is_sorted = (m_liststore != null
                              && m_liststore.get_sort_column_id (out sort_column, out sort_type));
 
-            var store = new ListStore.newv(m_store_types);
-            foreach (var e in m_cmp_funcs.entries) {
-                store.set_sort_func(e.key, e.value.compare_treeiter);
-            }
+            if (other_pane.pwd != null && pwd.equal(other_pane.pwd)) {
+                // re-use other pane's list store.
+                m_internal_liststore = other_pane.m_internal_liststore;
+                m_cursor_path = other_pane.m_cursor_path;
 
-            FileEnumerator enumerator;
-            try {
-                enumerator = yield pwd.enumerate_children_async (
-                                            m_file_attributes_str,
-                                            FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-            } catch (Error err1) {
-                display_error ("Error reading directory: %s (%s)"
-                               .printf(pwd.get_parse_name(),
-                                       err1.message));
-                return;
-            }
+            } else {
+                // chdir-proper.
+                var store = new ListStore.newv(m_store_types);
 
-            TreeIter iter;
-            TreeIter? prev_iter = null;
-
-            // Add [..]
-            var parent = pwd.get_parent();
-            FileInfo parent_info = null;
-            if (parent != null) {
+                FileEnumerator enumerator;
                 try {
-                    parent_info = yield parent.query_info_async(m_file_attributes_str,
+                    enumerator = yield pwd.enumerate_children_async (
+                                                m_file_attributes_str,
                                                 FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-                } catch (Error err2) {
-                    display_error ("Error querying parent directory: %s (%s)"
-                                    .printf(parent.get_parse_name(),
-                                            err2.message));
+                } catch (Error err1) {
+                    display_error ("Error reading directory: %s (%s)"
+                                   .printf(pwd.get_parse_name(),
+                                           err1.message));
+                    return;
                 }
-            }
-            if (parent_info != null) {
-                parent_info.set_display_name("..");
-                parent_info.set_name("..");
 
-                store.append (out iter);
+                TreeIter iter;
 
-                update_row (iter, parent_info, store, pwd);
-
-                if (prev_name == "..") {
-                    prev_iter = iter;
+                // Add [..]
+                var parent = pwd.get_parent();
+                FileInfo parent_info = null;
+                if (parent != null) {
+                    try {
+                        parent_info = yield parent.query_info_async(m_file_attributes_str,
+                                                    FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+                    } catch (Error err2) {
+                        display_error ("Error querying parent directory: %s (%s)"
+                                        .printf(parent.get_parse_name(),
+                                                err2.message));
+                    }
                 }
-            }
+                if (parent_info != null) {
+                    parent_info.set_display_name("..");
+                    parent_info.set_name("..");
 
-            // Add the rest.
-            while (true) {
-                GLib.List<FileInfo> fileinfos;
-                try {
-                    fileinfos = yield enumerator.next_files_async(20);
-                } catch (Error err3) {
-                    display_error ("Error querying some files. (%s)"
-                                    .printf(err3.message));
-                    continue;
-                }
-                if (fileinfos == null) break;
-
-                foreach (var file in fileinfos) {
                     store.append (out iter);
 
-                    update_row (iter, file, store, pwd);
+                    update_row (iter, parent_info, store, pwd);
 
-                    if (prev_name == file.get_name()) {
+                    if (prev_name == "..") {
                         prev_iter = iter;
                     }
                 }
-            }
 
-            m_liststore = store;
-            m_cursor_path = null;
-            m_list.set_model(store);
+                // Add the rest.
+                while (true) {
+                    GLib.List<FileInfo> fileinfos;
+                    try {
+                        fileinfos = yield enumerator.next_files_async(20);
+                    } catch (Error err3) {
+                        display_error ("Error querying some files. (%s)"
+                                        .printf(err3.message));
+                        continue;
+                    }
+                    if (fileinfos == null) break;
+
+                    foreach (var file in fileinfos) {
+                        store.append (out iter);
+
+                        update_row (iter, file, store, pwd);
+
+                        if (prev_name == file.get_name()) {
+                            prev_iter = iter;
+                        }
+                    }
+                }
+
+                m_internal_liststore = store;
+                m_cursor_path = null;
+
+            }
+            m_liststore = new TreeModelSort.with_model (m_internal_liststore);
+
+            m_list.set_model(m_liststore);
             m_pwd = pwd;
 
+            foreach (var e in m_cmp_funcs.entries) {
+                m_liststore.set_sort_func(e.key, e.value.compare_treeiter);
+            }
             if (is_sorted) {
                 m_liststore.set_sort_column_id (sort_column, sort_type);
             }
             if (prev_iter != null) {
-                var curs = m_liststore.get_path (prev_iter);
+                TreeIter sort_prev_iter;
+                m_liststore.convert_child_iter_to_iter (out sort_prev_iter, prev_iter);
+                var curs = m_liststore.get_path (sort_prev_iter);
                 m_list.set_cursor (curs, null, false);
             }
 
@@ -328,11 +343,8 @@ namespace Emperor.Application {
         }
 
         private void update_row (TreeIter iter, FileInfo file,
-                                 ListStore? store=null, File? pwd=null)
+                                 ListStore store, File? pwd=null)
         {
-            if (store == null) {
-                store = m_liststore;
-            }
             if (pwd == null) {
                 pwd = m_pwd;
             }
@@ -351,13 +363,13 @@ namespace Emperor.Application {
             }
         }
 
-        private async void query_and_update (TreeIter iter, File file)
+        private async void query_and_update (TreeIter unsorted_iter, File file)
         {
             try {
                 var fileinfo = yield file.query_info_async (
                         m_file_attributes_str,
                         FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-                update_row (iter, fileinfo, m_liststore);
+                update_row (unsorted_iter, fileinfo, m_internal_liststore);
             } catch (Error e) {
                 display_error ("Error fetching file information. (%s)".printf(e.message));
             }
@@ -381,8 +393,10 @@ namespace Emperor.Application {
         public void update_line (TreePath path, File file)
         {
             TreeIter iter;
+            TreeIter child_iter;
             m_liststore.get_iter (out iter, path);
-            query_and_update.begin (iter, file);
+            m_liststore.convert_iter_to_child_iter (out child_iter, iter);
+            query_and_update.begin (child_iter, file);
         }
 
         private void cursor_changed ()
@@ -661,10 +675,12 @@ namespace Emperor.Application {
             TreeIter? iter;
             m_liststore.get_iter (out iter, path);
             if (iter != null) {
+                TreeIter child_iter;
+                m_liststore.convert_iter_to_child_iter (out child_iter, iter);
                 Value selected;
-                m_liststore.get_value (iter, COL_SELECTED, out selected);
+                m_internal_liststore.get_value (child_iter, COL_SELECTED, out selected);
                 selected.set_boolean (!selected.get_boolean());
-                m_liststore.set_value (iter, COL_SELECTED, selected);
+                m_internal_liststore.set_value (child_iter, COL_SELECTED, selected);
                 restyle (iter, m_cursor_path != null && m_cursor_path.compare(path) == 0);
             }
         }
@@ -673,13 +689,13 @@ namespace Emperor.Application {
         {
 
             TreeIter iter = TreeIter();
-            if (m_liststore == null || !m_liststore.get_iter_first(out iter)) {
+            if (m_internal_liststore == null || !m_internal_liststore.get_iter_first(out iter)) {
                 return;
             }
 
             do {
                 restyle (iter, false);
-            } while (m_liststore.iter_next(ref iter));
+            } while (m_internal_liststore.iter_next(ref iter));
 
             if (m_cursor_path != null) {
                 restyle_path (m_cursor_path, true);
@@ -705,12 +721,14 @@ namespace Emperor.Application {
                 TreeIter? iter;
                 m_liststore.get_iter (out iter, path);
                 if (iter != null) {
-                    restyle (iter, cursor);
+                    TreeIter child_iter;
+                    m_liststore.convert_iter_to_child_iter (out child_iter, iter);
+                    restyle (child_iter, cursor);
                 }
             }
         }
 
-        private void restyle (TreeIter iter, bool cursor=false)
+        private void restyle (TreeIter unsorted_iter, bool cursor=false)
         {
             var falsevalue = Value(typeof(bool));
             falsevalue.set_boolean(false);
@@ -719,14 +737,14 @@ namespace Emperor.Application {
             var nullcolor = Value(typeof(RGBA));
             nullcolor.set_boxed(null);
 
-            m_liststore.set_value (iter, COL_FG_COLOR, nullcolor);
-            m_liststore.set_value (iter, COL_FG_SET, falsevalue);
+            m_internal_liststore.set_value (unsorted_iter, COL_FG_COLOR, nullcolor);
+            m_internal_liststore.set_value (unsorted_iter, COL_FG_SET, falsevalue);
 
-            m_liststore.set_value (iter, COL_BG_COLOR, nullcolor);
-            m_liststore.set_value (iter, COL_BG_SET, falsevalue);
+            m_internal_liststore.set_value (unsorted_iter, COL_BG_COLOR, nullcolor);
+            m_internal_liststore.set_value (unsorted_iter, COL_BG_SET, falsevalue);
 
-            //m_liststore.set_value(iter, COL_WEIGHT_SET, falsevalue);
-            //m_liststore.set_value(iter, COL_STYLE_SET, falsevalue);
+            //m_internal_liststore.set_value(unsorted_iter, COL_WEIGHT_SET, falsevalue);
+            //m_internal_liststore.set_value(unsorted_iter, COL_STYLE_SET, falsevalue);
 
             foreach (var style in m_app.ui_manager.style_directives) {
                 if (style.pane == FilePaneState.ACTIVE && !m_active) {
@@ -740,7 +758,7 @@ namespace Emperor.Application {
                     continue;
                 } else if (style.target == UserInterfaceManager.StyleDirective.Target.SELECTED) {
                     Value selected;
-                    m_liststore.get_value(iter, COL_SELECTED, out selected);
+                    m_internal_liststore.get_value(unsorted_iter, COL_SELECTED, out selected);
                     if (!selected.get_boolean()) {
                         continue;
                     }
@@ -751,15 +769,15 @@ namespace Emperor.Application {
                 if (style.fg != null) {
                     var fgcolor = Value(typeof(RGBA));
                     fgcolor.set_boxed((void*)style.fg);
-                    m_liststore.set_value(iter, COL_FG_COLOR, fgcolor);
-                    m_liststore.set_value(iter, COL_FG_SET, truevalue);
+                    m_internal_liststore.set_value(unsorted_iter, COL_FG_COLOR, fgcolor);
+                    m_internal_liststore.set_value(unsorted_iter, COL_FG_SET, truevalue);
                 }
                 if (style.bg != null) {
                     var bgcolor = Value(typeof(RGBA));
                     bgcolor.set_boxed((void*)style.bg);
-                    m_liststore.set_value(iter, COL_BG_COLOR, bgcolor);
-                    m_liststore.set_value(iter, COL_BG_SET, falsevalue);
-                    m_liststore.set_value(iter, COL_BG_SET, truevalue);
+                    m_internal_liststore.set_value(unsorted_iter, COL_BG_COLOR, bgcolor);
+                    m_internal_liststore.set_value(unsorted_iter, COL_BG_SET, falsevalue);
+                    m_internal_liststore.set_value(unsorted_iter, COL_BG_SET, truevalue);
                 }
             }
         }

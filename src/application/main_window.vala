@@ -54,9 +54,6 @@ namespace Emperor.Application {
 
             left_pane = new FilePane(m_app);
             right_pane = new FilePane(m_app);
-            left_pane.pwd = File.new_for_path(".");
-            right_pane.pwd = File.new_for_path("/");
-
             m_panes.pack1 (left_pane, true, true);
             m_panes.pack2 (right_pane, true, true);
 
@@ -93,6 +90,10 @@ namespace Emperor.Application {
             m_panes.position = w / 2;
             active_pane = right_pane;
             active_pane = left_pane;
+
+            left_pane.pwd = File.new_for_path(".");
+            right_pane.pwd = File.new_for_path("/");
+
             return false;
         }
 
