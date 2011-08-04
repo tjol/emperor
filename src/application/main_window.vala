@@ -90,10 +90,15 @@ namespace Emperor.Application {
             m_panes.position = w / 2;
             active_pane = left_pane;
 
-            left_pane.pwd = File.new_for_path(".");
-            right_pane.pwd = File.new_for_path("/");
+            set_directories.begin ();
 
             return false;
+        }
+
+        async void set_directories ()
+        {
+            yield left_pane.chdir (File.new_for_path("."));
+            yield right_pane.chdir (left_pane.pwd);
         }
 
         void on_destroy ()

@@ -229,7 +229,7 @@ namespace Emperor.Application {
             }
         }
 
-        private async void chdir (File pwd, string? prev_name)
+        public async void chdir (File pwd, string? prev_name=null)
         {
             TreeIter? prev_iter = null;
 
@@ -624,7 +624,7 @@ namespace Emperor.Application {
             stdout.printf("popup!\n");
         }
 
-        private void activate_row (TreePath path)
+        public void activate_row (TreePath path)
         {
             // get the FileInfo:
             TreeIter? iter = null;
@@ -638,15 +638,15 @@ namespace Emperor.Application {
             }
         }
 
-        private async void activate_file (FileInfo file_info, File? file)
+        private async void activate_file (FileInfo file_info, File? real_file)
         {
             switch (file_info.get_file_type()) {
             case FileType.DIRECTORY:
                 File dir;
-                if (file == null) {
+                if (real_file == null) {
                     dir = m_pwd.resolve_relative_path (file_info.get_name());
                 } else {
-                    dir = file;
+                    dir = real_file;
                 }
                 var old_name = file_info.get_name() == ".." 
                                     ? m_pwd.get_basename ()
@@ -667,6 +667,15 @@ namespace Emperor.Application {
                 }
                 yield activate_file (info, target);
                 break;
+            default:
+                File file;
+                if (real_file == null) {
+                    file = m_pwd.get_child (file_info.get_name());
+                } else {
+                    file = real_file;
+                }
+                m_app.open_file (file);
+                break;
             }
         }
 
@@ -681,7 +690,7 @@ namespace Emperor.Application {
                 m_data_store.get_value (child_iter, COL_SELECTED, out selected);
                 selected.set_boolean (!selected.get_boolean());
                 m_data_store.set_value (child_iter, COL_SELECTED, selected);
-                restyle (iter, m_cursor_path != null && m_cursor_path.compare(path) == 0);
+                restyle (child_iter, m_cursor_path != null && m_cursor_path.compare(path) == 0);
             }
         }
 

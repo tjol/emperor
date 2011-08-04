@@ -85,6 +85,31 @@ namespace Emperor.Application {
             }
         }
 
+        public void open_file (File file)
+        {
+            var file_list = new GLib.List<File> ();
+            file_list.append (file);
+            open_files (file_list);
+        }
+
+        public void open_files (List<File> file_list)
+            requires (file_list.length() > 0)
+        {
+            var first_file = file_list.nth_data(0);
+            try {
+                var app  = first_file.query_default_handler ();
+                app.launch (file_list, null);
+            } catch (Error e) {
+                string error_msg;
+                if (file_list.length() == 1) {
+                    error_msg = "Error opening “%s”".printf(first_file.get_basename());
+                } else {
+                    error_msg = "Error opening %ud files.".printf(file_list.length());
+                }
+                show_error_message_dialog (main_window, error_msg, e.message);
+            }
+        }
+
         public void main_loop ()
         {
             Gtk.main ();
