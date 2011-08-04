@@ -353,11 +353,14 @@ namespace Emperor.Application {
 
         private async void query_and_update (TreeIter iter, File file)
         {
-            var fileinfo = yield file.query_info_async (
-                    m_file_attributes_str,
-                    FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-
-            update_row (iter, fileinfo, m_liststore);
+            try {
+                var fileinfo = yield file.query_info_async (
+                        m_file_attributes_str,
+                        FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+                update_row (iter, fileinfo, m_liststore);
+            } catch (Error e) {
+                display_error ("Error fetching file information. (%s)".printf(e.message));
+            }
         }
 
         public TreePath cursor_path {

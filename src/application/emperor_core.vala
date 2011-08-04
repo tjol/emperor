@@ -116,8 +116,12 @@ namespace Emperor.Application {
                      arg_description = "XML file to read configuration from" }
             };
 
-            Gtk.init_with_args(ref argv, "Orthodox file manager for GNOME",
-                               options, null);
+            try {
+                Gtk.init_with_args(ref argv, "Orthodox file manager for GNOME",
+                                   options, null);
+            } catch (Error e) {
+                stderr.printf ("Error loading application: %s\n", e.message);
+            }
 
             EmperorCore app;
             try {

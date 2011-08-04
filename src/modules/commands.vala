@@ -60,9 +60,16 @@ namespace Emperor.Modules {
             }
             var file = pane.pwd.get_child (fileinfo.get_name());
 
-            fileinfo = yield file.query_info_async (
-                                FILE_ATTRIBUTE_STANDARD_EDIT_NAME,
-                                FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+            try {
+                fileinfo = yield file.query_info_async (
+                                    FILE_ATTRIBUTE_STANDARD_EDIT_NAME,
+                                    FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+            } catch (Error err1) {
+                show_error_message_dialog (application.main_window,
+                    "Error fetching file information.",
+                    err1.message);
+                return;
+            }
 
             //stdout.printf ("rename file: %s\n", fileinfo.get_edit_name());
             var filename = fileinfo.get_edit_name ();
@@ -80,10 +87,10 @@ namespace Emperor.Modules {
                             file.set_display_name (new_filename);
                             pane.update_line (path, pane.pwd.get_child(new_filename));
                             return false;
-                        } catch (Error e) {
+                        } catch (Error err2) {
                             show_error_message_dialog (dialog.dialog,
                                     "Error renaming file.",
-                                    e.message);
+                                    err2.message);
                             return true;
                         }
                     } else {
