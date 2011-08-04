@@ -277,6 +277,14 @@ namespace Emperor.Application {
             }
         }
 
+        public static const uint KEY_MODIFIERS = 
+              Gdk.ModifierType.CONTROL_MASK
+            | Gdk.ModifierType.MOD1_MASK
+            | Gdk.ModifierType.META_MASK
+            | Gdk.ModifierType.SUPER_MASK
+            | Gdk.ModifierType.HYPER_MASK
+            | Gdk.ModifierType.SHIFT_MASK;
+
         private KeyBinding make_key_binding (string key_descr, Command cmd)
             throws ConfigurationError
         {

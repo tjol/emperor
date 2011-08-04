@@ -81,6 +81,7 @@ namespace Emperor.Application {
             this.title = "Emperor";
 
             destroy.connect (on_destroy);
+            key_press_event.connect (on_key_press);
         }
 
         bool on_paned_map (Gdk.Event e)
@@ -93,6 +94,26 @@ namespace Emperor.Application {
             set_directories.begin ();
 
             return false;
+        }
+
+        bool on_key_press (Gdk.EventKey e)
+        {
+            bool handled = false;
+
+            if (e.type == Gdk.EventType.KEY_PRESS) {
+                var no_args = new string[0];
+                foreach (var key_bdg in  m_app.ui_manager.key_bindings) {
+                    if (key_bdg.keyval == e.keyval
+                        && key_bdg.mod == (e.state & UserInterfaceManager.KEY_MODIFIERS)) {
+
+                        key_bdg.cmd (no_args);
+                        handled = true;
+
+                    }
+                }
+            }
+
+            return handled;
         }
 
         async void set_directories ()
