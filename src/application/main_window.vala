@@ -88,7 +88,6 @@ namespace Emperor.Application {
             // make sure the HPaned is split in the middle at the start.
             int w = m_panes.get_allocated_width ();
             m_panes.position = w / 2;
-            active_pane = right_pane;
             active_pane = left_pane;
 
             left_pane.pwd = File.new_for_path(".");

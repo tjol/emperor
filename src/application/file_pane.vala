@@ -544,7 +544,7 @@ namespace Emperor.Application {
             set {
                 if (m_active != value) {
                     m_active = value;
-                    hide_error ();
+                    //hide_error ();
                     restyle_complete_list ();
                     other_pane.active = !m_active;
                 }
@@ -780,6 +780,12 @@ namespace Emperor.Application {
                     m_internal_liststore.set_value(unsorted_iter, COL_BG_SET, truevalue);
                 }
             }
+        }
+
+        public override void show_all ()
+        {
+            base.show_all ();
+            hide_error ();
         }
 
 
