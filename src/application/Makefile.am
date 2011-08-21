@@ -4,7 +4,7 @@ emperor_SOURCES=emperor_core.vala file_pane.vala \
 		module_delegates.vala file_info_column.vala \
 		main_window.vala module_registry.vala \
 		user_interface_manager.vala input_dialog.vala \
-		keynames.c
+		#keynames.c
 
 emperor_VALAFLAGS=@VALAFLAGS@ \
 		  @GMODULE_VALAFLAGS@ @LIBXML_VALAFLAGS@ \

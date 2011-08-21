@@ -17,6 +17,7 @@
 
 using GLib;
 using Gtk;
+using Gee;
 
 namespace Emperor.Application {
     
@@ -50,6 +51,9 @@ namespace Emperor.Application {
 
             // add widgets.
             m_main_box = new VBox (false, 0);
+
+            m_main_box.pack_start (app.ui_manager.menu_bar, false, false, 0);
+
             m_panes = new HPaned ();
 
             left_pane = new FilePane(m_app);
@@ -62,10 +66,14 @@ namespace Emperor.Application {
             m_main_box.pack_start (m_panes, true, true, 0);
 
             m_command_buttons = new HButtonBox ();
-            foreach (var cmd in m_app.ui_manager.command_buttons) {
-                var btn = new Button.with_label ("%s %s".printf(cmd.keystring, cmd.title));
+            foreach (var act in m_app.ui_manager.command_buttons) {
+                AccelKey key;
+                AccelMap.lookup_entry (act.get_accel_path(), out key);
+                var btn = new Button.with_label ("%s %s".printf(
+                        accelerator_name (key.accel_key, key.accel_mods),
+                        act.label));
                 btn.clicked.connect (() => {
-                        cmd.cmd (new string[0]);
+                        act.activate ();
                     });
                 m_command_buttons.pack_start (btn, false, false);
             }
@@ -81,7 +89,9 @@ namespace Emperor.Application {
             this.title = "Emperor";
 
             destroy.connect (on_destroy);
-            key_press_event.connect (on_key_press);
+            //key_press_event.connect (on_key_press);
+
+            add_accel_group (m_app.modules.default_accel_group);
         }
 
         bool on_paned_map (Gdk.Event e)
@@ -101,16 +111,6 @@ namespace Emperor.Application {
             bool handled = false;
 
             if (e.type == Gdk.EventType.KEY_PRESS) {
-                var no_args = new string[0];
-                foreach (var key_bdg in  m_app.ui_manager.key_bindings) {
-                    if (key_bdg.keyval == e.keyval
-                        && key_bdg.mod == (e.state & UserInterfaceManager.KEY_MODIFIERS)) {
-
-                        key_bdg.cmd (no_args);
-                        handled = true;
-
-                    }
-                }
             }
 
             return handled;

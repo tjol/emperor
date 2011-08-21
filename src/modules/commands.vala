@@ -25,14 +25,26 @@ namespace Emperor.Modules {
     {
         public static void register (ModuleRegistry reg)
         {
+            Gtk.Action action;
+
             var app = reg.application;
             var module = new CommandsModule (app);
+
+            action = reg.new_action ("rename");
+            action.label = "Rename";
+            action.set_accel_path ("<Emperor-Main>/Commands/Rename");
+            Gtk.AccelMap.add_entry ("<Emperor-Main>/Commands/Rename",
+                                    Gdk.KeySym.F2, 0);
+            action.activate.connect ( () => { module.do_rename.begin (); } );
+            action.connect_accelerator ();
+            app.ui_manager.add_action_to_menu ("_File", action);
+
 
             /* Increase the reference count:
                Passing a delegate to a method loses all reference information.
                The CommandsModule would otherwise be deallocated. */
-            module.@ref ();
-            reg.register_command ("rename", module.rename);
+            //module.@ref ();
+            //reg.register_command ("rename", module.rename);
         }
 
         public CommandsModule (EmperorCore app)
@@ -41,11 +53,6 @@ namespace Emperor.Modules {
         }
 
         public EmperorCore application { get; construct; }
-
-        public void rename (string[] args)
-        {
-            do_rename.begin ();
-        }
 
         private async void do_rename ()
         {

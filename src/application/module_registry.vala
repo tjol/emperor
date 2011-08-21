@@ -17,6 +17,7 @@
 
 using GLib;
 using Gee;
+using Gtk;
 
 namespace Emperor.Application {
 
@@ -33,6 +34,9 @@ namespace Emperor.Application {
 
         public EmperorCore application { get; private set; }
 
+        public Gtk.ActionGroup actions { get; private set; }
+        public AccelGroup default_accel_group { get; private set; }
+
         public ModuleRegistry (EmperorCore app, string? module_location)
         {
             m_columns = new HashMap<string,FileInfoColumn>();
@@ -41,6 +45,8 @@ namespace Emperor.Application {
             m_module_location = module_location;
 
             application = app;
+            actions = new Gtk.ActionGroup ("emperor");
+            default_accel_group = new AccelGroup ();
         }
 
         /**
@@ -80,7 +86,7 @@ namespace Emperor.Application {
         }
 
         /**
-         * Register an Command. It can then be used in the UI configuration for command buttons
+         * Register a Command. This is currently useless.
          */
         public void register_command (string name, Command command)
         {
@@ -94,6 +100,17 @@ namespace Emperor.Application {
             } else {
                 return null;
             }
+        }
+
+        /**
+         * Create, register, and return, a new Gtk Action object.
+         */
+        public Gtk.Action new_action (string name)
+        {
+            var action = new Gtk.Action (name, null, null, null);
+            action.set_accel_group (default_accel_group);
+            actions.add_action (action);
+            return action;
         }
 
 
