@@ -30,6 +30,7 @@ namespace Emperor.Modules {
             var app = reg.application;
             var module = new CommandsModule (app);
 
+            // F2: Rename.
             action = reg.new_action ("rename");
             action.label = "Rename";
             action.set_accel_path ("<Emperor-Main>/Commands/Rename");
@@ -39,12 +40,26 @@ namespace Emperor.Modules {
             action.connect_accelerator ();
             app.ui_manager.add_action_to_menu ("_File", action);
 
+            // F3: View.
+            action = reg.new_action ("view");
+            action.label = "View";
+            action.set_accel_path ("<Emperor-Main>/Commands/View");
+            Gtk.AccelMap.add_entry ("<Emperor-Main>/Commands/View",
+                                    Gdk.KeySym.F3, 0);
+            action.activate.connect ( () => { module.open_files (AppManager.FileAction.VIEW); } );
+            action.connect_accelerator ();
+            app.ui_manager.add_action_to_menu ("_File", action);
 
-            /* Increase the reference count:
-               Passing a delegate to a method loses all reference information.
-               The CommandsModule would otherwise be deallocated. */
-            //module.@ref ();
-            //reg.register_command ("rename", module.rename);
+            // F4: Edit.
+            action = reg.new_action ("edit");
+            action.label = "Edit";
+            action.set_accel_path ("<Emperor-Main>/Commands/Edit");
+            Gtk.AccelMap.add_entry ("<Emperor-Main>/Commands/Edit",
+                                    Gdk.KeySym.F4, 0);
+            action.activate.connect ( () => { module.open_files (AppManager.FileAction.EDIT); } );
+            action.connect_accelerator ();
+            app.ui_manager.add_action_to_menu ("_File", action);
+
         }
 
         public CommandsModule (EmperorCore app)
@@ -106,6 +121,24 @@ namespace Emperor.Modules {
                 });
 
             dialog.run ();
+        }
+
+        private void open_files (AppManager.FileAction how)
+        {
+            var pane = application.main_window.active_pane;
+            var files = pane.get_selected_files ();
+
+            if (files.length() == 0) {
+                pane.display_error ("No files selected.");
+                return;
+            }
+
+            foreach (var file in files) {
+                var launch = application.external_apps.get_specific_for_file (file, how,true, true);
+                var flst = new GLib.List<File> ();
+                flst.append (file);
+                launch (flst);
+            }
         }
     }
 }

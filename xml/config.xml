@@ -24,6 +24,8 @@
         </file-pane>
         <command-bar>
             <command-button action="rename"/>
+            <command-button action="view"/>
+            <command-button action="edit"/>
             <!--
             <command-button title="View" key="F3" command="view"/>
             <command-button title="Edit" key="F4" command="edit"/>

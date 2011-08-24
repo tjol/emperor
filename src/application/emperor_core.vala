@@ -20,7 +20,8 @@ namespace Emperor.Application {
     public errordomain ConfigurationError {
         PARSE_ERROR,
         INVALID_ERROR,
-        MODULE_ERROR
+        MODULE_ERROR,
+        NOT_FOUND_ERROR
     }
 
     public class EmperorCore : Object
@@ -29,20 +30,23 @@ namespace Emperor.Application {
         public ModuleRegistry modules { get; private set; }
         public UserInterfaceManager ui_manager { get; private set; }
         public MainWindow main_window { get; private set; }
+        public AppManager external_apps { get; private set; }
 
-        public EmperorCore (string? module_location, string? config_fname)
+        private string? m_config_dir;
+
+        public EmperorCore (string? module_location, string? config_dir)
                 throws ConfigurationError
         {
-            modules = new ModuleRegistry (this, module_location);
+            Xml.Parser.init ();
+            m_config_dir = config_dir;
 
+            modules = new ModuleRegistry (this, module_location);
             ui_manager = new UserInterfaceManager (this);
+            external_apps = new AppManager (this);
 
             // read the XML configuration.
-            if (config_fname == null) {
-                config_fname = "config.xml";
-            }
+            var config_fname = get_config_file_path ("config.xml");
             
-            Xml.Parser.init ();
             Xml.Doc* document = Xml.Parser.read_file (config_fname);
             if (document == null) {
                 throw new ConfigurationError.PARSE_ERROR (config_fname);
@@ -53,11 +57,61 @@ namespace Emperor.Application {
                 handle_config_xml_nodes(root);
             } finally {
                 delete document;
-                Xml.Parser.cleanup ();
             }
 
             main_window = new MainWindow (this);
             main_window.show_all ();
+        }
+
+        ~EmperorCore ()
+        {
+            Xml.Parser.cleanup ();
+        }
+
+        public string get_config_file_path (string basename)
+            throws ConfigurationError
+        {
+            string path;
+            File file;
+
+            // First, try the config dir set on the command line.
+            path = "%s/%s".printf (m_config_dir, basename);
+            file = File.new_for_path (path);
+            if (file.query_exists() == true) {
+                return path;
+            }
+
+            // Next, try the XDG data home dir
+            path = "%s/%s/%s".printf (Environment.get_user_data_dir (),
+                                      Config.PACKAGE_NAME,
+                                      basename);
+            file = File.new_for_path (path);
+            if (file.query_exists() == true) {
+                return path;
+            }
+
+            // Now, the XDG system data dirs.
+            foreach (var datadir in Environment.get_system_data_dirs ()) {
+                path = "%s/%s/%s".printf (datadir,
+                                          Config.PACKAGE_NAME,
+                                          basename);
+                file = File.new_for_path (path);
+                if (file.query_exists() == true) {
+                    return path;
+                }
+            }
+
+            // Finally, the autoconf-set data dir.
+            path = "%s/%s/%s".printf (Config.DATA_DIR,
+                                      Config.PACKAGE_NAME,
+                                      basename);
+            file = File.new_for_path (path);
+            if (file.query_exists() == true) {
+                return path;
+            }
+
+            throw new ConfigurationError.NOT_FOUND_ERROR (
+                "Configuration file not found: %s".printf (basename) );
         }
 
         private void handle_config_xml_nodes (Xml.Node* parent)
@@ -97,8 +151,8 @@ namespace Emperor.Application {
         {
             var first_file = file_list.nth_data(0);
             try {
-                var app  = first_file.query_default_handler ();
-                app.launch (file_list, null);
+                var launch  = external_apps.get_default_for_file (first_file);
+                launch (file_list);
             } catch (Error e) {
                 string error_msg;
                 if (file_list.length() == 1) {
@@ -130,15 +184,15 @@ namespace Emperor.Application {
                     arg = OptionArg.FILENAME,
                     arg_data = p_module_location, 
                     description = "Location of Emperor modules",
-                    arg_description = "Location of Emperor modules" },
+                    arg_description = ".../module/directory/" },
                 OptionEntry () {
                     long_name = "config",
                      short_name = 'c',
                      flags = 0,
                      arg = OptionArg.FILENAME,
                      arg_data = p_config_file,
-                     description = "Configuration file",
-                     arg_description = "XML file to read configuration from" }
+                     description = "Location of configuration files",
+                     arg_description = ".../config/directory/" }
             };
 
             try {

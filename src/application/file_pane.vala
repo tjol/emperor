@@ -694,6 +694,38 @@ namespace Emperor.Application {
             }
         }
 
+        public GLib.List<File> get_selected_files ()
+        {
+            var file_list = new GLib.List<File> ();
+
+            m_sorted_list.@foreach ((model, path, iter) => {
+                    Value selected;
+                    model.get_value (iter, COL_SELECTED, out selected);
+                    if (selected.get_boolean()) {
+                        Value finfo_val;
+                        model.get_value (iter, COL_FILEINFO, out finfo_val);
+                        assert ( finfo_val.holds (typeof(FileInfo)) );
+                        var finfo = finfo_val.get_object () as FileInfo;
+                        var file = m_pwd.resolve_relative_path (finfo.get_name());
+                        file_list.prepend (file);
+                    }
+                    return false;
+                });
+
+            if (file_list.length() == 0 && m_cursor_path != null) {
+                // if no files are selected, use the cursor in stead.
+                var cursor_finfo = get_fileinfo (m_cursor_path);
+                var cursor_file = m_pwd.resolve_relative_path (cursor_finfo.get_name());
+                file_list.prepend (cursor_file);
+            } else {
+                file_list.reverse ();
+            }
+            /* The (owned) cast is necessary to tell Vala not to unref the list
+             * or its contents. GLib.List is a lightweight class - it is not
+             * reference counted. Ownership must be explicitly transferred. */
+            return (owned) file_list;
+        }
+
         private void restyle_complete_list ()
         {
 

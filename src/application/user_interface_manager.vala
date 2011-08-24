@@ -44,13 +44,6 @@ namespace Emperor.Application {
             internal Gdk.RGBA? bg;
         }
 
-        internal class KeyBinding
-        {
-            internal Gdk.KeySym keyval; 
-            internal Gdk.ModifierType mod = 0;
-            internal Command cmd;
-        }
-
         EmperorCore m_app;
         internal LinkedList<FilePaneColumn> panel_columns { get; private set; }
         internal LinkedList<StyleDirective> style_directives { get; private set; }

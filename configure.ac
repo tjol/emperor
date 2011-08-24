@@ -15,6 +15,7 @@ dnl
 dnl Check for packages
 dnl
 PKG_CHECK_MODULES([GTK], [gtk+-3.0])
+PKG_CHECK_MODULES([GIO], [gio-unix-2.0])
 PKG_CHECK_MODULES([GMODULE], [gmodule-2.0])
 PKG_CHECK_MODULES([LIBXML], [libxml-2.0])
 PKG_CHECK_MODULES([GEE], [gee-1.0])
@@ -22,7 +23,7 @@ PKG_CHECK_MODULES([GEE], [gee-1.0])
 dnl
 dnl Configure VALAFLAGS and CFLAGS
 dnl
-GIO_VALAFLAGS="--pkg=gio-2.0"
+GIO_VALAFLAGS="--pkg=gio-unix-2.0"
 AC_SUBST([GIO_VALAFLAGS])
 GTK_VALAFLAGS="--pkg=gtk+-3.0 --pkg=gdkkeysyms"
 AC_SUBST([GTK_VALAFLAGS])
