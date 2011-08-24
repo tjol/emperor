@@ -75,6 +75,11 @@ namespace Emperor.Application {
             {
                 var handlerfactory = new AppInfoHandlerFactory (appinfo);
                 this.handler = handlerfactory.handle;
+                /* Vala/GObject reference counting breaks down when it comes
+                 * to delegates due to API compatability with C - the delegate
+                 * argument (here: handlerfactory) is passed as an opaque
+                 * pointer and the programmer has to take care of memory 
+                 * management.                                               */
                 handlerfactory.ref();
             }
 
@@ -86,8 +91,6 @@ namespace Emperor.Application {
 
                 public void handle (GLib.List<File> files)
                 {
-                    stderr.printf("I am: %p\n", this);
-                    stderr.printf("Using appinfo ptr: %p\n", appinfo);
                     appinfo.launch (files, null);
                 }
             }
