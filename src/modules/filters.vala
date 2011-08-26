@@ -25,20 +25,34 @@ namespace Emperor.Modules {
     {
         var info = f.query_info (FILE_ATTRIBUTE_STANDARD_IS_HIDDEN,
                                  FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-        return ! info.get_is_hidden ();
+        return currently_visible && ( ! info.get_is_hidden () );
+    }
+
+    public bool filter_backup (File f, FileInfo fi, bool currently_visible)
+    {
+        var info = f.query_info (FILE_ATTRIBUTE_STANDARD_IS_BACKUP,
+                                 FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+        return currently_visible && ( ! info.get_is_backup () );
     }
 
     public void toggle_filter (MainWindow main_window, string filter,
-                               FilePane.FileFilterFunc func)
+                               FilePane.FileFilterFunc func,
+                               bool? use_filter=null)
     {
-        if (main_window.left_pane.using_filter (filter)) {
-            // switch filter off.
-            main_window.left_pane.remove_filter (filter);
-            main_window.right_pane.remove_filter (filter);
+        bool flag;
+        if (use_filter != null) {
+            flag = use_filter;
         } else {
+            flag = main_window.left_pane.using_filter (filter);
+        }
+        if (flag) {
             // switch filter on.
             main_window.left_pane.add_filter (filter, func);
             main_window.right_pane.add_filter (filter, func);
+        } else {
+            // switch filter off.
+            main_window.left_pane.remove_filter (filter);
+            main_window.right_pane.remove_filter (filter);
         }
     }
 }
@@ -47,26 +61,43 @@ public void load_module (ModuleRegistry reg)
 {
     var app = reg.application;
 
-    Gtk.Action action;
-
     // Action: Show Hidden <Ctrl+H>
-    action = reg.new_action ("filters/toggle:hidden");
-    action.label = "Show Hidden Files";
-    action.set_accel_path ("<Emperor-Main>/Filters/Toggle_Hidden");
+    var hidden_action = new Gtk.ToggleAction ("filters/toggle:hidden",
+                                              "Show Hidden Files",
+                                              null, null);
+    reg.register_action (hidden_action);
+    hidden_action.set_accel_path ("<Emperor-Main>/Filters/Toggle_Hidden");
     Gtk.AccelMap.add_entry ("<Emperor-Main>/Filters/Toggle_Hidden",
                         Gdk.KeySym.H, Gdk.ModifierType.CONTROL_MASK);
-    action.activate.connect ( () => {
+    hidden_action.toggled.connect ( () => {
             Emperor.Modules.toggle_filter (app.main_window,
-                "filters/hidden", Emperor.Modules.filter_hidden);
+                "filters/hidden", Emperor.Modules.filter_hidden,
+                ! hidden_action.active );
         } );
-    action.connect_accelerator ();
-    app.ui_manager.add_action_to_menu ("_View", action);
+    hidden_action.connect_accelerator ();
+    app.ui_manager.add_action_to_menu ("_View", hidden_action);
 
+    // Action: Show Backup
+    var backup_action = new Gtk.ToggleAction ("filters/toggle:backup",
+                                              "Show Backup Files",
+                                              null, null);
+    reg.register_action (backup_action);
+    // no accelerator.
+    backup_action.toggled.connect ( () => {
+            Emperor.Modules.toggle_filter (app.main_window,
+                "filters/backup", Emperor.Modules.filter_backup,
+                ! backup_action.active );
+        } );
+    app.ui_manager.add_action_to_menu ("_View", backup_action);
 
-    // Hide hidden files by default:
+    // Hide hidden and backup files by default:
     app.ui_manager.main_window_ready.connect ( (main_window) => {
             Emperor.Modules.toggle_filter (main_window,
-                "filters/hidden", Emperor.Modules.filter_hidden);
+                "filters/hidden", Emperor.Modules.filter_hidden,
+                true);
+            Emperor.Modules.toggle_filter (main_window,
+                "filters/backup", Emperor.Modules.filter_backup,
+                true);
         } );
 }
 

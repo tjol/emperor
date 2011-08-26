@@ -108,9 +108,14 @@ namespace Emperor.Application {
         public Gtk.Action new_action (string name)
         {
             var action = new Gtk.Action (name, null, null, null);
+            register_action (action);
+            return action;
+        }
+
+        public void register_action (Gtk.Action action)
+        {
             action.set_accel_group (default_accel_group);
             actions.add_action (action);
-            return action;
         }
 
 
