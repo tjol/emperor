@@ -1,9 +1,9 @@
 #!/bin/sh
 
-echo +++ Running aclocal ... &&
-aclocal &&
 echo +++ Running libtoolize ... &&
 libtoolize --copy &&
+echo +++ Running aclocal ... &&
+aclocal -I m4 &&
 echo +++ Running autoconf ... &&
 autoconf && 
 echo +++ Running automake --add-missing ... &&
