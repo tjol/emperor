@@ -103,6 +103,8 @@ namespace Emperor.Application {
 
             set_directories.begin ();
 
+            m_app.ui_manager.main_window_ready (this);
+
             return false;
         }
 

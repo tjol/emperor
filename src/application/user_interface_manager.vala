@@ -23,6 +23,8 @@ namespace Emperor.Application {
 
     public class UserInterfaceManager : Object
     {
+        public signal void main_window_ready (MainWindow main_window);
+        
         internal class FilePaneColumn
         {
             internal string title;

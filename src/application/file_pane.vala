@@ -30,6 +30,8 @@ namespace Emperor.Application {
 
     public class FilePane : VBox
     {
+        public delegate bool FileFilterFunc (File f, FileInfo fi, bool currently_visible);
+
         EmperorCore m_app;
         TreeView m_list;
         Label m_pane_title;
@@ -38,12 +40,14 @@ namespace Emperor.Application {
         EventBox m_error_message_bg;
         ListStore m_data_store = null;
         TreeModelSort m_sorted_list = null;
+        TreeModelFilter m_list_filter = null;
         TreePath m_cursor_path;
         FileInfoColumn[] m_store_cells;
         Type[] m_store_types;
         Map<int,TreeIterCompareFuncWrapper> m_cmp_funcs;
         Set<string> m_file_attributes;
         string m_file_attributes_str;
+        Map<string,FileFilterFuncWrapper> m_filters;
 
         public int COL_FILEINFO { get; private set; }
         public int COL_SELECTED { get; private set; }
@@ -59,6 +63,7 @@ namespace Emperor.Application {
         public FilePane (EmperorCore app)
         {
             m_app = app;
+            m_filters = new HashMap<string,FileFilterFuncWrapper> ();
 
             /*
              * Create and add the title Label
@@ -216,6 +221,49 @@ namespace Emperor.Application {
             m_error_message_bg.visible = false;
         }
 
+        public void add_filter (string id, FileFilterFunc filter)
+        {
+            m_filters[id] = new FileFilterFuncWrapper (filter);
+            if (m_list_filter != null) {
+                m_list_filter.refilter ();
+            }
+        }
+
+        public bool remove_filter (string id)
+        {
+            bool removed = m_filters.remove (id);
+            if (removed && m_list_filter != null) {
+                m_list_filter.refilter ();
+            }
+            return removed;
+        }
+
+        public bool using_filter (string id)
+        {
+            return m_filters.has_key (id);
+        }
+
+        private bool filter_list_row (TreeModel model, TreeIter iter)
+        {
+            bool visible = true;
+
+            Value finfo_val;
+            model.get_value (iter, COL_FILEINFO, out finfo_val);
+            var finfo = finfo_val.get_object () as FileInfo;
+
+            if (finfo == null || m_pwd == null) {
+                return true;
+            }
+
+            var file = m_pwd.resolve_relative_path (finfo.get_name ());
+
+            foreach (var wrapper in m_filters.values) {
+                visible = wrapper.func (file, finfo, visible);
+            }
+            
+            return visible;
+        }
+
         File m_pwd = null;
 
         /**
@@ -314,10 +362,12 @@ namespace Emperor.Application {
                 m_cursor_path = null;
 
             }
-            m_sorted_list = new TreeModelSort.with_model (m_data_store);
+            m_pwd = pwd;
+            m_list_filter = new TreeModelFilter (m_data_store, null);
+            m_list_filter.set_visible_func (this.filter_list_row);
+            m_sorted_list = new TreeModelSort.with_model (m_list_filter);
 
             m_list.set_model(m_sorted_list);
-            m_pwd = pwd;
 
             foreach (var e in m_cmp_funcs.entries) {
                 m_sorted_list.set_sort_func(e.key, e.value.compare_treeiter);
@@ -327,7 +377,9 @@ namespace Emperor.Application {
             }
             if (prev_iter != null) {
                 TreeIter sort_prev_iter;
-                m_sorted_list.convert_child_iter_to_iter (out sort_prev_iter, prev_iter);
+                TreeIter filter_prev_iter;
+                m_list_filter.convert_child_iter_to_iter (out filter_prev_iter, prev_iter);
+                m_sorted_list.convert_child_iter_to_iter (out sort_prev_iter, filter_prev_iter);
                 var curs = m_sorted_list.get_path (sort_prev_iter);
                 m_list.set_cursor (curs, null, false);
             }
@@ -393,10 +445,18 @@ namespace Emperor.Application {
         public void update_line (TreePath path, File file)
         {
             TreeIter iter;
-            TreeIter child_iter;
+            TreeIter data_iter;
             m_sorted_list.get_iter (out iter, path);
-            m_sorted_list.convert_iter_to_child_iter (out child_iter, iter);
-            query_and_update.begin (child_iter, file);
+            toplevel_iter_to_data_iter (out data_iter, iter);
+            query_and_update.begin (data_iter, file);
+        }
+
+        private void toplevel_iter_to_data_iter (out TreeIter data_iter,
+                                                 TreeIter toplevel_iter)
+        {
+            TreeIter filter_iter;
+            m_sorted_list.convert_iter_to_child_iter (out filter_iter, toplevel_iter);
+            m_list_filter.convert_iter_to_child_iter (out data_iter, filter_iter);
         }
 
         private void cursor_changed ()
@@ -684,13 +744,13 @@ namespace Emperor.Application {
             TreeIter? iter;
             m_sorted_list.get_iter (out iter, path);
             if (iter != null) {
-                TreeIter child_iter;
-                m_sorted_list.convert_iter_to_child_iter (out child_iter, iter);
+                TreeIter data_iter;
+                toplevel_iter_to_data_iter (out data_iter, iter);
                 Value selected;
-                m_data_store.get_value (child_iter, COL_SELECTED, out selected);
+                m_data_store.get_value (data_iter, COL_SELECTED, out selected);
                 selected.set_boolean (!selected.get_boolean());
-                m_data_store.set_value (child_iter, COL_SELECTED, selected);
-                restyle (child_iter, m_cursor_path != null && m_cursor_path.compare(path) == 0);
+                m_data_store.set_value (data_iter, COL_SELECTED, selected);
+                restyle (data_iter, m_cursor_path != null && m_cursor_path.compare(path) == 0);
             }
         }
 
@@ -762,9 +822,9 @@ namespace Emperor.Application {
                 TreeIter? iter;
                 m_sorted_list.get_iter (out iter, path);
                 if (iter != null) {
-                    TreeIter child_iter;
-                    m_sorted_list.convert_iter_to_child_iter (out child_iter, iter);
-                    restyle (child_iter, cursor);
+                    TreeIter data_iter;
+                    toplevel_iter_to_data_iter (out data_iter, iter);
+                    restyle (data_iter, cursor);
                 }
             }
         }
@@ -848,6 +908,14 @@ namespace Emperor.Application {
                 model.get_value(it_b, m_col, out b);
                 return m_cmp(a, b);
             }
+        }
+
+        private class FileFilterFuncWrapper : Object
+        {
+            public FileFilterFuncWrapper (FileFilterFunc f) {
+                this.func = f;
+            }
+            public FileFilterFunc func { get; private set; }
         }
 
         private class Ref<T>
