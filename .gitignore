@@ -15,6 +15,5 @@ Makefile.in
 /config.status
 .deps
 .libs
-/m4
 /autom4te.cache
 /INSTALL
