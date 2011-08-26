@@ -5,6 +5,7 @@
         <load name="basic_columns"/>
         <load name="sort"/>
         <load name="commands"/>
+        <load name="filters"/>
     </modules>
     <user-interface>
         <file-pane>
