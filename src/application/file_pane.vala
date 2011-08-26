@@ -301,7 +301,7 @@ namespace Emperor.Application {
                                                 m_file_attributes_str,
                                                 FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
                 } catch (Error err1) {
-                    display_error ("Error reading directory: %s (%s)"
+                    display_error (_("Error reading directory: %s (%s)")
                                    .printf(pwd.get_parse_name(),
                                            err1.message));
                     return;
@@ -317,7 +317,7 @@ namespace Emperor.Application {
                         parent_info = yield parent.query_info_async(m_file_attributes_str,
                                                     FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
                     } catch (Error err2) {
-                        display_error ("Error querying parent directory: %s (%s)"
+                        display_error (_("Error querying parent directory: %s (%s)")
                                         .printf(parent.get_parse_name(),
                                                 err2.message));
                     }
@@ -341,7 +341,7 @@ namespace Emperor.Application {
                     try {
                         fileinfos = yield enumerator.next_files_async(20);
                     } catch (Error err3) {
-                        display_error ("Error querying some files. (%s)"
+                        display_error (_("Error querying some files. (%s)")
                                         .printf(err3.message));
                         continue;
                     }
@@ -423,7 +423,7 @@ namespace Emperor.Application {
                         FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
                 update_row (unsorted_iter, fileinfo, m_data_store);
             } catch (Error e) {
-                display_error ("Error fetching file information. (%s)".printf(e.message));
+                display_error (_("Error fetching file information. (%s)").printf(e.message));
             }
         }
 
@@ -681,6 +681,7 @@ namespace Emperor.Application {
 
         private void popup_menu_for (TreePath path)
         {
+            // TODO: popup menu!
             stdout.printf("popup!\n");
         }
 
@@ -721,7 +722,7 @@ namespace Emperor.Application {
                 try {
                     info = yield target.query_info_async (m_file_attributes_str, 0);
                 } catch {
-                    display_error ("Could not resolve symbolic link: %s"
+                    display_error (_("Could not resolve symbolic link: %s")
                                     .printf(target_s));
                     return;
                 }

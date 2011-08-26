@@ -111,7 +111,7 @@ namespace Emperor.Application {
             }
 
             throw new ConfigurationError.NOT_FOUND_ERROR (
-                "Configuration file not found: %s".printf (basename) );
+                _("Configuration file not found: %s").printf (basename) );
         }
 
         private void handle_config_xml_nodes (Xml.Node* parent)
@@ -119,7 +119,7 @@ namespace Emperor.Application {
         {
             if (parent->name != "emperor-config") {
                 throw new ConfigurationError.INVALID_ERROR(
-                            "Unexpected root element: " + parent->name);
+                            _("Unexpected root element: %s").printf(parent->name));
             }
 
             for (Xml.Node* node = parent->children; node != null; node = node->next) {
@@ -133,7 +133,7 @@ namespace Emperor.Application {
                         break;
                     default:
                         throw new ConfigurationError.INVALID_ERROR(
-                                    "Unexpected element: " + node->name);
+                                    _("Unexpected element: %s").printf(node->name));
                     }
                 }
             }
@@ -156,9 +156,9 @@ namespace Emperor.Application {
             } catch (Error e) {
                 string error_msg;
                 if (file_list.length() == 1) {
-                    error_msg = "Error opening “%s”".printf(first_file.get_basename());
+                    error_msg = _("Error opening “%s”").printf(first_file.get_basename());
                 } else {
-                    error_msg = "Error opening %ud files.".printf(file_list.length());
+                    error_msg = _("Error opening %ud files.").printf(file_list.length());
                 }
                 show_error_message_dialog (main_window, error_msg, e.message);
             }
@@ -183,23 +183,23 @@ namespace Emperor.Application {
                     flags = 0,
                     arg = OptionArg.FILENAME,
                     arg_data = p_module_location, 
-                    description = "Location of Emperor modules",
-                    arg_description = ".../module/directory/" },
+                    description = _("Location of Emperor modules"),
+                    arg_description = _(".../module/directory/") },
                 OptionEntry () {
                     long_name = "config",
                      short_name = 'c',
                      flags = 0,
                      arg = OptionArg.FILENAME,
                      arg_data = p_config_file,
-                     description = "Location of configuration files",
-                     arg_description = ".../config/directory/" }
+                     description = _("Location of configuration files"),
+                     arg_description = _(".../config/directory/") }
             };
 
             try {
-                Gtk.init_with_args(ref argv, "Orthodox file manager for GNOME",
+                Gtk.init_with_args(ref argv, _("Orthodox file manager for GNOME"),
                                    options, null);
             } catch (Error e) {
-                stderr.printf ("Error loading application: %s\n", e.message);
+                stderr.printf (_("Error loading application: %s\n"), e.message);
             }
 
             EmperorCore app;
@@ -207,9 +207,9 @@ namespace Emperor.Application {
                 app = new EmperorCore (module_location, config_file);
             } catch (ConfigurationError e) {
                 if (e is ConfigurationError.PARSE_ERROR) {
-                    stderr.printf("ERROR: Cannot parse file \"%s\"\n", e.message);
+                    stderr.printf(_("ERROR: Cannot parse file \"%s\"\n"), e.message);
                 } else {
-                    stderr.printf("ERROR: %s\n", e.message);
+                    stderr.printf(_("ERROR: %s\n"), e.message);
                 }
                 return 1;
             }

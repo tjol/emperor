@@ -63,7 +63,7 @@ public void load_module (ModuleRegistry reg)
 
     // Action: Show Hidden <Ctrl+H>
     var hidden_action = new Gtk.ToggleAction ("filters/toggle:hidden",
-                                              "Show Hidden Files",
+                                              _("Show Hidden Files"),
                                               null, null);
     reg.register_action (hidden_action);
     hidden_action.set_accel_path ("<Emperor-Main>/Filters/Toggle_Hidden");
@@ -75,11 +75,11 @@ public void load_module (ModuleRegistry reg)
                 ! hidden_action.active );
         } );
     hidden_action.connect_accelerator ();
-    app.ui_manager.add_action_to_menu ("_View", hidden_action);
+    app.ui_manager.add_action_to_menu (_("_View"), hidden_action);
 
     // Action: Show Backup
     var backup_action = new Gtk.ToggleAction ("filters/toggle:backup",
-                                              "Show Backup Files",
+                                              _("Show Backup Files"),
                                               null, null);
     reg.register_action (backup_action);
     // no accelerator.
@@ -88,7 +88,7 @@ public void load_module (ModuleRegistry reg)
                 "filters/backup", Emperor.Modules.filter_backup,
                 ! backup_action.active );
         } );
-    app.ui_manager.add_action_to_menu ("_View", backup_action);
+    app.ui_manager.add_action_to_menu (_("_View"), backup_action);
 
     // Hide hidden and backup files by default:
     app.ui_manager.main_window_ready.connect ( (main_window) => {

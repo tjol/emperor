@@ -1,6 +1,6 @@
-SUBDIRS = src
+SUBDIRS = po src
 
-EXTRA_DIST = bootstrap.sh config.xml
+EXTRA_DIST = config/config.rpath  bootstrap.sh config.xml
 ACLOCAL_AMFLAGS = -I m4
 
 run: all-recursive

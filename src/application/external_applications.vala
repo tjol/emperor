@@ -116,7 +116,7 @@ namespace Emperor.Application {
                                 _current_entry = new AppCfgEntry (FileAction.VIEW);
                             } else {
                                 throw new ConfigurationError.INVALID_ERROR (
-                                    "Illegal value for binding action: %s".printf(s_action));
+                                    _("Illegal value for binding action: %s").printf(s_action));
                             }
 
                             handle_apps_xml_nodes (node);
@@ -129,7 +129,7 @@ namespace Emperor.Application {
 
                         } else {
                             throw new ConfigurationError.INVALID_ERROR (
-                                        "Unexpected element: " + node->name);
+                                        _("Unexpected element: %s").printf(node->name));
                         }
                     }
                     break;
@@ -140,7 +140,7 @@ namespace Emperor.Application {
                             var ctype = node->get_prop ("content-type");
                             if (ctype == null) {
                                 throw new ConfigurationError.INVALID_ERROR (
-                                            "Empty match");
+                                            _("Empty match"));
                             }
                             _current_entry.content_types.add (ctype);
 
@@ -148,13 +148,13 @@ namespace Emperor.Application {
                             var for_ctype = node->get_prop ("content-type");
                             if (for_ctype == null) {
                                 throw new ConfigurationError.INVALID_ERROR (
-                                        "default-application requires content-type");
+                                        _("default-application requires content-type"));
                             }
                             try {
                                 _current_entry.handler = get_default_for_type (for_ctype);
                             } catch (Error e) {
-                                stderr.printf("Warning: no default application found "
-                                   +"for type: %s\n", for_ctype);
+                                stderr.printf(_("Warning: no default application found for type: %s\n"),
+                                              for_ctype);
                             }
 
                         } else if (node->name == "desktop-application") {
@@ -168,18 +168,18 @@ namespace Emperor.Application {
                                 appinfo = new DesktopAppInfo.from_filename (desktop_file_name);
                             } else {
                                 throw new ConfigurationError.INVALID_ERROR (
-                                        "desktop-application without source/reference");
+                                        _("desktop-application without source/reference"));
                             }
 
                             if (appinfo != null) {
                                 _current_entry.use_appinfo (appinfo);
                             } else {
-                                stderr.printf("Warning: Application not found.\n");
+                                stderr.printf(_("Warning: Application not found.\n"));
                             }
 
                         } else {
                             throw new ConfigurationError.INVALID_ERROR (
-                                        "Unexpected element: " + node->name);
+                                        _("Unexpected element: %s").printf(node->name));
                         }
                     }
                     break;
@@ -219,7 +219,7 @@ namespace Emperor.Application {
                 break;
             default:
                 throw new AppManagementError.APPLICATION_NOT_FOUND (
-                        "Major mess. This should never happen.");
+                        _("Major mess. This should never happen."));
             }
 
             FileHandler? last_glob_result = null;
@@ -247,7 +247,7 @@ namespace Emperor.Application {
                 return get_default_for_type (content_type);
             }
 
-            throw new AppManagementError.APPLICATION_NOT_FOUND ("Not implemented.");
+            throw new AppManagementError.APPLICATION_NOT_FOUND (_("No suitable application found."));
         }
 
         public FileHandler get_specific_for_file (File file, FileAction action,

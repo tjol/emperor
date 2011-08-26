@@ -120,7 +120,7 @@ namespace Emperor.Application {
                             handle_config_xml_nodes (node);
                         } else {
                             throw new ConfigurationError.INVALID_ERROR(
-                                        "Unexpected element: " + node->name);
+                                        _("Unexpected element: %s").printf(node->name));
                         }
                     }
                     break;
@@ -134,7 +134,7 @@ namespace Emperor.Application {
                             break;
                         default:
                             throw new ConfigurationError.INVALID_ERROR(
-                                        "Unexpected element: " + node->name);
+                                        _("Unexpected element: %s").printf(node->name));
                         }
                     }
                     break;
@@ -156,7 +156,7 @@ namespace Emperor.Application {
 
                         } else {
                             throw new ConfigurationError.INVALID_ERROR(
-                                        "Unexpected element: " + node->name);
+                                        _("Unexpected element: %s").printf(node->name));
                         }
                     }
                     break;
@@ -168,13 +168,13 @@ namespace Emperor.Application {
                             var data = node->get_prop("data");
                             if (data == null) {
                                 throw new ConfigurationError.INVALID_ERROR(
-                                            "Cannot have cell without data");
+                                            _("Cannot have cell without data"));
                             }
 
                             var coldata = m_app.modules.get_column(data);
                             if (coldata == null) {
                                 throw new ConfigurationError.MODULE_ERROR(
-                                            "Unknown column type: " + data);
+                                            _("Unknown column type: %s").printf(data));
                             }
 
                             var sortflag = node->get_prop("sort");
@@ -183,14 +183,14 @@ namespace Emperor.Application {
                                     var sortfunc = m_app.modules.get_sort_function(sortflag);
                                     if (sortfunc == null) {
                                         throw new ConfigurationError.INVALID_ERROR(
-                                               "Illegal value for \"sort\": \"" + sortflag + "\"");
+                                               _("Illegal value for \"sort\": \"%s\"").printf(sortflag));
                                     } else {
                                         _current_column.sort_column = coldata;
                                         _current_column.cmp_function = sortfunc;
                                     }
                                 } else {
                                     throw new ConfigurationError.INVALID_ERROR(
-                                        "There can be only one sorting cell per column.");
+                                        _("There can be only one sorting cell per column."));
                                 }
                             }
 
@@ -198,7 +198,7 @@ namespace Emperor.Application {
 
                         } else {
                             throw new ConfigurationError.INVALID_ERROR(
-                                        "Unexpected element: " + node->name);
+                                        _("Unexpected element: %s").printf(node->name));
                         }
                     }
                     break;
@@ -216,7 +216,7 @@ namespace Emperor.Application {
                             break;
                         default:
                             throw new ConfigurationError.INVALID_ERROR(
-                                    "Unexpected element: " + node->name);
+                                    _("Unexpected element: %s").printf(node->name));
                         }
 
                         var pane_str = node->get_prop("pane");
@@ -234,7 +234,7 @@ namespace Emperor.Application {
                             break;
                         default:
                             throw new ConfigurationError.INVALID_ERROR(
-                                    "Illegal value for \"pane\": \"" + pane_str + "\"");
+                                    _("Illegal value for \"pane\": \"%s\"").printf(pane_str));
                         }
                         style.fg = make_color(node->get_prop("fg"));
                         style.bg = make_color(node->get_prop("bg"));
@@ -251,12 +251,12 @@ namespace Emperor.Application {
 
                             if (commandname == null) {
                                 throw new ConfigurationError.INVALID_ERROR (
-                                    "Each command button must an associated action.");
+                                    _("Each command button must an associated action."));
                             } else {
                                 action = m_app.modules.actions.get_action (commandname);
                                 if (action == null) {
                                     throw new ConfigurationError.MODULE_ERROR (
-                                        "Unknown action: " + commandname);
+                                        _("Unknown action: %s").printf(commandname));
                                 }
                             }
 
@@ -264,14 +264,14 @@ namespace Emperor.Application {
 
                         } else {
                             throw new ConfigurationError.INVALID_ERROR(
-                                        "Unexpected element: " + node->name);
+                                        _("Unexpected element: %s").printf(node->name));
                         }
                     }
                     break;
 
                 default:
                     throw new ConfigurationError.INVALID_ERROR(
-                                "Unexpected element: " + parent->name);
+                                _("Unexpected element: %s").printf(parent->name));
 
                 }
             }

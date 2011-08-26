@@ -86,7 +86,7 @@ namespace Emperor.Application {
             add (m_main_box);
 
             set_default_size (900, 500);
-            this.title = "Emperor";
+            this.title = _("Emperor");
 
             destroy.connect (on_destroy);
             //key_press_event.connect (on_key_press);

@@ -11,6 +11,8 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 AM_PROG_VALAC([0.10.0])
 
+AM_GNU_GETTEXT([external])
+
 dnl
 dnl Check for packages
 dnl
@@ -48,7 +50,7 @@ CONFIG_CFLAGS="-I${BUILD_ROOT}/src/config"
 
 VALAFLAGS="$GIO_VALAFLAGS $GTK_VALAFLAGS $GEE_VALAFLAGS $CONFIG_VALAFLAGS --vapidir=${SOURCE_ROOT}/src/application"
 
-GLOBAL_CFLAGS="$GLIB_CFLAGS $GIO_CFLAGS $GTK_CFLAGS $GEE_CFLAGS $CONFIG_CFLAGS -I${SOURCE_ROOT}/src/application"
+GLOBAL_CFLAGS="$GLIB_CFLAGS $GIO_CFLAGS $GTK_CFLAGS $GEE_CFLAGS $CONFIG_CFLAGS -I${SOURCE_ROOT}/src/application -DGETTEXT_PACKAGE=\\\"$PACKAGE\\\""
 
 AC_SUBST([EMPEROREXT_VALAFLAGS])
 AC_SUBST([EMPEROREXT_CFLAGS])
@@ -56,7 +58,7 @@ AC_SUBST([GLOBAL_CFLAGS])
 
 AC_SUBST([VALAFLAGS])
 
-AC_CONFIG_FILES([Makefile
+AC_CONFIG_FILES([Makefile po/Makefile.in
                  src/Makefile
                  src/config/Makefile
                  src/application/Makefile

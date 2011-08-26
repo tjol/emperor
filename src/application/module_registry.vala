@@ -134,7 +134,7 @@ namespace Emperor.Application {
                     break;
                 default:
                     throw new ConfigurationError.INVALID_ERROR(
-                                "Unexpected element: " + parent->name);
+                                _("Unexpected element: %s").printf(parent->name));
                 }
             }
         }
