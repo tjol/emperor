@@ -9,6 +9,6 @@ src/application/module_delegates.vala
 src/application/module_registry.vala
 src/application/user_interface_manager.vala
 src/modules/basic_columns.vala
-src/modules/commands.vala
+src/modules/basic_actions.vala
 src/modules/filters.vala
 src/modules/sort.vala
