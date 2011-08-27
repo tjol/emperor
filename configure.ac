@@ -62,6 +62,7 @@ AC_CONFIG_FILES([Makefile po/Makefile.in
                  src/Makefile
                  src/config/Makefile
                  src/application/Makefile
-                 src/modules/Makefile])
+                 src/modules/Makefile
+                 xml/Makefile])
 AC_OUTPUT
 

@@ -102,9 +102,8 @@ namespace Emperor.Application {
             }
 
             // Finally, the autoconf-set data dir.
-            path = "%s/%s/%s".printf (Config.DATA_DIR,
-                                      Config.PACKAGE_NAME,
-                                      basename);
+            path = "%s/%s".printf (Config.DATA_DIR,
+                                   basename);
             file = File.new_for_path (path);
             if (file.query_exists() == true) {
                 return path;
