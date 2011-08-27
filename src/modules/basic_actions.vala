@@ -21,20 +21,20 @@ using Emperor.Application;
 
 namespace Emperor.Modules {
 
-    public class CommandsModule : Object
+    public class BasicActionsModule : Object
     {
         public static void register (ModuleRegistry reg)
         {
             Gtk.Action action;
 
             var app = reg.application;
-            var module = new CommandsModule (app);
+            var module = new BasicActionsModule (app);
 
             // F2: Rename.
             action = reg.new_action ("rename");
             action.label = _("Rename");
-            action.set_accel_path ("<Emperor-Main>/Commands/Rename");
-            Gtk.AccelMap.add_entry ("<Emperor-Main>/Commands/Rename",
+            action.set_accel_path ("<Emperor-Main>/BasicActions/Rename");
+            Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Rename",
                                     Gdk.KeySym.F2, 0);
             action.activate.connect ( () => { module.do_rename.begin (); } );
             action.connect_accelerator ();
@@ -43,8 +43,8 @@ namespace Emperor.Modules {
             // F3: View.
             action = reg.new_action ("view");
             action.label = _("View");
-            action.set_accel_path ("<Emperor-Main>/Commands/View");
-            Gtk.AccelMap.add_entry ("<Emperor-Main>/Commands/View",
+            action.set_accel_path ("<Emperor-Main>/BasicActions/View");
+            Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/View",
                                     Gdk.KeySym.F3, 0);
             action.activate.connect ( () => { module.open_files (AppManager.FileAction.VIEW); } );
             action.connect_accelerator ();
@@ -53,8 +53,8 @@ namespace Emperor.Modules {
             // F4: Edit.
             action = reg.new_action ("edit");
             action.label = _("Edit");
-            action.set_accel_path ("<Emperor-Main>/Commands/Edit");
-            Gtk.AccelMap.add_entry ("<Emperor-Main>/Commands/Edit",
+            action.set_accel_path ("<Emperor-Main>/BasicActions/Edit");
+            Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Edit",
                                     Gdk.KeySym.F4, 0);
             action.activate.connect ( () => { module.open_files (AppManager.FileAction.EDIT); } );
             action.connect_accelerator ();
@@ -62,7 +62,7 @@ namespace Emperor.Modules {
 
         }
 
-        public CommandsModule (EmperorCore app)
+        public BasicActionsModule (EmperorCore app)
         {
             Object ( application : app );
         }
@@ -145,6 +145,6 @@ namespace Emperor.Modules {
 
 public void load_module (ModuleRegistry reg)
 {
-    Emperor.Modules.CommandsModule.register (reg);
+    Emperor.Modules.BasicActionsModule.register (reg);
 }
 

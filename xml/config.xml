@@ -4,7 +4,7 @@
     <modules>
         <load name="basic_columns"/>
         <load name="sort"/>
-        <load name="commands"/>
+        <load name="basic_actions"/>
         <load name="filters"/>
     </modules>
     <user-interface>
