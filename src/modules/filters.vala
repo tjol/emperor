@@ -43,7 +43,7 @@ namespace Emperor.Modules {
         if (use_filter != null) {
             flag = use_filter;
         } else {
-            flag = main_window.left_pane.using_filter (filter);
+            flag = ! main_window.left_pane.using_filter (filter);
         }
         if (flag) {
             // switch filter on.
