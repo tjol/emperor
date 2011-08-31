@@ -1,6 +1,8 @@
 SUBDIRS = po src xml
 
-EXTRA_DIST = config/config.rpath  bootstrap.sh 
+pkgdata_DATA = crown_icon_256.png
+
+EXTRA_DIST = config/config.rpath  bootstrap.sh crown_icon_256.png
 ACLOCAL_AMFLAGS = -I m4
 
 run: all-recursive

@@ -45,6 +45,12 @@ namespace Emperor.Application {
             }
         }
 
+        public FilePane passive_pane {
+            get {
+                return active_pane.other_pane;
+            }
+        }
+
         public MainWindow (EmperorCore app)
         {
             m_app = app;
@@ -92,6 +98,26 @@ namespace Emperor.Application {
             //key_press_event.connect (on_key_press);
 
             add_accel_group (m_app.modules.default_accel_group);
+
+            // Register this window with the GtkApplication
+            this.application = m_app;
+
+            // attempt to set the icon.
+            bool set_icon = false;
+            try {
+                set_icon = set_icon_from_file (Config.DATA_DIR + "/crown_icon_256.png");
+            } catch (Error e) {
+                // pass
+            }
+
+            if (!set_icon) { // try again, current dir.
+                try {
+                    set_icon = set_icon_from_file ("crown_icon_256.png");
+                } catch (Error e) {
+                    // pass
+                }
+            }
+
         }
 
         bool on_paned_map (Gdk.Event e)
