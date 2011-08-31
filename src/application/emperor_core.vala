@@ -24,7 +24,7 @@ namespace Emperor.Application {
         NOT_FOUND_ERROR
     }
 
-    public class EmperorCore : Object
+    public class EmperorCore : Gtk.Application
     {
 
         public ModuleRegistry modules { get; private set; }
@@ -37,6 +37,8 @@ namespace Emperor.Application {
         public EmperorCore (string? module_location, string? config_dir)
                 throws ConfigurationError
         {
+            Object ( application_id : "de.jollybox.Emperor", flags : ApplicationFlags.FLAGS_NONE);
+
             Xml.Parser.init ();
             m_config_dir = config_dir;
 
@@ -60,7 +62,8 @@ namespace Emperor.Application {
             }
 
             main_window = new MainWindow (this);
-            main_window.show_all ();
+
+            this.activate.connect (run_program);
         }
 
         ~EmperorCore ()
@@ -163,9 +166,10 @@ namespace Emperor.Application {
             }
         }
 
-        public void main_loop ()
+        public void run_program ()
         {
-            Gtk.main ();
+            main_window.show_all ();
+            //Gtk.main ();
         }
 
         public static int main (string[] argv)
@@ -212,12 +216,36 @@ namespace Emperor.Application {
                 }
                 return 1;
             }
-            app.main_loop ();
+            app.run(null);
 
             return 0;
         }
 
     }
+
+    public static string bytesize_to_string (uint64 size_in_bytes)
+    {
+        if (size_in_bytes < 900) { // 0 -- 900b
+            return _("%qu bytes").printf(size_in_bytes);
+        } else if (size_in_bytes < 10240) { // 0.9K -- 10K
+            return _("%s KiB").printf("%.1f".printf(size_in_bytes / 1024.0));
+        } else if (size_in_bytes < 921600) { // 10K -- 900K
+            return _("%s KiB").printf("%qu".printf(size_in_bytes / 1024));
+        } else if (size_in_bytes < 10485760) { // 0.9M -- 10M
+            return _("%s MiB").printf("%.1f".printf(size_in_bytes / 1048576.0));
+        } else if (size_in_bytes < 943718400) { // 10M -- 900M
+            return _("%s MiB").printf("%qu".printf(size_in_bytes / 1048576));
+        } else { // 0.9G +
+            return _("%.1f GiB").printf(size_in_bytes / 1073741824.0);
+        }
+    }
+
+    public class Ref<T>
+    {
+        public Ref (T initial_value) { val = initial_value; }
+        public T val { get; set; }
+    }
+
 
 }
 

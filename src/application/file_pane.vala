@@ -919,12 +919,6 @@ namespace Emperor.Application {
             public FileFilterFunc func { get; private set; }
         }
 
-        private class Ref<T>
-        {
-            public Ref (T initial_value) { val = initial_value; }
-            public T val { get; set; }
-        }
-
     }
 
 }
