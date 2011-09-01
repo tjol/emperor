@@ -77,6 +77,9 @@ namespace Emperor.Application {
             m_pane_title_bg.margin = 2;
             m_pane_title_bg.add (m_pane_title);
             m_pane_title_bg.button_press_event.connect (on_title_click);
+            var attr_list = new Pango.AttrList ();
+            attr_list.insert (Pango.attr_weight_new (Pango.Weight.BOLD));
+            m_pane_title.set_attributes (attr_list);
             pack_start(m_pane_title_bg, false, false);
 
             /*
@@ -389,7 +392,7 @@ namespace Emperor.Application {
             /* TODO: once archive support is implemented, special-case their
              *       URI here and create a nice path/uri without archive://
              */
-            m_pane_title.set_markup("<b>%s</b>".printf(title));
+            m_pane_title.set_text (title);
 
             restyle_complete_list ();
         }
