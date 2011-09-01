@@ -102,7 +102,7 @@ namespace Emperor.Modules {
             dialog.add_text (_("Rename “%s” to:").printf(filename));
             dialog.add_entry ("name", filename, true);
 
-            dialog.response.connect ((id) => {
+            dialog.decisive_response.connect ((id) => {
                     if (id == Gtk.ResponseType.OK) {
                         var new_filename = dialog.get_text("name");
                         try {
@@ -110,7 +110,7 @@ namespace Emperor.Modules {
                             pane.update_line (path, pane.pwd.get_child(new_filename));
                             return false;
                         } catch (Error err2) {
-                            show_error_message_dialog (dialog.dialog,
+                            show_error_message_dialog (dialog,
                                     _("Error renaming file."),
                                     err2.message);
                             return true;
@@ -134,7 +134,8 @@ namespace Emperor.Modules {
             }
 
             foreach (var file in files) {
-                var launch = application.external_apps.get_specific_for_file (file, how,true, true);
+                var launch = application.external_apps.get_specific_for_file (
+                                    file, how, true, true);
                 var flst = new GLib.List<File> ();
                 flst.append (file);
                 launch (flst);
