@@ -260,6 +260,11 @@ namespace Emperor.Application {
 
             var file = m_pwd.resolve_relative_path (finfo.get_name ());
 
+            // standard behaviour: do not display non-existant files.
+            if (!file.query_exists ()) {
+                return false;
+            }
+
             foreach (var wrapper in m_filters.values) {
                 visible = wrapper.func (file, finfo, visible);
             }
@@ -452,6 +457,54 @@ namespace Emperor.Application {
             m_sorted_list.get_iter (out iter, path);
             toplevel_iter_to_data_iter (out data_iter, iter);
             query_and_update.begin (data_iter, file);
+        }
+
+        public void update_file (File file)
+            requires (m_pwd != null)
+        {
+            var parent = file.get_parent ();
+            if (m_pwd.equal (parent)) {
+                // okay, it should be in the list.
+                bool file_found = false;
+
+                m_data_store.@foreach ((model, path, iter) => {
+                        Value finfo_val;
+                        model.get_value (iter, COL_FILEINFO, out finfo_val);
+                        var finfo = finfo_val.get_object () as FileInfo;
+                        if (finfo != null && finfo.get_name() == file.get_basename()) {
+                            // same file.
+                            file_found = true;
+                            query_and_update.begin (iter, file);
+                        }
+
+                        return false;
+                    });
+
+                if (!file_found) {
+                    // add file.
+                    TreeIter iter;
+                    m_data_store.append (out iter);
+                    query_and_update.begin (iter, file);
+                }
+            }
+        }
+
+        public async void refresh ()
+            requires (m_pwd != null)
+        {
+            var enumerator = yield m_pwd.enumerate_children_async (
+                                        FILE_ATTRIBUTE_STANDARD_NAME,
+                                        FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+            GLib.List<FileInfo> fileinfos;
+            while ((fileinfos = yield enumerator.next_files_async (20)) != null) {
+                foreach (var finfo in fileinfos) {
+                    var file = m_pwd.get_child (finfo.get_name ());
+                    update_file (file);
+                }
+            }
+
+            m_list_filter.refilter ();
+
         }
 
         private void toplevel_iter_to_data_iter (out TreeIter data_iter,

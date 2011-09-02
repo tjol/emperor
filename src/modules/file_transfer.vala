@@ -307,6 +307,12 @@ namespace Emperor.Modules {
             application.release ();
 
             free((void*)done_bytes_p);
+
+            var main_window = application.main_window;
+
+            // update listings.
+            main_window.left_pane.refresh.begin ();
+            main_window.right_pane.refresh.begin ();
         }
 
         private string? ask_for_new_name (string old_name)
@@ -473,7 +479,7 @@ namespace Emperor.Modules {
                     owr_dialog.add_button (_("Overwrite All"), 2);
                     owr_dialog.add_button (_("Rename"), 0);
                     owr_dialog.add_button (_("Skip"), 3);
-                    owr_dialog.add_button (_("Merge"), 1);
+                    owr_dialog.add_button (_("Overwrite"), 1);
                     owr_dialog.set_default_response (0);
                     owr_dialog.response.connect ((id) => {
                             owr_dialog.destroy ();
