@@ -62,8 +62,8 @@ namespace Emperor.Application {
 
             m_panes = new HPaned ();
 
-            left_pane = new FilePane(m_app);
-            right_pane = new FilePane(m_app);
+            left_pane = new FilePane(m_app, "left");
+            right_pane = new FilePane(m_app, "right");
             m_panes.pack1 (left_pane, true, true);
             m_panes.pack2 (right_pane, true, true);
 
@@ -145,8 +145,8 @@ namespace Emperor.Application {
 
         async void set_directories ()
         {
-            yield left_pane.chdir (File.new_for_path("."));
-            yield right_pane.chdir (left_pane.pwd);
+            yield left_pane.chdir_from_pref ();
+            yield right_pane.chdir_from_pref ();
         }
 
         void on_destroy ()

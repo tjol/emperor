@@ -33,6 +33,7 @@ namespace Emperor.Application {
         public delegate bool FileFilterFunc (File f, FileInfo fi, bool currently_visible);
 
         EmperorCore m_app;
+        string m_designation;
         TreeView m_list;
         Label m_pane_title;
         EventBox m_pane_title_bg;
@@ -60,9 +61,10 @@ namespace Emperor.Application {
         public int COL_STYLE { get; private set; }
         public int COL_STYLE_SET { get; private set; }
 
-        public FilePane (EmperorCore app)
+        public FilePane (EmperorCore app, string pane_designation)
         {
             m_app = app;
+            m_designation = pane_designation;
             m_filters = new HashMap<string,FileFilterFuncWrapper> ();
 
             /*
@@ -374,6 +376,7 @@ namespace Emperor.Application {
             m_list_filter = new TreeModelFilter (m_data_store, null);
             m_list_filter.set_visible_func (this.filter_list_row);
             m_sorted_list = new TreeModelSort.with_model (m_list_filter);
+            m_sorted_list.sort_column_changed.connect (sort_column_changed);
 
             m_list.set_model(m_sorted_list);
 
@@ -382,6 +385,8 @@ namespace Emperor.Application {
             }
             if (is_sorted) {
                 m_sorted_list.set_sort_column_id (sort_column, sort_type);
+            } else {
+                get_sort_from_prefs (m_sorted_list);
             }
             if (prev_iter != null) {
                 TreeIter sort_prev_iter;
@@ -399,7 +404,22 @@ namespace Emperor.Application {
              */
             m_pane_title.set_text (title);
 
+            // save pwd to prefs
+            m_app.prefs.set_string (m_designation + "-pwd", m_pwd.get_parse_name());
+
             restyle_complete_list ();
+        }
+
+        public async void chdir_from_pref ()
+        {
+            var old_pwd_str = m_app.prefs.get_string (m_designation + "-pwd", null);
+            File old_pwd;
+            if (old_pwd_str != null) {
+                old_pwd = File.parse_name (old_pwd_str);
+            } else {
+                old_pwd = File.new_for_path (".");
+            }
+            yield chdir (old_pwd);
         }
 
         private void update_row (TreeIter iter, FileInfo file,
@@ -513,6 +533,31 @@ namespace Emperor.Application {
             TreeIter filter_iter;
             m_sorted_list.convert_iter_to_child_iter (out filter_iter, toplevel_iter);
             m_list_filter.convert_iter_to_child_iter (out data_iter, filter_iter);
+        }
+
+        private void sort_column_changed ()
+        {
+            int sort_column;
+            SortType sort_type;
+
+            m_sorted_list.get_sort_column_id (out sort_column, out sort_type);
+
+            m_app.prefs.set_int32 (m_designation + "-sort-column", (int32) sort_column);
+            m_app.prefs.set_string (m_designation + "-sort-type", 
+                                    sort_type == SortType.ASCENDING ? "asc" : "desc");
+        }
+
+        private void get_sort_from_prefs (TreeSortable model)
+        {
+            int sort_column = (int) m_app.prefs.get_int32 (m_designation + "-sort-column", -1);
+            string sort_type_str = m_app.prefs.get_string (m_designation + "-sort-type", null);
+            if (sort_column == -1 || sort_type_str == null) {
+                return;
+            }
+
+            model.set_sort_column_id (sort_column, (sort_type_str == "asc") ? SortType.ASCENDING
+                                                                            : SortType.DESCENDING);
+
         }
 
         private void cursor_changed ()

@@ -54,6 +54,9 @@ namespace Emperor.Modules {
             main_window.left_pane.remove_filter (filter);
             main_window.right_pane.remove_filter (filter);
         }
+        
+        // save to prefs
+        ((EmperorCore) main_window.application).prefs.set_boolean ("use-filter:"+filter, flag);
     }
 }
 
@@ -90,14 +93,20 @@ public void load_module (ModuleRegistry reg)
         } );
     app.ui_manager.add_action_to_menu (_("_View"), backup_action);
 
-    // Hide hidden and backup files by default:
+    // Read prefs (default: hide.)
     app.ui_manager.main_window_ready.connect ( (main_window) => {
+            var hide_hidden = app.prefs.get_boolean ("use-filter:filters/hidden", true);
+            var hide_backup = app.prefs.get_boolean ("use-filter:filters/backup", true);
+
             Emperor.Modules.toggle_filter (main_window,
                 "filters/hidden", Emperor.Modules.filter_hidden,
-                true);
+                hide_hidden);
+            hidden_action.active = !hide_hidden;
+
             Emperor.Modules.toggle_filter (main_window,
                 "filters/backup", Emperor.Modules.filter_backup,
-                true);
+                hide_backup);
+            backup_action.active = !hide_backup;
         } );
 }
 

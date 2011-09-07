@@ -31,6 +31,7 @@ namespace Emperor.Application {
         public UserInterfaceManager ui_manager { get; private set; }
         public MainWindow main_window { get; private set; }
         public AppManager external_apps { get; private set; }
+        public PrefsMachine prefs { get; private set; }
 
         private string? m_config_dir;
 
@@ -42,6 +43,10 @@ namespace Emperor.Application {
             Xml.Parser.init ();
             m_config_dir = config_dir;
 
+            prefs = new PrefsMachine ();
+            if (!prefs.load ()) {
+                stderr.printf ("Failed to load preferences file.\n");
+            }
             modules = new ModuleRegistry (this, module_location);
             ui_manager = new UserInterfaceManager (this);
             external_apps = new AppManager (this);
@@ -64,6 +69,7 @@ namespace Emperor.Application {
             main_window = new MainWindow (this);
 
             this.activate.connect (run_program);
+            this.application_quit.connect (on_quit);
         }
 
         ~EmperorCore ()
@@ -172,6 +178,13 @@ namespace Emperor.Application {
             //Gtk.main ();
         }
 
+        public signal void application_quit ();
+
+        private void on_quit ()
+        {
+            prefs.save ();
+        }
+
         public static int main (string[] argv)
         {
             string? module_location = null;
@@ -217,6 +230,7 @@ namespace Emperor.Application {
                 return 1;
             }
             app.run(null);
+            app.application_quit ();
 
             return 0;
         }
