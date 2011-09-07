@@ -27,7 +27,7 @@ namespace Emperor.Application {
 
         VBox m_main_box;
         HPaned m_panes;
-        HButtonBox m_command_buttons;
+        HBox m_command_buttons;
 
         public FilePane left_pane { get; private set; }
         public FilePane right_pane { get; private set; }
@@ -71,23 +71,22 @@ namespace Emperor.Application {
 
             m_main_box.pack_start (m_panes, true, true, 0);
 
-            m_command_buttons = new HButtonBox ();
+            m_command_buttons = new HBox (false, 3);
             foreach (var act in m_app.ui_manager.command_buttons) {
                 AccelKey key;
                 AccelMap.lookup_entry (act.get_accel_path(), out key);
                 var btn = new Button.with_label ("%s %s".printf(
-                        accelerator_name (key.accel_key, key.accel_mods),
-                        act.label));
+                        accelerator_get_label (key.accel_key, key.accel_mods),
+                        act.short_label.replace("_","")));
                 btn.clicked.connect (() => {
                         act.activate ();
                     });
-                m_command_buttons.pack_start (btn, false, false);
+                m_command_buttons.pack_start (btn, true, true, 0);
             }
-            m_command_buttons.halign = Align.START;
+            //m_command_buttons.halign = Align.START;
             m_command_buttons.margin = 3;
-            m_command_buttons.spacing = 3;
 
-            m_main_box.pack_start (m_command_buttons, false, false, 0);
+            m_main_box.pack_start (m_command_buttons, false, true, 0);
 
             add (m_main_box);
 

@@ -3,10 +3,10 @@
 <emperor-config>
     <modules>
         <load name="basic_columns"/>
-        <load name="sort"/>
-        <load name="filters"/>
         <load name="basic_actions"/>
         <load name="file_transfer"/>
+        <load name="sort"/>
+        <load name="filters"/>
     </modules>
     <user-interface>
         <file-pane>
@@ -32,10 +32,7 @@
             <command-button action="move"/>
             <command-button action="mkdir"/>
             <command-button action="delete"/>
-            <!--
-            <command-button title="Menu" key="F9" command="pulldn"/>
-            <command-button title="Quit" key="F10" command="quit"/>
-            -->
+            <command-button action="quit"/>
         </command-bar>
     </user-interface>
 </emperor-config>

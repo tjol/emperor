@@ -81,6 +81,18 @@ namespace Emperor.Modules {
             action.connect_accelerator ();
             app.ui_manager.add_action_to_menu (_("_File"), action);
 
+            // Ctrl+Q: Quit.
+            action = reg.new_action ("quit");
+            action.stock_id = STOCK_QUIT;
+            action.set_accel_path ("<Emperor-Main>/BasicActions/Quit");
+            Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Quit",
+                                    Gdk.KeySym.Q, Gdk.ModifierType.CONTROL_MASK);
+            action.activate.connect ( () => { 
+                    app.main_window.destroy ();
+                } );
+            action.connect_accelerator ();
+            app.ui_manager.add_action_to_menu (_("_File"), action);
+
         }
 
         public BasicActionsModule (EmperorCore app)
