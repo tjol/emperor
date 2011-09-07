@@ -22,13 +22,16 @@ using Emperor.Application;
 namespace Emperor.Modules {
     public int cmp_filename_collation(Value a, Value b)
     {
-        if (!a.holds(typeof(string)))
-            return 1;
-        else if (!b.holds(typeof(string)))
-            return -1;
+        string str1 = null, str2 = null;
 
-        var key1 = a.get_string().collate_key_for_filename();
-        var key2 = b.get_string().collate_key_for_filename();
+        if ((!a.holds(typeof(string))) || (str1 = a.get_string()) == null) {
+            return 1;
+        } else if ((!b.holds(typeof(string))) || (str2 = b.get_string()) == null) {
+            return -1;
+        }
+
+        var key1 = str1.collate_key_for_filename();
+        var key2 = str2.collate_key_for_filename();
         return strcmp(key1, key2);
     }
 }
