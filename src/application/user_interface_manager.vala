@@ -83,9 +83,11 @@ namespace Emperor.Application {
             m_menus = new HashMap<string,Menu> ();
             menu_bar = new MenuBar ();
 
+            m_menu_items = new HashMap<string,TreeMap<int,MenuItem> > ();
+
         }
 
-        public Menu get_menu (string title)
+        public Menu get_menu (string title, int pos = -1)
         {
             if (m_menus.has_key(title)) {
                 return m_menus[title];
@@ -93,16 +95,42 @@ namespace Emperor.Application {
                 var title_menu_item = new MenuItem.with_mnemonic (title);
                 var menu = new Menu ();
                 title_menu_item.set_submenu (menu);
-                menu_bar.append (title_menu_item);
+                if (pos == -1) {
+                    menu_bar.append (title_menu_item);
+                } else {
+                    menu_bar.insert (title_menu_item, pos);
+                }
                 m_menus[title] = menu;
+                m_menu_items[title] = new TreeMap<int,MenuItem> ();
                 return menu;
             }
         }
 
-        public void add_action_to_menu (string menu_title, Gtk.Action act)
+        private HashMap<string,TreeMap<int,MenuItem> > m_menu_items;
+
+        public void add_action_to_menu (string menu_title, Gtk.Action act, int pos = -1)
         {
             var menu = get_menu (menu_title);
-            menu.append (act.create_menu_item() as MenuItem);
+            var item = act.create_menu_item() as MenuItem;
+
+            menu.append (item);
+            var menu_item_map = m_menu_items[menu_title];
+            while (menu_item_map.has_key(pos)) {
+                pos ++;
+            }
+            menu_item_map[pos] = item;
+
+            reorder_menu (menu_title);
+        }
+
+        public void reorder_menu (string menu_title)
+        {
+            int idx = 0;
+            var menu = get_menu (menu_title);
+            foreach (var e in m_menu_items[menu_title].ascending_entries) {
+                menu.reorder_child (e.value, idx);
+                idx ++;
+            }
         }
 
 

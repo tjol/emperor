@@ -31,6 +31,8 @@ namespace Emperor.Modules {
             var app = reg.application;
             var module = new BasicActionsModule (app);
 
+            app.ui_manager.get_menu (_("_File"), 0);
+
             // F2: Rename.
             action = reg.new_action ("rename");
             action.label = _("Rename");
@@ -39,7 +41,7 @@ namespace Emperor.Modules {
                                     Gdk.KeySym.F2, 0);
             action.activate.connect ( () => { module.do_rename.begin (); } );
             action.connect_accelerator ();
-            app.ui_manager.add_action_to_menu (_("_File"), action);
+            app.ui_manager.add_action_to_menu (_("_File"), action, 40);
 
             // F3: View.
             action = reg.new_action ("view");
@@ -49,7 +51,7 @@ namespace Emperor.Modules {
                                     Gdk.KeySym.F3, 0);
             action.activate.connect ( () => { module.open_files (AppManager.FileAction.VIEW); } );
             action.connect_accelerator ();
-            app.ui_manager.add_action_to_menu (_("_File"), action);
+            app.ui_manager.add_action_to_menu (_("_File"), action, 20);
 
             // F4: Edit.
             action = reg.new_action ("edit");
@@ -59,7 +61,7 @@ namespace Emperor.Modules {
                                     Gdk.KeySym.F4, 0);
             action.activate.connect ( () => { module.open_files (AppManager.FileAction.EDIT); } );
             action.connect_accelerator ();
-            app.ui_manager.add_action_to_menu (_("_File"), action);
+            app.ui_manager.add_action_to_menu (_("_File"), action, 21);
 
             // F7: Mkdir.
             action = reg.new_action ("mkdir");
@@ -69,7 +71,7 @@ namespace Emperor.Modules {
                                     Gdk.KeySym.F7, 0);
             action.activate.connect ( () => { module.do_mkdir.begin (); } );
             action.connect_accelerator ();
-            app.ui_manager.add_action_to_menu (_("_File"), action);
+            app.ui_manager.add_action_to_menu (_("_File"), action, 10);
 
             // F8: Delete.
             action = reg.new_action ("delete");
@@ -79,7 +81,7 @@ namespace Emperor.Modules {
                                     Gdk.KeySym.F8, 0);
             action.activate.connect ( () => { module.do_delete.begin (); } );
             action.connect_accelerator ();
-            app.ui_manager.add_action_to_menu (_("_File"), action);
+            app.ui_manager.add_action_to_menu (_("_File"), action, 69);
 
             // Ctrl+Q: Quit.
             action = reg.new_action ("quit");
@@ -91,7 +93,7 @@ namespace Emperor.Modules {
                     app.main_window.destroy ();
                 } );
             action.connect_accelerator ();
-            app.ui_manager.add_action_to_menu (_("_File"), action);
+            app.ui_manager.add_action_to_menu (_("_File"), action, 99);
 
             // Ctrl+L: Change directory
             action = reg.new_action ("chdir");

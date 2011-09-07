@@ -39,7 +39,7 @@ namespace Emperor.Modules {
                                     Gdk.KeySym.F5, 0);
             action.activate.connect ( () => { module.do_transfer.begin (false); } );
             action.connect_accelerator ();
-            app.ui_manager.add_action_to_menu (_("_File"), action);
+            app.ui_manager.add_action_to_menu (_("_File"), action, 60);
 
             // F6: Move
             action = reg.new_action ("move");
@@ -49,7 +49,7 @@ namespace Emperor.Modules {
                                     Gdk.KeySym.F6, 0);
             action.activate.connect ( () => { module.do_transfer.begin (true); } );
             action.connect_accelerator ();
-            app.ui_manager.add_action_to_menu (_("_File"), action);
+            app.ui_manager.add_action_to_menu (_("_File"), action, 61);
         }
 
         public FileTransfersModule (EmperorCore app)

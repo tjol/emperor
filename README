@@ -11,7 +11,7 @@ To build Emperor from source, you will need:
  * A working C compiler, make, and a bourne-compatible /bin/sh
  * GTK+3 and dependencies
  * libxml2
- * Gee, the Vala collections library.
+ * Gee, the Vala collections library, version 0.7.0 or newer.
 
 Configure the package with `./configure', build with `make', and install
 with `make install` (usually as root). Type `./configure --help' for a 

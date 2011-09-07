@@ -64,6 +64,8 @@ public void load_module (ModuleRegistry reg)
 {
     var app = reg.application;
 
+    app.ui_manager.get_menu (_("_View"), 2);
+
     // Action: Show Hidden <Ctrl+H>
     var hidden_action = new Gtk.ToggleAction ("filters/toggle:hidden",
                                               _("Show Hidden Files"),
