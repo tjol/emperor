@@ -63,6 +63,7 @@ AC_CONFIG_FILES([Makefile po/Makefile.in
                  src/config/Makefile
                  src/application/Makefile
                  src/modules/Makefile
-                 xml/Makefile])
+                 xml/Makefile
+                 emperor.desktop])
 AC_OUTPUT
 

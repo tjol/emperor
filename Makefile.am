@@ -1,8 +1,15 @@
 SUBDIRS = po src xml
 
-pkgdata_DATA = crown_icon_256.png
+iconsdir = $(datadir)/icons/hicolor/256x256/apps
+icons_DATA = emperor-fm.png
 
-EXTRA_DIST = config/config.rpath  bootstrap.sh crown_icon_256.png
+desktopdir = $(datadir)/applications
+desktop_DATA = emperor.desktop
+
+EXTRA_DIST = config/config.rpath  bootstrap.sh  \
+	     $(icons_DATA) \
+	     emperor.desktop.in
+
 ACLOCAL_AMFLAGS = -I m4
 
 run: all-recursive
@@ -20,3 +27,17 @@ dist-hook:
 	    else \
 		echo A git clone is required to generate a ChangeLog. >&2; \
 	    fi
+
+gtk_update_icon_cache = gtk-update-icon-cache -f -t $(datadir)/icons/hicolor
+
+install-data-hook: update-icon-cache
+uninstall-hook: update-icon-cache
+update-icon-cache:
+	@-if test -z "$(DESTDIR)"; then \
+		echo "Updating Gtk icon cache."; \
+		$(gtk_update_icon_cache); \
+	else \
+		echo "*** Icon cache not updated.  After (un)install, run this:"; \
+		echo "***   $(gtk_update_icon_cache)"; \
+	fi
+

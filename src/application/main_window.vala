@@ -102,20 +102,7 @@ namespace Emperor.Application {
             this.application = m_app;
 
             // attempt to set the icon.
-            bool set_icon = false;
-            try {
-                set_icon = set_icon_from_file (Config.DATA_DIR + "/crown_icon_256.png");
-            } catch (Error e) {
-                // pass
-            }
-
-            if (!set_icon) { // try again, current dir.
-                try {
-                    set_icon = set_icon_from_file ("crown_icon_256.png");
-                } catch (Error e) {
-                    // pass
-                }
-            }
+            set_icon_name ("emperor-fm");
 
         }
 
