@@ -606,7 +606,7 @@ namespace Emperor.Application {
             return false;
         }
 
-        private void edit_title ()
+        public void edit_title ()
         {
             if (m_editing_title) return;
                     
@@ -721,13 +721,6 @@ namespace Emperor.Application {
                 case KeySym.Menu:
                     if (m_cursor_path != null) {
                         popup_menu_for (m_cursor_path);
-                    }
-                    return true;
-                case KeySym.l:
-                case KeySym.L:
-                    if ((e.state & ModifierType.CONTROL_MASK) != 0) {
-                        // C-L => edit location.
-                        edit_title ();
                     }
                     return true;
                 }
