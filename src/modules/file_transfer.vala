@@ -311,8 +311,8 @@ namespace Emperor.Modules {
             var main_window = application.main_window;
 
             // update listings.
-            main_window.left_pane.refresh.begin ();
-            main_window.right_pane.refresh.begin ();
+            yield main_window.left_pane.refresh ();
+            yield main_window.right_pane.refresh ();
         }
 
         private string? ask_for_new_name (string old_name)

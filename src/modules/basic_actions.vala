@@ -16,6 +16,7 @@
  */
 
 using GLib;
+using Gtk;
 using Emperor;
 using Emperor.Application;
 
@@ -60,6 +61,26 @@ namespace Emperor.Modules {
             action.connect_accelerator ();
             app.ui_manager.add_action_to_menu (_("_File"), action);
 
+            // F7: Mkdir.
+            action = reg.new_action ("mkdir");
+            action.label = _("New directory");
+            action.set_accel_path ("<Emperor-Main>/BasicActions/Mkdir");
+            Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Mkdir",
+                                    Gdk.KeySym.F7, 0);
+            action.activate.connect ( () => { module.do_mkdir.begin (); } );
+            action.connect_accelerator ();
+            app.ui_manager.add_action_to_menu (_("_File"), action);
+
+            // F8: Delete.
+            action = reg.new_action ("delete");
+            action.label = _("Delete");
+            action.set_accel_path ("<Emperor-Main>/BasicActions/Delete");
+            Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Delete",
+                                    Gdk.KeySym.F8, 0);
+            action.activate.connect ( () => { module.do_delete.begin (); } );
+            action.connect_accelerator ();
+            app.ui_manager.add_action_to_menu (_("_File"), action);
+
         }
 
         public BasicActionsModule (EmperorCore app)
@@ -97,13 +118,13 @@ namespace Emperor.Modules {
             var filename = fileinfo.get_edit_name ();
 
             var dialog = new InputDialog (_("Rename file"), application.main_window);
-            dialog.add_button (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL);
-            dialog.add_button (_("Rename"), Gtk.ResponseType.OK, true);
+            dialog.add_button (STOCK_CANCEL, ResponseType.CANCEL);
+            dialog.add_button (_("Rename"), ResponseType.OK, true);
             dialog.add_text (_("Rename “%s” to:").printf(filename));
             dialog.add_entry ("name", filename, true);
 
             dialog.decisive_response.connect ((id) => {
-                    if (id == Gtk.ResponseType.OK) {
+                    if (id == ResponseType.OK) {
                         var new_filename = dialog.get_text("name");
                         try {
                             file.set_display_name (new_filename);
@@ -121,6 +142,203 @@ namespace Emperor.Modules {
                 });
 
             dialog.run ();
+        }
+
+        private async void do_mkdir ()
+        {
+            var pane = application.main_window.active_pane;
+            var pwd = pane.pwd;
+
+            var dialog = new InputDialog (_("New directory"), application.main_window);
+            dialog.add_button (STOCK_CANCEL, ResponseType.CANCEL);
+            dialog.add_button (STOCK_OK, ResponseType.OK, true);
+            dialog.add_text (_("Create new directory in “%s” named").printf(pwd.get_parse_name()));
+            dialog.add_entry ("name", "", true);
+
+            dialog.decisive_response.connect ((id) => {
+                    if (id == ResponseType.OK) {
+                        var dirname = dialog.get_text("name");
+                        var dirfile = pwd.get_child(dirname);
+                        try {
+                            dirfile.make_directory ();
+                            pane.update_file (dirfile);
+                            return false;
+                        } catch (Error err) {
+                            show_error_message_dialog (dialog,
+                                    _("Error creating directory."),
+                                    err.message);
+                            return true;
+                        }
+                    } else {
+                        return false;
+                    }
+                });
+
+            dialog.run ();
+        }
+
+        private async void do_delete ()
+        {
+            var pane = application.main_window.active_pane;
+            var files = pane.get_selected_files ();
+
+            var n_files = files.length ();
+            string fname = null;
+            if (n_files == 0) {
+                pane.display_error (_("No files selected."));
+                return;
+            } else if (n_files == 1) {
+                fname = files.nth_data(0).get_basename();
+            }
+
+            var confirmation_dialog = new MessageDialog (application.main_window,
+                DialogFlags.MODAL, MessageType.QUESTION, ButtonsType.YES_NO,
+                (n_files == 1) ? _("Really delete “%s”?").printf(fname)
+                               : _("Really delete %u files?").printf(n_files));
+            confirmation_dialog.secondary_text = _("This cannot be undone.");
+            confirmation_dialog.set_default_response (ResponseType.YES);
+
+            bool do_delete = false;
+            confirmation_dialog.response.connect ((id) => {
+                    if (id == ResponseType.YES) {
+                        do_delete = true;
+                    }
+                    confirmation_dialog.destroy ();
+                });
+
+            confirmation_dialog.run ();
+
+            if (!do_delete) {
+                return;
+            }
+
+            bool* recurse_always_p = (bool*) malloc (2* sizeof(bool));
+            bool* truth_p = recurse_always_p + 1;
+            *recurse_always_p = false;
+            *truth_p = true;
+
+            var cancellable = new Cancellable ();
+
+            foreach (var file in files) {
+                yield delete_file (file, recurse_always_p, truth_p, cancellable);
+            }
+
+            free ((void*) recurse_always_p);
+
+            yield pane.refresh ();
+
+        }
+
+        private async void delete_file (File file, bool* recurse_always_p, bool* truth_p,
+                                        Cancellable cancellable)
+        {
+            try {
+                yield delete_file_real (file, recurse_always_p, truth_p, cancellable);
+            } catch (Error e) {
+                if (cancellable.is_cancelled()) {
+                    return;
+                }
+
+                var err_msg = new MessageDialog (application.main_window,
+                    DialogFlags.MODAL, MessageType.ERROR, ButtonsType.NONE,
+                    _("Error deleting file “%s”."),
+                    file.get_parse_name());
+                err_msg.secondary_text = e.message;
+                err_msg.add_button (STOCK_STOP, ResponseType.CLOSE);
+                err_msg.add_button (_("Skip"), 2);
+                err_msg.add_button (_("Retry"), 1);
+                err_msg.set_default_response (1);
+
+                bool retry = false;
+
+                err_msg.response.connect ((id) => {
+                        switch (id) {
+                        case 1: // Retry.
+                            retry = true;
+                            break;
+                        case ResponseType.CLOSE:
+                            cancellable.cancel ();
+                            break;
+                        default: // Skip.
+                            break;
+                        }
+                        err_msg.destroy ();
+                    });
+
+                err_msg.run ();
+
+                if (retry) {
+                    yield delete_file (file, recurse_always_p, truth_p, cancellable);
+                }
+            }
+        }
+
+
+        private async void delete_file_real (File file, bool* recurse_always_p, bool* truth_p,
+                                             Cancellable cancellable)
+            throws Error
+        {
+            if (cancellable.is_cancelled()) {
+                return;
+            }
+
+            var ftype = file.query_file_type (FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+
+            if (ftype == FileType.DIRECTORY) {
+                // do we always delete directories with their contents?
+                if (! (*recurse_always_p)) {
+                    // Check if the directory is empty
+                    var enumerator = yield file.enumerate_children_async ("", 0,
+                                                Priority.DEFAULT, cancellable);
+                    if (enumerator.next_file(cancellable) != null) {
+                        // ask.
+                        var recurse_dialog = new MessageDialog (application.main_window,
+                            DialogFlags.MODAL, MessageType.WARNING, ButtonsType.NONE,
+                            _("Directory “%s” is not empty! Delete it and all its contents?"),
+                            file.get_basename());
+                        recurse_dialog.secondary_text = _("This cannot be undone.");
+                        recurse_dialog.add_button (_("Always"), 1);
+                        recurse_dialog.add_button (STOCK_NO, ResponseType.NO);
+                        recurse_dialog.add_button (STOCK_YES, ResponseType.YES);
+                        recurse_dialog.set_default_response (ResponseType.YES);
+                        bool do_recurse = false;
+                        recurse_dialog.response.connect ((id) => {
+                                switch (id) {
+                                case 1: // Always
+                                    *recurse_always_p = true;
+                                    do_recurse = true;
+                                    break;
+                                case ResponseType.YES:
+                                    do_recurse = true;
+                                    break;
+                                }
+                                recurse_dialog.destroy ();
+                            });
+                        recurse_dialog.run ();
+
+                        if (!do_recurse) {
+                            return;
+                        }
+                    }
+                }
+
+                // Delete everything in this directory.
+                var children = yield file.enumerate_children_async (
+                                        FILE_ATTRIBUTE_STANDARD_NAME, 0,
+                                        Priority.DEFAULT, cancellable);
+                GLib.List<FileInfo> fileinfos;
+                while ((fileinfos = yield children.next_files_async (20, Priority.DEFAULT,
+                                            cancellable)) != null) {
+                    foreach (var child_finfo in fileinfos) {
+                        var child = file.get_child (child_finfo.get_name());
+                        // Recurse fully, therefore: recurse if file is a directory.
+                        yield delete_file (child, truth_p, truth_p, cancellable);
+                    }
+                }
+            }
+
+            // if it's a directory, it should now be empty. GERONIMO!
+            file.delete (cancellable);
         }
 
         private void open_files (AppManager.FileAction how)

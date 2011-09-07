@@ -30,9 +30,9 @@
             <command-button action="edit"/>
             <command-button action="copy"/>
             <command-button action="move"/>
+            <command-button action="mkdir"/>
+            <command-button action="delete"/>
             <!--
-            <command-button title="New Directory" key="F7" command="mkdir"/>
-            <command-button title="Delete" key="F8" command="delete"/>
             <command-button title="Menu" key="F9" command="pulldn"/>
             <command-button title="Quit" key="F10" command="quit"/>
             -->
