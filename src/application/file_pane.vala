@@ -163,6 +163,7 @@ namespace Emperor.Application {
             store_cells.add(null);
 
             int colidx = 0;
+            TreeViewColumn last_col = null;
             // get the actual columns from configuration.
             foreach (var col in m_app.ui_manager.panel_columns) {
                 var tvcol = new TreeViewColumn();
@@ -194,7 +195,12 @@ namespace Emperor.Application {
                     idx++;
                 }
                 m_list.append_column(tvcol);
+                last_col = tvcol;
                 colidx ++;
+            }
+            
+            if (last_col != null) {
+                last_col.sizing = TreeViewColumnSizing.GROW_ONLY;
             }
 
             // finish.
@@ -211,6 +217,9 @@ namespace Emperor.Application {
             m_file_attributes_str = sb.str;
 
             var scrwnd = new ScrolledWindow (null, null);
+            if (m_designation.has_prefix ("left")) {
+                scrwnd.set_placement (CornerType.TOP_RIGHT);
+            }
             scrwnd.add(m_list);
             pack_start (scrwnd, true, true);
 
@@ -231,12 +240,21 @@ namespace Emperor.Application {
         private void check_column_sizes ()
         {
             int colidx = 0;
+            TreeViewColumn last_col = null;
             foreach (var tvcol in m_list.get_columns()) {
                 var pref_w_name = "%s-col-width-%d".printf(m_designation, colidx);
                 m_app.prefs.set_int32 (pref_w_name, tvcol.width);
-                tvcol.sizing = TreeViewColumnSizing.GROW_ONLY;
-                tvcol.queue_resize ();
+                last_col = tvcol;
                 colidx ++;
+            }
+            last_col.sizing = TreeViewColumnSizing.GROW_ONLY;
+        }
+
+        private void fix_column_sizes ()
+        {
+            foreach (var tvcol in m_list.get_columns()) {
+                tvcol.fixed_width = tvcol.width;
+                //tvcol.sizing = TreeViewColumnSizing.FIXED;
             }
         }
 
@@ -469,6 +487,7 @@ namespace Emperor.Application {
             m_sorted_list = new TreeModelSort.with_model (m_list_filter);
             m_sorted_list.sort_column_changed.connect (sort_column_changed);
 
+            fix_column_sizes ();
             m_list.set_model(m_sorted_list);
 
             foreach (var e in m_cmp_funcs.entries) {
