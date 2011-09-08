@@ -21,7 +21,7 @@
             <columns>
                 <column title="Name">
                     <cell data="icon"/>
-                    <cell data="filename" sort="filename-collation"/>
+                    <cell data="filename-F" sort="filename-collation"/>
                 </column>
                 <column title="Date">
                     <cell data="mtime" sort="datetime"/>

@@ -44,6 +44,37 @@ namespace Emperor.Modules {
 
     }
 
+    public class FilenameWithTypeHintColumn : TextFileInfoColumn
+    {
+        LinkedList<string> m_attrs;
+
+        public FilenameWithTypeHintColumn ()
+        {
+            m_attrs = new LinkedList<string>();
+            m_attrs.add(FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME);
+            m_attrs.add(FILE_ATTRIBUTE_STANDARD_TYPE);
+        }
+
+        public override Value get_value (File dir, FileInfo fi)
+        {
+            var name = new StringBuilder (fi.get_display_name());
+            switch (fi.get_file_type()) {
+            case FileType.DIRECTORY:
+                name.append ("/");
+                break;
+            case FileType.SYMBOLIC_LINK:
+                name.append ("@");
+                break;
+            }
+            var v = Value(typeof(string));
+            v.set_string(name.str);
+            return v;
+        }
+
+        public override Collection<string> file_attributes { get { return m_attrs; } }
+
+    }
+
     public class MTimeColumn : DateTimeFileInfoColumn
     {
         LinkedList<string> m_attrs;
@@ -127,6 +158,7 @@ public void load_module (ModuleRegistry reg)
 {
     reg.register_column("icon", new Emperor.Modules.IconColumn());
     reg.register_column("filename", new Emperor.Modules.FilenameColumn());
+    reg.register_column("filename-F", new Emperor.Modules.FilenameWithTypeHintColumn());
     reg.register_column("mtime", new Emperor.Modules.MTimeColumn());
 }
 
