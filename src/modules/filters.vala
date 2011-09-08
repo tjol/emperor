@@ -23,24 +23,12 @@ namespace Emperor.Modules {
     
     public bool filter_hidden (File f, FileInfo fi, bool currently_visible)
     {
-        try {
-            var info = f.query_info (FILE_ATTRIBUTE_STANDARD_IS_HIDDEN,
-                                     FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-            return currently_visible && ( ! info.get_is_hidden () );
-        } catch (Error e) {
-            return currently_visible;
-        }
+        return currently_visible && (! fi.get_is_hidden () );
     }
 
     public bool filter_backup (File f, FileInfo fi, bool currently_visible)
     {
-        try {
-            var info = f.query_info (FILE_ATTRIBUTE_STANDARD_IS_BACKUP,
-                                     FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-            return currently_visible && ( ! info.get_is_backup () );
-        } catch (Error e) {
-            return currently_visible;
-        }
+        return currently_visible && (! fi.get_is_backup () );
     }
 
     public void toggle_filter (MainWindow main_window, string filter,
@@ -105,6 +93,12 @@ public void load_module (ModuleRegistry reg)
 
     // Read prefs (default: hide.)
     app.ui_manager.main_window_ready.connect ( (main_window) => {
+            // pre-requisites.
+            main_window.left_pane.add_query_attribute (FILE_ATTRIBUTE_STANDARD_IS_HIDDEN);
+            main_window.left_pane.add_query_attribute (FILE_ATTRIBUTE_STANDARD_IS_BACKUP);
+            main_window.right_pane.add_query_attribute (FILE_ATTRIBUTE_STANDARD_IS_HIDDEN);
+            main_window.right_pane.add_query_attribute (FILE_ATTRIBUTE_STANDARD_IS_BACKUP);
+
             var hide_hidden = app.prefs.get_boolean ("use-filter:filters/hidden", true);
             var hide_backup = app.prefs.get_boolean ("use-filter:filters/backup", true);
 
