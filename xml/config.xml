@@ -7,6 +7,7 @@
         <load name="basic_actions"/>
         <load name="file_transfer"/>
         <load name="sort"/>
+        <load name="volume_toolbar"/>
     </modules>
     <user-interface>
         <file-pane>
