@@ -5,6 +5,7 @@ Type=Application
 Name=Emperor
 GenericName=File Manager
 Comment=View and manage files and directories 
+Categories=GTK;Utility
 Exec=@prefix@/bin/emperor
 Icon=emperor-fm
 
