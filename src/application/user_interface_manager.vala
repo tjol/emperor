@@ -37,13 +37,18 @@ namespace Emperor.Application {
         {
             internal enum Target {
                 CURSOR,
-                SELECTED
+                SELECTED,
+                ANY
             }
 
-            internal Target target;
+            internal Target target = Target.ANY;
             internal FilePaneState pane;
-            internal Gdk.RGBA? fg;
-            internal Gdk.RGBA? bg;
+            internal FileType file_type;
+
+            internal int? weight = null;
+            internal Pango.Style? style = null;
+            internal Gdk.RGBA? fg = null;
+            internal Gdk.RGBA? bg = null;
         }
 
         EmperorCore m_app;
@@ -235,12 +240,37 @@ namespace Emperor.Application {
                     if (node->type == Xml.ElementType.ELEMENT_NODE) {
                         var style = new StyleDirective();
 
+                        // Defaults
+                        style.target = StyleDirective.Target.ANY;
+                        style.file_type = (FileType)(-1);
+
                         switch (node->name) {
                         case "cursor":
                             style.target = StyleDirective.Target.CURSOR;
                             break;
                         case "selected":
                             style.target = StyleDirective.Target.SELECTED;
+                            break;
+                        case "directory":
+                            style.file_type = FileType.DIRECTORY;
+                            break;
+                        case "symlink":
+                            style.file_type = FileType.SYMBOLIC_LINK;
+                            break;
+                        case "special":
+                            style.file_type = FileType.SPECIAL;
+                            break;
+                        case "shortcut":
+                            style.file_type = FileType.SHORTCUT;
+                            break;
+                        case "mountable":
+                            style.file_type = FileType.MOUNTABLE;
+                            break;
+                        case "regular":
+                            style.file_type = FileType.REGULAR;
+                            break;
+                        case "unknown-type":
+                            style.file_type = FileType.UNKNOWN;
                             break;
                         default:
                             throw new ConfigurationError.INVALID_ERROR(
@@ -267,7 +297,34 @@ namespace Emperor.Application {
                         style.fg = make_color(node->get_prop("fg"));
                         style.bg = make_color(node->get_prop("bg"));
 
+                        var weight_str = node->get_prop ("weight");
+                        if (weight_str == "bold") {
+                            style.weight = 600;
+                        } else if (weight_str == null) {
+                            // pass.
+                        } else {
+                            throw new ConfigurationError.INVALID_ERROR(
+                                    _("Illegal value for \"weight\": \"%s\"").printf(weight_str));
+                        }
+                        var style_str = node->get_prop ("style");
+                        switch (style_str) {
+                        case null:
+                        case "normal":
+                            style.style = Pango.Style.NORMAL;
+                            break;
+                        case "oblique":
+                            style.style = Pango.Style.OBLIQUE;
+                            break;
+                        case "italic":
+                            style.style = Pango.Style.ITALIC;
+                            break;
+                        default:
+                            throw new ConfigurationError.INVALID_ERROR(
+                                    _("Illegal value for \"style\": \"%s\"").printf(style));
+                        }
+
                         style_directives.add(style);
+
                     }
                     break;
 

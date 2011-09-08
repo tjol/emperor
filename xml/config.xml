@@ -16,6 +16,7 @@
                 <cursor pane="passive" bg="gtk:background-color:prelight"/>
                 -->
                 <selected fg="#ff0000"/>
+                <symlink style="italic"/>
             </style>
             <columns>
                 <column title="Name">

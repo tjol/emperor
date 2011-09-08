@@ -1001,6 +1001,14 @@ namespace Emperor.Application {
             truevalue.set_boolean(true);
             var nullcolor = Value(typeof(RGBA));
             nullcolor.set_boxed(null);
+            var normalweight = Value(typeof(int));
+            normalweight.set_int(400);
+            var normalstyle = Value(typeof(Pango.Style));
+            normalstyle.set_enum(Pango.Style.NORMAL);
+
+            Value finfo_val;
+            m_data_store.get_value (unsorted_iter, COL_FILEINFO, out finfo_val);
+            var finfo = (FileInfo) finfo_val.get_object();
 
             m_data_store.set_value (unsorted_iter, COL_FG_COLOR, nullcolor);
             m_data_store.set_value (unsorted_iter, COL_FG_SET, falsevalue);
@@ -1008,8 +1016,11 @@ namespace Emperor.Application {
             m_data_store.set_value (unsorted_iter, COL_BG_COLOR, nullcolor);
             m_data_store.set_value (unsorted_iter, COL_BG_SET, falsevalue);
 
-            //m_data_store.set_value(unsorted_iter, COL_WEIGHT_SET, falsevalue);
-            //m_data_store.set_value(unsorted_iter, COL_STYLE_SET, falsevalue);
+            m_data_store.set_value(unsorted_iter, COL_WEIGHT, normalweight);
+            m_data_store.set_value(unsorted_iter, COL_WEIGHT_SET, falsevalue);
+
+            m_data_store.set_value(unsorted_iter, COL_STYLE, normalstyle);
+            m_data_store.set_value(unsorted_iter, COL_STYLE_SET, falsevalue);
 
             foreach (var style in m_app.ui_manager.style_directives) {
                 if (style.pane == FilePaneState.ACTIVE && !m_active) {
@@ -1029,6 +1040,17 @@ namespace Emperor.Application {
                     }
                 }
 
+                var ftype = finfo.get_file_type ();
+                if (style.file_type != -1 && ftype != style.file_type) {
+                    if (finfo.get_file_type() == 3) {
+                        stdout.printf("me: %d, style: %d\n", ftype,
+                                            style.file_type);
+                        stdout.printf("equal: %d %d\n", (int)(ftype == style.file_type),
+                                                        (int)(style.file_type == ftype));
+                    }
+                    continue;
+                }
+
                 // If this point is reached, the style directive applies.
 
                 if (style.fg != null) {
@@ -1041,8 +1063,19 @@ namespace Emperor.Application {
                     var bgcolor = Value(typeof(RGBA));
                     bgcolor.set_boxed((void*)style.bg);
                     m_data_store.set_value(unsorted_iter, COL_BG_COLOR, bgcolor);
-                    m_data_store.set_value(unsorted_iter, COL_BG_SET, falsevalue);
                     m_data_store.set_value(unsorted_iter, COL_BG_SET, truevalue);
+                }
+                if (style.weight != null) {
+                    var wghval = Value(typeof(int));
+                    wghval.set_int (style.weight);
+                    m_data_store.set_value(unsorted_iter, COL_WEIGHT, wghval);
+                    m_data_store.set_value(unsorted_iter, COL_WEIGHT_SET, truevalue);
+                }
+                if (style.style != null) {
+                    var styval = Value(typeof(Pango.Style));
+                    styval.set_enum (style.style);
+                    m_data_store.set_value(unsorted_iter, COL_STYLE, styval);
+                    m_data_store.set_value(unsorted_iter, COL_STYLE_SET, truevalue);
                 }
             }
         }
