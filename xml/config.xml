@@ -23,6 +23,9 @@
                     <cell data="icon"/>
                     <cell data="filename" sort="filename-collation"/>
                 </column>
+                <column title="Date">
+                    <cell data="mtime" sort="datetime"/>
+                </column>
             </columns>
         </file-pane>
         <command-bar>

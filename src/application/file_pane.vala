@@ -166,6 +166,8 @@ namespace Emperor.Application {
             foreach (var col in m_app.ui_manager.panel_columns) {
                 var tvcol = new TreeViewColumn();
                 tvcol.title = col.title;
+                tvcol.resizable = true;
+                tvcol.expand = true;
                 foreach (var cell in col.cells) {
                     store_cells.add (cell);
                     store_types.add (cell.column_type);
@@ -651,6 +653,10 @@ namespace Emperor.Application {
 
         private bool on_mouse_event (EventButton e)
         {
+            if (e.window != m_list.get_bin_window()) {
+                return false;
+            }
+
             TreePath path = null;
             if (! m_list.get_path_at_pos((int)e.x, (int)e.y, out path, null, null, null)) {
                 path = null;

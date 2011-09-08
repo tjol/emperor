@@ -63,7 +63,7 @@ namespace Emperor {
     public abstract class TextFileInfoColumn : Object, FileInfoColumn
     {
         public abstract Value get_value (File dir, FileInfo fi);
-        public abstract Type column_type { get; }
+        public Type column_type { get { return typeof(string); } }
         public abstract Collection<string> file_attributes { get; }
 
         public virtual void add_to_column (TreeViewColumn column,
@@ -88,6 +88,52 @@ namespace Emperor {
             column.add_attribute (renderer, "weight-set", idx_weight_set);
             column.add_attribute (renderer, "style", idx_style);
             column.add_attribute (renderer, "style-set", idx_style_set);
+        }
+    }
+
+    public abstract class DateTimeFileInfoColumn : Object, FileInfoColumn
+    {
+        public abstract Value get_value (File dir, FileInfo fi);
+        public Type column_type { get { return typeof(DateTime); } }
+        public abstract Collection<string> file_attributes { get; }
+
+        public virtual void add_to_column (TreeViewColumn column,
+                                           int idx_data,
+                                           int idx_fg_rgba,
+                                           int idx_fg_set,
+                                           int idx_bg_rgba,
+                                           int idx_bg_set,
+                                           int idx_weight,
+                                           int idx_weight_set,
+                                           int idx_style,
+                                           int idx_style_set)
+        {
+            var renderer = new CellRendererDateTime ();
+            column.pack_start (renderer, true);
+            column.add_attribute (renderer, "datetime", idx_data);
+            column.add_attribute (renderer, "foreground-rgba", idx_fg_rgba);
+            column.add_attribute (renderer, "foreground-set", idx_fg_set);
+            column.add_attribute (renderer, "cell-background-rgba", idx_bg_rgba);
+            column.add_attribute (renderer, "cell-background-set", idx_bg_set);
+            column.add_attribute (renderer, "weight", idx_weight);
+            column.add_attribute (renderer, "weight-set", idx_weight_set);
+            column.add_attribute (renderer, "style", idx_style);
+            column.add_attribute (renderer, "style-set", idx_style_set);
+        }
+
+    }
+
+    public class CellRendererDateTime : CellRendererText
+    {
+        public CellRendererDateTime ()
+        {
+            Object ();
+        }
+
+        public DateTime datetime {
+            set {
+                text = value.to_string ();
+            }
         }
     }
 

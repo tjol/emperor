@@ -40,8 +40,30 @@ namespace Emperor.Modules {
             return v;
         }
 
-        public override Type column_type { get { return typeof(string); } }
-        
+        public override Collection<string> file_attributes { get { return m_attrs; } }
+
+    }
+
+    public class MTimeColumn : DateTimeFileInfoColumn
+    {
+        LinkedList<string> m_attrs;
+
+        public MTimeColumn ()
+        {
+            m_attrs = new LinkedList<string>();
+            m_attrs.add(FILE_ATTRIBUTE_TIME_MODIFIED);
+        }
+
+        public override Value get_value (File dir, FileInfo fi)
+        {
+            var v = Value(typeof(DateTime));
+            TimeVal tv;
+            fi.get_modification_time (out tv);
+            var dt = new DateTime.from_timeval_local(tv);
+            v.set_boxed(dt);
+            return v;
+        }
+
         public override Collection<string> file_attributes { get { return m_attrs; } }
 
     }
@@ -105,6 +127,7 @@ public void load_module (ModuleRegistry reg)
 {
     reg.register_column("icon", new Emperor.Modules.IconColumn());
     reg.register_column("filename", new Emperor.Modules.FilenameColumn());
+    reg.register_column("mtime", new Emperor.Modules.MTimeColumn());
 }
 
 

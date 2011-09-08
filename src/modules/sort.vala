@@ -35,6 +35,19 @@ namespace Emperor.Modules {
         return strcmp(key1, key2);
     }
 
+    public int cmp_datetime (Value a, Value b)
+    {
+        DateTime dt1 = null, dt2 = null;
+
+        if ((!a.holds(typeof(DateTime))) || (dt1 = (DateTime) a.get_boxed()) == null) {
+            return 1;
+        } else if ((!b.holds(typeof(DateTime))) || (dt2 = (DateTime) b.get_boxed()) == null) {
+            return -1;
+        }
+
+        return dt1.compare (dt2);
+    }
+
     public int cmp_directories_first (FileInfo a, FileInfo b)
     {
         FileType type_a = a.get_file_type ();
@@ -53,6 +66,7 @@ namespace Emperor.Modules {
 public void load_module (ModuleRegistry reg)
 {
     reg.register_sort_function ("filename-collation", Emperor.Modules.cmp_filename_collation);
+    reg.register_sort_function ("datetime", Emperor.Modules.cmp_datetime);
 
     // Action: Sort directories first
     var dir_first_act = new Gtk.ToggleAction ("sort/toggle:directories-first",
