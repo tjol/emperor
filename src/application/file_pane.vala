@@ -911,6 +911,7 @@ namespace Emperor.Application {
                                 && m_cursor_path != null) {
                             restyle_path(m_cursor_path, true);
                         }
+                        restyle_header ();
                     }
                     other_pane.active = !m_active;
                 }
@@ -1102,7 +1103,11 @@ namespace Emperor.Application {
                 restyle_path (m_cursor_path, true);
             }
 
-            // restyle the header
+            restyle_header ();
+        }
+
+        private void restyle_header ()
+        {
             if (m_active) {
                 m_pane_title.override_color(StateFlags.NORMAL,
                             m_app.ui_manager.selected_foreground);
