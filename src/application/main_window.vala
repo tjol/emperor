@@ -90,7 +90,8 @@ namespace Emperor.Application {
 
             add (m_main_box);
 
-            set_default_size (900, 500);
+            set_default_size (m_app.prefs.get_int32("window-x", 900),
+                              m_app.prefs.get_int32("window-y", 500));
             this.title = _("Emperor");
 
             destroy.connect (on_destroy);
@@ -138,7 +139,8 @@ namespace Emperor.Application {
 
         void on_destroy ()
         {
-            main_quit ();
+            m_app.prefs.set_int32 ("window-x", get_allocated_width());
+            m_app.prefs.set_int32 ("window-y", get_allocated_height());
         }
 
     }

@@ -162,12 +162,19 @@ namespace Emperor.Application {
             store_types.add(typeof(bool));
             store_cells.add(null);
 
+            int colidx = 0;
             // get the actual columns from configuration.
             foreach (var col in m_app.ui_manager.panel_columns) {
                 var tvcol = new TreeViewColumn();
                 tvcol.title = col.title;
                 tvcol.resizable = true;
-                tvcol.expand = true;
+                var pref_w_name = "%s-col-width-%d".printf(m_designation,colidx);
+                var pref_w = m_app.prefs.get_int32 (pref_w_name, -1);
+                if (pref_w > 0) {
+                    tvcol.sizing = TreeViewColumnSizing.FIXED;
+                    tvcol.fixed_width = pref_w;
+                }
+                
                 foreach (var cell in col.cells) {
                     store_cells.add (cell);
                     store_types.add (cell.column_type);
@@ -187,6 +194,7 @@ namespace Emperor.Application {
                     idx++;
                 }
                 m_list.append_column(tvcol);
+                colidx ++;
             }
 
             // finish.
@@ -218,6 +226,17 @@ namespace Emperor.Application {
             m_error_message_bg.override_background_color (0, red);
             m_error_message_bg.add(m_error_message);
             pack_start (m_error_message_bg, false, false);
+        }
+
+        private void check_column_sizes ()
+        {
+            int colidx = 0;
+            foreach (var tvcol in m_list.get_columns()) {
+                var pref_w_name = "%s-col-width-%d".printf(m_designation, colidx);
+                m_app.prefs.set_int32 (pref_w_name, tvcol.width);
+                tvcol.sizing = TreeViewColumnSizing.GROW_ONLY;
+                colidx ++;
+            }
         }
 
         public void display_error (string message)
@@ -521,6 +540,7 @@ namespace Emperor.Application {
                         m_file_attributes_str,
                         FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
                 update_row (unsorted_iter, fileinfo, m_data_store);
+                restyle (unsorted_iter);
             } catch (Error e) {
                 display_error (_("Error fetching file information. (%s)").printf(e.message));
             }
@@ -654,6 +674,9 @@ namespace Emperor.Application {
         private bool on_mouse_event (EventButton e)
         {
             if (e.window != m_list.get_bin_window()) {
+                if (e.type == EventType.BUTTON_RELEASE) {
+                    check_column_sizes ();
+                }
                 return false;
             }
 
