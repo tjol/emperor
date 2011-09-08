@@ -300,15 +300,18 @@ namespace Emperor.Application {
             var finfo = finfo_val.get_object () as FileInfo;
 
             if (finfo == null || m_pwd == null) {
-                return true;
+                // no file info => no displaying.
+                return false;
             }
 
             var file = m_pwd.resolve_relative_path (finfo.get_name ());
 
+            /*
             // standard behaviour: do not display non-existant files.
             if (!file.query_exists ()) {
                 return false;
             }
+            */
 
             foreach (var wrapper in m_filters.values) {
                 visible = wrapper.func (file, finfo, visible);
@@ -384,6 +387,7 @@ namespace Emperor.Application {
 
 
         File m_pwd = null;
+        Mount m_mnt = null;
 
         /**
          * The directory currently being listed. Setting the property changes
@@ -396,6 +400,10 @@ namespace Emperor.Application {
             }
         }
 
+        public Mount mnt {
+            get { return m_mnt; }
+        }
+
         public async bool chdir (File pwd, string? prev_name=null)
         {
             TreeIter? prev_iter = null;
@@ -405,12 +413,44 @@ namespace Emperor.Application {
             bool is_sorted = (m_sorted_list != null
                              && m_sorted_list.get_sort_column_id (out sort_column, out sort_type));
 
+            Mount mnt = null;
+
             if (other_pane.pwd != null && pwd.equal(other_pane.pwd)) {
                 // re-use other pane's list store.
                 m_data_store = other_pane.m_data_store;
                 m_cursor_path = other_pane.m_cursor_path;
+                mnt = other_pane.mnt;
 
             } else {
+                try {
+                    mnt = yield pwd.find_enclosing_mount_async ();
+                } catch (Error mnterr1) {
+                    mnt = null;
+                }
+                if (mnt == null && ! pwd.is_native()) {
+                    // not mounted. Can I mount this?
+                    bool mounted = false;
+                    try {
+                        yield pwd.mount_enclosing_volume (
+                                MountMountFlags.NONE, new Gtk.MountOperation (m_app.main_window),
+                                null);
+                        mounted = true;
+                    } catch (Error mnterr2) {
+                        display_error (_("Error mounting volume. (%s)").printf(mnterr2.message));
+                        mounted = false;
+                    }
+                    if (mounted) {
+                        try {
+                            mnt = yield pwd.find_enclosing_mount_async ();
+                        } catch (Error mnterr3) {
+                            display_error (_("Error accessing mount. (%s)").printf(
+                                                mnterr3.message));
+                        }
+                    } else {
+                        return false;
+                    }
+                }
+
                 // chdir-proper.
                 var store = new ListStore.newv(m_store_types);
 
@@ -482,6 +522,7 @@ namespace Emperor.Application {
 
             }
             m_pwd = pwd;
+            m_mnt = mnt;
             m_list_filter = new TreeModelFilter (m_data_store, null);
             m_list_filter.set_visible_func (this.filter_list_row);
             m_sorted_list = new TreeModelSort.with_model (m_list_filter);
@@ -596,6 +637,7 @@ namespace Emperor.Application {
             requires (m_pwd != null)
         {
             var parent = file.get_parent ();
+            bool exists = file.query_exists ();
             if (m_pwd.equal (parent)) {
                 // okay, it should be in the list.
                 bool file_found = false;
@@ -603,17 +645,26 @@ namespace Emperor.Application {
                 m_data_store.@foreach ((model, path, iter) => {
                         Value finfo_val;
                         model.get_value (iter, COL_FILEINFO, out finfo_val);
-                        var finfo = finfo_val.get_object () as FileInfo;
-                        if (finfo != null && finfo.get_name() == file.get_basename()) {
-                            // same file.
-                            file_found = true;
-                            query_and_update.begin (iter, file);
+                        var finfo = (FileInfo) finfo_val.get_object ();
+                        if (finfo != null) {
+                            if (exists && finfo.get_name() == file.get_basename()) {
+                                // same file.
+                                file_found = true;
+                                query_and_update.begin (iter, file);
+                            } else {
+                                var this_file = m_pwd.get_child (finfo.get_name());
+                                if (!this_file.query_exists()) {
+                                    // get rid.
+                                    finfo_val.set_object (null);
+                                    ((ListStore)model).set_value (iter, COL_FILEINFO, finfo_val);
+                                }
+                            }
                         }
 
                         return false;
                     });
 
-                if (!file_found) {
+                if (!file_found && exists) {
                     // add file.
                     TreeIter iter;
                     m_data_store.append (out iter);
@@ -630,11 +681,19 @@ namespace Emperor.Application {
                                             FILE_ATTRIBUTE_STANDARD_NAME,
                                             FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
                 GLib.List<FileInfo> fileinfos;
+                bool at_least_one_child = false;
                 while ((fileinfos = yield enumerator.next_files_async (20)) != null) {
                     foreach (var finfo in fileinfos) {
                         var file = m_pwd.get_child (finfo.get_name ());
                         update_file (file);
+                        at_least_one_child = true;
                     }
+                }
+                if (!at_least_one_child) {
+                    // if there were no children, that means that the rows weren't all
+                    // checked above. It also means that it really doesn't matter if we
+                    // forget what was selected. So just go and chdir to .
+                    yield chdir (m_pwd);
                 }
 
                 m_list_filter.refilter ();
@@ -1066,6 +1125,9 @@ namespace Emperor.Application {
             Value finfo_val;
             m_data_store.get_value (unsorted_iter, COL_FILEINFO, out finfo_val);
             var finfo = (FileInfo) finfo_val.get_object();
+            if (finfo == null) {
+                return;
+            }
 
             m_data_store.set_value (unsorted_iter, COL_FG_COLOR, nullcolor);
             m_data_store.set_value (unsorted_iter, COL_FG_SET, falsevalue);
@@ -1099,12 +1161,6 @@ namespace Emperor.Application {
 
                 var ftype = finfo.get_file_type ();
                 if (style.file_type != -1 && ftype != style.file_type) {
-                    if (finfo.get_file_type() == 3) {
-                        stdout.printf("me: %d, style: %d\n", ftype,
-                                            style.file_type);
-                        stdout.printf("equal: %d %d\n", (int)(ftype == style.file_type),
-                                                        (int)(style.file_type == ftype));
-                    }
                     continue;
                 }
 
