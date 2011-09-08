@@ -132,7 +132,26 @@ namespace Emperor {
 
         public DateTime datetime {
             set {
-                text = value.to_string ();
+                var now = new DateTime.now_local ();
+                if (value.get_year() == now.get_year()) {
+                    if (value.get_day_of_year() == now.get_day_of_year()) {
+                        // today.
+                        text = value.format (_("%H:%M"));
+                    } else {
+                        // not today.
+                        var delta = now.difference (value);
+                        if (delta.DAY >= 0 && delta.DAY < 6) {
+                            // Within the past few days
+                            text = value.format (_("%A, %H:%M"));
+                        } else {
+                            // some other day, this year.
+                            text = value.format (_("%e %B, %H:%M"));
+                        }
+                    }
+                } else {
+                    // different year.
+                    text = value.format (_("%e %b %y, %H:%M"));
+                }
             }
         }
     }

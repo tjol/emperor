@@ -58,6 +58,11 @@ namespace Emperor.Modules {
         } else if (type_a != FileType.DIRECTORY && type_b == FileType.DIRECTORY) {
             return +1;
         } else {
+            if (a.get_display_name() == "..") {
+                return -1;
+            } else if (b.get_display_name() == "..") {
+                return 1;
+            }
             return 0;
         }
     }
