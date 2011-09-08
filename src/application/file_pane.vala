@@ -235,6 +235,7 @@ namespace Emperor.Application {
                 var pref_w_name = "%s-col-width-%d".printf(m_designation, colidx);
                 m_app.prefs.set_int32 (pref_w_name, tvcol.width);
                 tvcol.sizing = TreeViewColumnSizing.GROW_ONLY;
+                tvcol.queue_resize ();
                 colidx ++;
             }
         }
