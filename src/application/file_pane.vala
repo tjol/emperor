@@ -393,6 +393,7 @@ namespace Emperor.Application {
          * The directory currently being listed. Setting the property changes
          * directory asynchronously
          */
+        [CCode(notify = false)]
         public File pwd {
             get { return m_pwd; }
             set {
@@ -523,6 +524,8 @@ namespace Emperor.Application {
             }
             m_pwd = pwd;
             m_mnt = mnt;
+            notify_property ("pwd");
+            notify_property ("mnt");
             m_list_filter = new TreeModelFilter (m_data_store, null);
             m_list_filter.set_visible_func (this.filter_list_row);
             m_sorted_list = new TreeModelSort.with_model (m_list_filter);
@@ -891,7 +894,24 @@ namespace Emperor.Application {
                 if (m_active != value) {
                     m_active = value;
                     //hide_error ();
-                    restyle_complete_list ();
+                    if (m_app.ui_manager.style_info.other_styles_use_focus) {
+                        restyle_complete_list ();
+                    } else {
+                        if (m_app.ui_manager.style_info.selected_style_uses_focus) {
+                            m_data_store.@foreach ((model, path, iter) => {
+                                    Value selected;
+                                    model.get_value (iter, COL_SELECTED, out selected);
+                                    if (selected.get_boolean()) {
+                                        restyle (iter, false);
+                                    }
+                                    return false;
+                                });
+                        }
+                        if (m_app.ui_manager.style_info.cursor_style_uses_focus
+                                && m_cursor_path != null) {
+                            restyle_path(m_cursor_path, true);
+                        }
+                    }
                     other_pane.active = !m_active;
                 }
                 if (m_active && !m_list.has_focus) {

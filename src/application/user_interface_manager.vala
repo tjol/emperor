@@ -51,9 +51,17 @@ namespace Emperor.Application {
             internal Gdk.RGBA? bg = null;
         }
 
+        internal struct AboutStyle
+        {
+            public bool selected_style_uses_focus;
+            public bool cursor_style_uses_focus;
+            public bool other_styles_use_focus;
+        }
+
         EmperorCore m_app;
         internal LinkedList<FilePaneColumn> panel_columns { get; private set; }
         internal LinkedList<StyleDirective> style_directives { get; private set; }
+        internal AboutStyle style_info { get; private set; }
         internal LinkedList<Gtk.Action> command_buttons { get; private set; }
 
         private Gdk.RGBA m_default_foreground;
@@ -81,7 +89,13 @@ namespace Emperor.Application {
         {
             m_app = app;
             create_style_context ();
+
             style_directives = new LinkedList<StyleDirective> ();
+            style_info = AboutStyle();
+            style_info.selected_style_uses_focus = false;
+            style_info.cursor_style_uses_focus = false;
+            style_info.other_styles_use_focus = false;
+
             panel_columns = new LinkedList<FilePaneColumn> ();
             command_buttons = new LinkedList<Gtk.Action> ();
 
@@ -294,6 +308,17 @@ namespace Emperor.Application {
                             throw new ConfigurationError.INVALID_ERROR(
                                     _("Illegal value for \"pane\": \"%s\"").printf(pane_str));
                         }
+
+                        if (style.pane != FilePaneState.EITHER) {
+                            if (style.target == StyleDirective.Target.CURSOR) {
+                                style_info.cursor_style_uses_focus = true;
+                            } else if (style.target == StyleDirective.Target.SELECTED) {
+                                style_info.selected_style_uses_focus = true;
+                            } else {
+                                style_info.other_styles_use_focus = true;
+                            }
+                        }
+
                         style.fg = make_color(node->get_prop("fg"));
                         style.bg = make_color(node->get_prop("bg"));
 
