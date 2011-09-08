@@ -23,8 +23,14 @@
                     <cell data="icon"/>
                     <cell data="filename-F" sort="filename-collation"/>
                 </column>
+                <column title="Size">
+                    <cell data="size" sort="size"/>
+                </column>
                 <column title="Date">
                     <cell data="mtime" sort="datetime"/>
+                </column>
+                <column title="Mode">
+                    <cell data="mode" sort="text"/>
                 </column>
             </columns>
         </file-pane>

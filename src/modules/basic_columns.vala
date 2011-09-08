@@ -53,6 +53,7 @@ namespace Emperor.Modules {
             m_attrs = new LinkedList<string>();
             m_attrs.add(FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME);
             m_attrs.add(FILE_ATTRIBUTE_STANDARD_TYPE);
+            m_attrs.add(FILE_ATTRIBUTE_UNIX_MODE);
         }
 
         public override Value get_value (File dir, FileInfo fi)
@@ -65,9 +66,41 @@ namespace Emperor.Modules {
             case FileType.SYMBOLIC_LINK:
                 name.append ("@");
                 break;
+            default:
+                var mode = fi.get_attribute_uint32 (FILE_ATTRIBUTE_UNIX_MODE);
+                if (Posix.S_ISSOCK(mode)) {
+                    name.append ("=");
+                } else if (Posix.S_ISFIFO(mode)) {
+                    name.append ("|");
+                } else if ((mode & 0111) != 0) { // executable
+                    name.append ("*");
+                }
+                break;
             }
             var v = Value(typeof(string));
             v.set_string(name.str);
+            return v;
+        }
+
+        public override Collection<string> file_attributes { get { return m_attrs; } }
+
+    }
+
+    public class ModeColumn : TextFileInfoColumn
+    {
+        LinkedList<string> m_attrs;
+
+        public ModeColumn ()
+        {
+            m_attrs = new LinkedList<string>();
+            m_attrs.add(FILE_ATTRIBUTE_UNIX_MODE);
+        }
+
+        public override Value get_value (File dir, FileInfo fi)
+        {
+            var v = Value(typeof(string));
+            var mode = fi.get_attribute_uint32 (FILE_ATTRIBUTE_UNIX_MODE) & 07777;
+            v.set_string("%04o".printf(mode));
             return v;
         }
 
@@ -152,6 +185,72 @@ namespace Emperor.Modules {
 
     }
 
+    public class FileSizeColumn : Object, FileInfoColumn
+    {
+        LinkedList<string> m_attrs;
+
+        public FileSizeColumn ()
+        {
+            m_attrs = new LinkedList<string>();
+            m_attrs.add(FILE_ATTRIBUTE_STANDARD_SIZE);
+        }
+
+        public Value get_value (File dir, FileInfo fi)
+        {
+            var v = Value(typeof(uint64));
+
+            var size = fi.get_size ();
+            if (fi.get_file_type() == FileType.DIRECTORY) {
+                size = 0xFFFFFFFFFFFFFFFF;
+            }
+
+            v.set_uint64(size);
+            return v;
+        }
+
+        public Type column_type { get { return typeof(uint64); } }
+
+        public Collection<string> file_attributes { get { return m_attrs; } }
+
+        public void add_to_column (TreeViewColumn column,
+                                   int idx_data,
+                                   int idx_fg_rgba,
+                                   int idx_fg_set,
+                                   int idx_bg_rgba,
+                                   int idx_bg_set,
+                                   int idx_weight,
+                                   int idx_weight_set,
+                                   int idx_style,
+                                   int idx_style_set)
+        {
+            var renderer = new CellRendererFileSize ();
+            column.pack_start (renderer, true);
+            column.add_attribute (renderer, "file-size", idx_data);
+            column.add_attribute (renderer, "foreground-rgba", idx_fg_rgba);
+            column.add_attribute (renderer, "foreground-set", idx_fg_set);
+            column.add_attribute (renderer, "cell-background-rgba", idx_bg_rgba);
+            column.add_attribute (renderer, "cell-background-set", idx_bg_set);
+            column.add_attribute (renderer, "weight", idx_weight);
+            column.add_attribute (renderer, "weight-set", idx_weight_set);
+            column.add_attribute (renderer, "style", idx_style);
+            column.add_attribute (renderer, "style-set", idx_style_set);
+        }
+
+    }
+
+    private class CellRendererFileSize : CellRendererText
+    {
+        public uint64 file_size {
+            set {
+                if (value == 0xFFFFFFFFFFFFFFFF) {
+                    text = _("<DIR>");
+                } else {
+                    text = bytesize_to_string (value);
+                }
+            }
+        }
+    }
+
 }
 
 public void load_module (ModuleRegistry reg)
@@ -159,7 +258,9 @@ public void load_module (ModuleRegistry reg)
     reg.register_column("icon", new Emperor.Modules.IconColumn());
     reg.register_column("filename", new Emperor.Modules.FilenameColumn());
     reg.register_column("filename-F", new Emperor.Modules.FilenameWithTypeHintColumn());
+    reg.register_column("mode", new Emperor.Modules.ModeColumn());
     reg.register_column("mtime", new Emperor.Modules.MTimeColumn());
+    reg.register_column("size", new Emperor.Modules.FileSizeColumn());
 }
 
 

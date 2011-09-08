@@ -240,7 +240,7 @@ namespace Emperor.Application {
     public static string bytesize_to_string (uint64 size_in_bytes)
     {
         if (size_in_bytes < 900) { // 0 -- 900b
-            return _("%qu bytes").printf(size_in_bytes);
+            return _("%qu b").printf(size_in_bytes);
         } else if (size_in_bytes < 10240) { // 0.9K -- 10K
             return _("%s KiB").printf("%.1f".printf(size_in_bytes / 1024.0));
         } else if (size_in_bytes < 921600) { // 10K -- 900K

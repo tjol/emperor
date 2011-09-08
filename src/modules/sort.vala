@@ -20,6 +20,33 @@ using Emperor;
 using Emperor.Application;
 
 namespace Emperor.Modules {
+
+    public int cmp_text (Value a, Value b)
+    {
+        string str1 = null, str2 = null;
+
+        if ((!a.holds(typeof(string))) || (str1 = a.get_string()) == null) {
+            return 1;
+        } else if ((!b.holds(typeof(string))) || (str2 = b.get_string()) == null) {
+            return -1;
+        }
+
+        return strcmp (str1, str2);
+    }
+
+    public int cmp_unicode (Value a, Value b)
+    {
+        string str1 = null, str2 = null;
+
+        if ((!a.holds(typeof(string))) || (str1 = a.get_string()) == null) {
+            return 1;
+        } else if ((!b.holds(typeof(string))) || (str2 = b.get_string()) == null) {
+            return -1;
+        }
+
+        return str1.collate (str2);
+    }
+
     public int cmp_filename_collation (Value a, Value b)
     {
         string str1 = null, str2 = null;
@@ -48,6 +75,28 @@ namespace Emperor.Modules {
         return dt1.compare (dt2);
     }
 
+    public int cmp_uint64 (Value a, Value b)
+    {
+        uint64 u1, u2;
+
+        if (!a.holds(typeof(uint64))) {
+            return 1;
+        } else if (!b.holds(typeof(uint64))) {
+            return -1;
+        }
+
+        u1 = a.get_uint64();
+        u2 = b.get_uint64();
+
+        if (u1 == u2) {
+            return 0;
+        } else if (u1 < u2) {
+            return 1;
+        } else {
+            return -1;
+        }
+    }
+
     public int cmp_directories_first (FileInfo a, FileInfo b)
     {
         FileType type_a = a.get_file_type ();
@@ -70,8 +119,12 @@ namespace Emperor.Modules {
 
 public void load_module (ModuleRegistry reg)
 {
+    reg.register_sort_function ("text", Emperor.Modules.cmp_text);
+    reg.register_sort_function ("unicode", Emperor.Modules.cmp_unicode);
     reg.register_sort_function ("filename-collation", Emperor.Modules.cmp_filename_collation);
     reg.register_sort_function ("datetime", Emperor.Modules.cmp_datetime);
+    reg.register_sort_function ("size", Emperor.Modules.cmp_uint64);
+    reg.register_sort_function ("uint64", Emperor.Modules.cmp_uint64);
 
     // Action: Sort directories first
     var dir_first_act = new Gtk.ToggleAction ("sort/toggle:directories-first",
