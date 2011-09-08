@@ -20,7 +20,7 @@ using Emperor;
 using Emperor.Application;
 
 namespace Emperor.Modules {
-    public int cmp_filename_collation(Value a, Value b)
+    public int cmp_filename_collation (Value a, Value b)
     {
         string str1 = null, str2 = null;
 
@@ -34,10 +34,49 @@ namespace Emperor.Modules {
         var key2 = str2.collate_key_for_filename();
         return strcmp(key1, key2);
     }
+
+    public int cmp_directories_first (FileInfo a, FileInfo b)
+    {
+        FileType type_a = a.get_file_type ();
+        FileType type_b = b.get_file_type ();
+
+        if (type_a == FileType.DIRECTORY && type_b != FileType.DIRECTORY) {
+            return -1;
+        } else if (type_a != FileType.DIRECTORY && type_b == FileType.DIRECTORY) {
+            return +1;
+        } else {
+            return 0;
+        }
+    }
 }
 
 public void load_module (ModuleRegistry reg)
 {
     reg.register_sort_function ("filename-collation", Emperor.Modules.cmp_filename_collation);
+
+    // Action: Sort directories first
+    var dir_first_act = new Gtk.ToggleAction ("sort/toggle:directories-first",
+                                              _("Sort directories first"),
+                                              null, null);
+    reg.register_action (dir_first_act);
+    dir_first_act.set_accel_path ("<Emperor-Main>/Sort/Directories_First");
+    dir_first_act.toggled.connect ( () => {
+            var mw = reg.application.main_window;
+            bool flag = dir_first_act.active;
+            if (flag) {
+                mw.left_pane.add_sort ("directories-first", Emperor.Modules.cmp_directories_first);
+                mw.right_pane.add_sort ("directories-first", Emperor.Modules.cmp_directories_first);
+            } else {
+                mw.left_pane.remove_sort ("directories-first");
+                mw.right_pane.remove_sort ("directories-first");
+            }
+            reg.application.prefs.set_boolean ("sort/directories-first", flag);
+        } );
+    reg.application.ui_manager.add_action_to_menu (_("_View"), dir_first_act);
+
+    reg.application.ui_manager.main_window_ready.connect ( (main_window) => {
+        bool dir_first = reg.application.prefs.get_boolean ("sort/directories-first", true);
+        dir_first_act.active = dir_first;
+    } );
 }
 

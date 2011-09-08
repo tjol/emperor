@@ -49,6 +49,7 @@ namespace Emperor.Application {
         Set<string> m_file_attributes;
         string m_file_attributes_str;
         Map<string,FileFilterFuncWrapper> m_filters;
+        Map<string,FileInfoCompareFuncWrapper> m_permanent_sort;
 
         public int COL_FILEINFO { get; private set; }
         public int COL_SELECTED { get; private set; }
@@ -66,6 +67,7 @@ namespace Emperor.Application {
             m_app = app;
             m_designation = pane_designation;
             m_filters = new HashMap<string,FileFilterFuncWrapper> ();
+            m_permanent_sort = new HashMap<string,FileInfoCompareFuncWrapper> ();
 
             /*
              * Create and add the title Label
@@ -177,7 +179,8 @@ namespace Emperor.Application {
                     if (cell == col.sort_column) {
                         tvcol.set_sort_column_id(idx);
                         m_cmp_funcs[idx] = new TreeIterCompareFuncWrapper(idx,
-                                                    col.cmp_function);
+                                                    col.cmp_function,
+                                                    this.compare_using_global_sort);
                     }
                     idx++;
                 }
@@ -273,6 +276,72 @@ namespace Emperor.Application {
             
             return visible;
         }
+
+        public void add_query_attribute (string att)
+        {
+            m_file_attributes.add (att);
+
+            var sb = new StringBuilder();
+            bool first = true;
+            foreach (string attr in m_file_attributes) {
+                if (!first) sb.append_c(',');
+                else first = false;
+
+                sb.append(attr);
+            }
+            m_file_attributes_str = sb.str;
+        }
+
+        public void add_sort (string id, FileInfoCompareFunc cmp)
+        {
+            m_permanent_sort[id] = new FileInfoCompareFuncWrapper (cmp);
+            if (m_sorted_list != null) {
+                // refresh.
+                int col;
+                SortType st;
+                m_sorted_list.get_sort_column_id (out col, out st);
+                m_sorted_list.set_sort_column_id (col, st);
+            }
+        }
+
+        public bool remove_sort (string id)
+        {
+            bool removed = m_permanent_sort.remove (id);
+            if (removed && m_sorted_list != null) {
+                // refresh.
+                int col;
+                SortType st;
+                m_sorted_list.get_sort_column_id (out col, out st);
+                m_sorted_list.set_sort_column_id (col, st);
+            }
+            return removed;
+        }
+
+        public bool using_sort (string id)
+        {
+            return m_permanent_sort.has_key (id);
+        }
+
+        private int compare_using_global_sort (TreeModel model, TreeIter it1, TreeIter it2)
+        {
+            Value finfo1_val, finfo2_val;
+            model.get_value (it1, COL_FILEINFO, out finfo1_val);
+            model.get_value (it2, COL_FILEINFO, out finfo2_val);
+            var finfo1 = (FileInfo) finfo1_val.get_object ();
+            var finfo2 = (FileInfo) finfo2_val.get_object ();
+
+            int d = 0;
+
+            foreach (var fw in m_permanent_sort.values) {
+                int this_d = fw.func (finfo1, finfo2);
+                if (this_d != 0) {
+                    d = this_d;
+                }
+            }
+            
+            return d;
+        }
+
 
         File m_pwd = null;
 
@@ -989,15 +1058,23 @@ namespace Emperor.Application {
         {
             int m_col;
             CompareFunc m_cmp;
+            TreeIterCompareFunc m_prio_sort;
 
-            public TreeIterCompareFuncWrapper (int column, CompareFunc cmp)
+            public TreeIterCompareFuncWrapper (int column, CompareFunc cmp,
+                                               TreeIterCompareFunc priosort)
             {
                 m_col = column;
                 m_cmp = cmp;
+                m_prio_sort = priosort;
             }
 
             public int compare_treeiter (TreeModel model, TreeIter it_a, TreeIter it_b)
             {
+                int prio_d = m_prio_sort (model, it_a, it_b);
+                if (prio_d != 0) {
+                    return prio_d;
+                }
+
                 Value a, b;
                 model.get_value(it_a, m_col, out a);
                 model.get_value(it_b, m_col, out b);
@@ -1012,6 +1089,15 @@ namespace Emperor.Application {
             }
             public FileFilterFunc func { get; private set; }
         }
+
+        private class FileInfoCompareFuncWrapper : Object
+        {
+            public FileInfoCompareFuncWrapper (FileInfoCompareFunc f) {
+                this.func = f;
+            }
+            public FileInfoCompareFunc func { get; private set; }
+        }
+
 
     }
 
