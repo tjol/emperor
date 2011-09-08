@@ -9,7 +9,7 @@ LT_INIT([disable-static])
 
 AC_PROG_CC
 AM_PROG_CC_C_O
-AM_PROG_VALAC([0.10.0])
+AM_PROG_VALAC([0.12.0])
 
 AM_GNU_GETTEXT([external])
 

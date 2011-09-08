@@ -52,10 +52,14 @@ namespace Emperor.Application {
                             continue;
                         }
                         var value_str = node->get_content();
-                        var value_v = Variant.parse (null, value_str);
+                        try {
+                            var value_v = Variant.parse (null, value_str);
 
-                        if (value_v != null) {
-                            prefs[key] = value_v;
+                            if (value_v != null) {
+                                prefs[key] = value_v;
+                            }
+                        } catch (Error e) {
+                            // doesn't matter.
                         }
                     } else {
                         // be forgiving.

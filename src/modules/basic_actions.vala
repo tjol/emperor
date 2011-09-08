@@ -85,7 +85,7 @@ namespace Emperor.Modules {
 
             // Ctrl+Q: Quit.
             action = reg.new_action ("quit");
-            action.stock_id = STOCK_QUIT;
+            action.stock_id = Stock.QUIT;
             action.set_accel_path ("<Emperor-Main>/BasicActions/Quit");
             Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Quit",
                                     Gdk.KeySym.Q, Gdk.ModifierType.CONTROL_MASK);
@@ -143,7 +143,7 @@ namespace Emperor.Modules {
             var filename = fileinfo.get_edit_name ();
 
             var dialog = new InputDialog (_("Rename file"), application.main_window);
-            dialog.add_button (STOCK_CANCEL, ResponseType.CANCEL);
+            dialog.add_button (Stock.CANCEL, ResponseType.CANCEL);
             dialog.add_button (_("Rename"), ResponseType.OK, true);
             dialog.add_text (_("Rename “%s” to:").printf(filename));
             dialog.add_entry ("name", filename, true);
@@ -175,8 +175,8 @@ namespace Emperor.Modules {
             var pwd = pane.pwd;
 
             var dialog = new InputDialog (_("New directory"), application.main_window);
-            dialog.add_button (STOCK_CANCEL, ResponseType.CANCEL);
-            dialog.add_button (STOCK_OK, ResponseType.OK, true);
+            dialog.add_button (Stock.CANCEL, ResponseType.CANCEL);
+            dialog.add_button (Stock.OK, ResponseType.OK, true);
             dialog.add_text (_("Create new directory in “%s” named").printf(pwd.get_parse_name()));
             dialog.add_entry ("name", "", true);
 
@@ -269,7 +269,7 @@ namespace Emperor.Modules {
                     _("Error deleting file “%s”."),
                     file.get_parse_name());
                 err_msg.secondary_text = e.message;
-                err_msg.add_button (STOCK_STOP, ResponseType.CLOSE);
+                err_msg.add_button (Stock.STOP, ResponseType.CLOSE);
                 err_msg.add_button (_("Skip"), 2);
                 err_msg.add_button (_("Retry"), 1);
                 err_msg.set_default_response (1);
@@ -323,8 +323,8 @@ namespace Emperor.Modules {
                             file.get_basename());
                         recurse_dialog.secondary_text = _("This cannot be undone.");
                         recurse_dialog.add_button (_("Always"), 1);
-                        recurse_dialog.add_button (STOCK_NO, ResponseType.NO);
-                        recurse_dialog.add_button (STOCK_YES, ResponseType.YES);
+                        recurse_dialog.add_button (Stock.NO, ResponseType.NO);
+                        recurse_dialog.add_button (Stock.YES, ResponseType.YES);
                         recurse_dialog.set_default_response (ResponseType.YES);
                         bool do_recurse = false;
                         recurse_dialog.response.connect ((id) => {
@@ -377,11 +377,17 @@ namespace Emperor.Modules {
             }
 
             foreach (var file in files) {
-                var launch = application.external_apps.get_specific_for_file (
-                                    file, how, true, true);
-                var flst = new GLib.List<File> ();
-                flst.append (file);
-                launch (flst);
+                try {
+                    var launch = application.external_apps.get_specific_for_file (
+                                        file, how, true, true);
+                    var flst = new GLib.List<File> ();
+                    flst.append (file);
+                    launch (flst);
+                } catch (Error e) {
+                    show_error_message_dialog (application.main_window,
+                        _("Error opening file."),
+                        e.message);
+                }
             }
         }
     }

@@ -23,16 +23,24 @@ namespace Emperor.Modules {
     
     public bool filter_hidden (File f, FileInfo fi, bool currently_visible)
     {
-        var info = f.query_info (FILE_ATTRIBUTE_STANDARD_IS_HIDDEN,
-                                 FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-        return currently_visible && ( ! info.get_is_hidden () );
+        try {
+            var info = f.query_info (FILE_ATTRIBUTE_STANDARD_IS_HIDDEN,
+                                     FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+            return currently_visible && ( ! info.get_is_hidden () );
+        } catch (Error e) {
+            return currently_visible;
+        }
     }
 
     public bool filter_backup (File f, FileInfo fi, bool currently_visible)
     {
-        var info = f.query_info (FILE_ATTRIBUTE_STANDARD_IS_BACKUP,
-                                 FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-        return currently_visible && ( ! info.get_is_backup () );
+        try {
+            var info = f.query_info (FILE_ATTRIBUTE_STANDARD_IS_BACKUP,
+                                     FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+            return currently_visible && ( ! info.get_is_backup () );
+        } catch (Error e) {
+            return currently_visible;
+        }
     }
 
     public void toggle_filter (MainWindow main_window, string filter,

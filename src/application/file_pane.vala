@@ -279,7 +279,7 @@ namespace Emperor.Application {
 
         public bool remove_filter (string id)
         {
-            bool removed = m_filters.remove (id);
+            bool removed = m_filters.unset (id);
             if (removed && m_list_filter != null) {
                 m_list_filter.refilter ();
             }
@@ -346,7 +346,7 @@ namespace Emperor.Application {
 
         public bool remove_sort (string id)
         {
-            bool removed = m_permanent_sort.remove (id);
+            bool removed = m_permanent_sort.unset (id);
             if (removed && m_sorted_list != null) {
                 // refresh.
                 int col;
@@ -396,7 +396,7 @@ namespace Emperor.Application {
             }
         }
 
-        public async void chdir (File pwd, string? prev_name=null)
+        public async bool chdir (File pwd, string? prev_name=null)
         {
             TreeIter? prev_iter = null;
 
@@ -423,7 +423,7 @@ namespace Emperor.Application {
                     display_error (_("Error reading directory: %s (%s)")
                                    .printf(pwd.get_parse_name(),
                                            err1.message));
-                    return;
+                    return false;
                 }
 
                 TreeIter iter;
@@ -518,9 +518,11 @@ namespace Emperor.Application {
             m_app.prefs.set_string (m_designation + "-pwd", m_pwd.get_parse_name());
 
             restyle_complete_list ();
+
+            return true;
         }
 
-        public async void chdir_from_pref ()
+        public async bool chdir_from_pref ()
         {
             var old_pwd_str = m_app.prefs.get_string (m_designation + "-pwd", null);
             File old_pwd;
@@ -529,7 +531,7 @@ namespace Emperor.Application {
             } else {
                 old_pwd = File.new_for_path (".");
             }
-            yield chdir (old_pwd);
+            return yield chdir (old_pwd);
         }
 
         private void update_row (TreeIter iter, FileInfo file,
@@ -623,18 +625,24 @@ namespace Emperor.Application {
         public async void refresh ()
             requires (m_pwd != null)
         {
-            var enumerator = yield m_pwd.enumerate_children_async (
-                                        FILE_ATTRIBUTE_STANDARD_NAME,
-                                        FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-            GLib.List<FileInfo> fileinfos;
-            while ((fileinfos = yield enumerator.next_files_async (20)) != null) {
-                foreach (var finfo in fileinfos) {
-                    var file = m_pwd.get_child (finfo.get_name ());
-                    update_file (file);
+            try {
+                var enumerator = yield m_pwd.enumerate_children_async (
+                                            FILE_ATTRIBUTE_STANDARD_NAME,
+                                            FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+                GLib.List<FileInfo> fileinfos;
+                while ((fileinfos = yield enumerator.next_files_async (20)) != null) {
+                    foreach (var finfo in fileinfos) {
+                        var file = m_pwd.get_child (finfo.get_name ());
+                        update_file (file);
+                    }
                 }
-            }
 
-            m_list_filter.refilter ();
+                m_list_filter.refilter ();
+
+            } catch (Error e) {
+                display_error (_("Error reading directory. (%s)")
+                               .printf(e.message));
+            }
 
         }
 

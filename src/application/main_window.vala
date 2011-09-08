@@ -121,20 +121,14 @@ namespace Emperor.Application {
             return false;
         }
 
-        bool on_key_press (Gdk.EventKey e)
-        {
-            bool handled = false;
-
-            if (e.type == Gdk.EventType.KEY_PRESS) {
-            }
-
-            return handled;
-        }
-
         async void set_directories ()
         {
-            yield left_pane.chdir_from_pref ();
-            yield right_pane.chdir_from_pref ();
+            if (!yield left_pane.chdir_from_pref()) {
+                yield left_pane.chdir(File.new_for_path("."));
+            }
+            if (!yield right_pane.chdir_from_pref()) {
+                yield right_pane.chdir(File.new_for_path("."));
+            }
         }
 
         void on_destroy ()

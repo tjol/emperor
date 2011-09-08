@@ -87,7 +87,7 @@ namespace Emperor.Modules {
 
             var dialog = new InputDialog (dialog_title, application.main_window);
             //dialog.add_button
-            dialog.add_button (STOCK_CANCEL, ResponseType.CANCEL);
+            dialog.add_button (Stock.CANCEL, ResponseType.CANCEL);
             dialog.add_button (go_ahead_txt, ResponseType.OK, true);
             var text_label = dialog.add_text (dialog_text);
             dialog.add_entry ("target", target_path);
@@ -120,20 +120,27 @@ namespace Emperor.Modules {
 
             uint idx = 0;
             foreach (var file in files) {
-                var finfo = yield file.query_info_async (FILE_ATTRIBUTE_STANDARD_SIZE + ","
-                                                            + FILE_ATTRIBUTE_STANDARD_TYPE + ","
-                                                            + FILE_ATTRIBUTE_STANDARD_SIZE,
-                                                         FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-                total_size_in_bytes += finfo.get_size ();
-                if (finfo.get_file_type() == FileType.DIRECTORY) {
-                    int files_within;
-                    total_size_in_bytes += yield get_directory_size (file,
-                                                FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
-                                                out files_within);
-                    n_files += files_within - 1;
+                try {
+                    var finfo = yield file.query_info_async (
+                                             FILE_ATTRIBUTE_STANDARD_SIZE + ","
+                                                + FILE_ATTRIBUTE_STANDARD_TYPE + ","
+                                                + FILE_ATTRIBUTE_STANDARD_SIZE,
+                                             FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+                    total_size_in_bytes += finfo.get_size ();
+                    if (finfo.get_file_type() == FileType.DIRECTORY) {
+                        int files_within;
+                        total_size_in_bytes += yield get_directory_size (file,
+                                                    FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
+                                                    out files_within);
+                        n_files += files_within - 1;
+                    }
+                    file_infos[idx] = finfo;
+                    idx ++;
+                } catch (Error e) {
+                    show_error_message_dialog (application.main_window,
+                        _("Error getting size of “%s”.").printf(file.get_basename()),
+                        e.message);
                 }
-                file_infos[idx] = finfo;
-                idx ++;
             }
 
             get_transfer_dialog_texts (move, n_files, fname,
@@ -150,24 +157,31 @@ namespace Emperor.Modules {
             uint64 total = 0;
             files_within = 0;
 
-            var enumerator = yield directory.enumerate_children_async (
-                                        FILE_ATTRIBUTE_STANDARD_SIZE + ","
-                                            + FILE_ATTRIBUTE_STANDARD_NAME + ","
-                                            + FILE_ATTRIBUTE_STANDARD_TYPE,
-                                        flags);
-            GLib.List<FileInfo> fileinfos;
-            while ((fileinfos = yield enumerator.next_files_async (20)) != null) {
-                foreach (var finfo in fileinfos) {
-                    total += finfo.get_size ();
-                    if (finfo.get_file_type() == FileType.DIRECTORY) {
-                        int inner_files;
-                        total += yield get_directory_size (directory.get_child (finfo.get_name()),
-                                                           flags, out inner_files);
-                        files_within += inner_files;
-                    } else {
-                        files_within ++;
+            try {
+                var enumerator = yield directory.enumerate_children_async (
+                                            FILE_ATTRIBUTE_STANDARD_SIZE + ","
+                                                + FILE_ATTRIBUTE_STANDARD_NAME + ","
+                                                + FILE_ATTRIBUTE_STANDARD_TYPE,
+                                            flags);
+                GLib.List<FileInfo> fileinfos;
+                while ((fileinfos = yield enumerator.next_files_async (20)) != null) {
+                    foreach (var finfo in fileinfos) {
+                        total += finfo.get_size ();
+                        if (finfo.get_file_type() == FileType.DIRECTORY) {
+                            int inner_files;
+                            total += yield get_directory_size (
+                                            directory.get_child (finfo.get_name()),
+                                            flags, out inner_files);
+                            files_within += inner_files;
+                        } else {
+                            files_within ++;
+                        }
                     }
                 }
+            } catch (Error e) {
+                show_error_message_dialog (null,
+                    _("Error fetching size of directory “%s”.").printf(directory.get_basename()),
+                    e.message);
             }
 
             return total;
@@ -219,7 +233,7 @@ namespace Emperor.Modules {
             dialog.deletable = false;
             dialog.resizable = false;
 
-            dialog.add_button (STOCK_STOP, ResponseType.CLOSE);
+            dialog.add_button (Stock.STOP, ResponseType.CLOSE);
 
             if (move) {
                 if (total_n_files == 1) {
@@ -318,8 +332,8 @@ namespace Emperor.Modules {
         private string? ask_for_new_name (string old_name)
         {
             var dialog = new InputDialog (_("Change name"), application.main_window);
-            dialog.add_button (STOCK_CANCEL, ResponseType.CANCEL);
-            dialog.add_button (STOCK_OK, ResponseType.OK, true);
+            dialog.add_button (Stock.CANCEL, ResponseType.CANCEL);
+            dialog.add_button (Stock.OK, ResponseType.OK, true);
             dialog.add_text (_("Rename “%s” to:").printf(old_name));
             dialog.add_entry ("name", old_name, true);
             
@@ -359,7 +373,7 @@ namespace Emperor.Modules {
                          : _("Error copying file “%s”."),
                     file.get_parse_name());
                 err_msg.secondary_text = e.message;
-                err_msg.add_button (STOCK_STOP, ResponseType.CLOSE);
+                err_msg.add_button (Stock.STOP, ResponseType.CLOSE);
                 err_msg.add_button (_("Skip"), 2);
                 err_msg.add_button (_("Retry"), 1);
                 err_msg.set_default_response (1);
@@ -426,7 +440,7 @@ namespace Emperor.Modules {
                         DialogFlags.MODAL, MessageType.WARNING, ButtonsType.NONE,
                         _("Directory “%s” exists. Merge directories?"),
                         dest.get_basename());
-                    merge_dialog.add_button (STOCK_STOP, ResponseType.CLOSE);
+                    merge_dialog.add_button (Stock.STOP, ResponseType.CLOSE);
                     merge_dialog.add_button (_("Skip All"), 4);
                     merge_dialog.add_button (_("Overwrite All"), 2);
                     merge_dialog.add_button (_("Rename"), 0);
@@ -474,7 +488,7 @@ namespace Emperor.Modules {
                         DialogFlags.MODAL, MessageType.WARNING, ButtonsType.NONE,
                         _("File “%s” exists. Overwrite file?"),
                         dest.get_basename());
-                    owr_dialog.add_button (STOCK_STOP, ResponseType.CLOSE);
+                    owr_dialog.add_button (Stock.STOP, ResponseType.CLOSE);
                     owr_dialog.add_button (_("Skip All"), 4);
                     owr_dialog.add_button (_("Overwrite All"), 2);
                     owr_dialog.add_button (_("Rename"), 0);

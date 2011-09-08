@@ -90,6 +90,7 @@ namespace Emperor.Application {
                 public AppInfoHandlerFactory (AppInfo appinfo) { Object ( appinfo : appinfo ) ; }
 
                 public void handle (GLib.List<File> files)
+                    throws Error
                 {
                     appinfo.launch (files, null);
                 }
