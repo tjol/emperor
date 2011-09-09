@@ -416,6 +416,10 @@ namespace Emperor.Application {
 
             Mount mnt = null;
 
+            if (m_mnt != null) {
+                m_mnt.unmounted.disconnect (on_unmounted);
+            }
+
             if (other_pane.pwd != null && pwd.equal(other_pane.pwd)) {
                 // re-use other pane's list store.
                 m_data_store = other_pane.m_data_store;
@@ -526,6 +530,10 @@ namespace Emperor.Application {
             m_mnt = mnt;
             notify_property ("pwd");
             notify_property ("mnt");
+            if (m_mnt != null) {
+                m_mnt.unmounted.connect (on_unmounted);
+            }
+
             m_list_filter = new TreeModelFilter (m_data_store, null);
             m_list_filter.set_visible_func (this.filter_list_row);
             m_sorted_list = new TreeModelSort.with_model (m_list_filter);
@@ -576,6 +584,12 @@ namespace Emperor.Application {
                 old_pwd = File.new_for_path (".");
             }
             return yield chdir (old_pwd);
+        }
+
+        private void on_unmounted ()
+        {
+            chdir.begin (File.new_for_path (Environment.get_home_dir()), null);
+            display_error (_("Location unmounted."));
         }
 
         private void update_row (TreeIter iter, FileInfo file,
