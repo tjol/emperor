@@ -205,12 +205,109 @@ namespace Emperor.Modules {
             var vm = VolumeMonitor.get ();
             var volmenu = new Menu ();
             ImageMenuItem menuitem;
+            var pwd = m_pane.pwd;
 
             var listed_mounts = new HashSet<string>();
+
+            // Home directory.
+            var home = File.new_for_path (Environment.get_home_dir());
+            listed_mounts.add (home.get_path());
+            menuitem = new ImageMenuItem ();
+            menuitem.set_label (_("Home"));
+            menuitem.set_image (new Image.from_icon_name (
+                "user-home", IconSize.MENU));
+            menuitem.set_always_show_image (true);
+            menuitem.activate.connect (
+                new VolumeMenuClickHandler (this,
+                        home, null).on_click );
+
+            volmenu.append (menuitem);
+
+            bool pwd_is_bookmark = false;
+
+            foreach (var bmark in get_bookmarks ()) {
+                string bm_name = null;
+                Icon bm_icon = null;
+
+                if (bmark.equal (home)) {
+                    continue;
+                }
+                if (bmark.equal (pwd)) {
+                    pwd_is_bookmark = true;
+                }
+                try {
+                    var bm_finfo = bmark.query_info (FILE_ATTRIBUTE_STANDARD_TYPE + "," +
+                                                     FILE_ATTRIBUTE_STANDARD_ICON + "," +
+                                                     FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME,
+                                                     FileQueryInfoFlags.NONE, null);
+                    if (bm_finfo.get_file_type() == FileType.DIRECTORY) {
+                        bm_name = bm_finfo.get_display_name ();
+                        bm_icon = bm_finfo.get_icon ();
+                    }
+                } catch (Error e) {
+                    if (bmark.is_native()) {
+                        continue;
+                    } else {
+                        try {
+                            var bm_mount = bmark.find_enclosing_mount (null);
+                            if (bm_mount != null) {
+                                // it's mounted, yet query failed => skip.
+                                continue;
+                            }
+                        } catch (Error e) {
+                            // fine!
+                        }
+                        // not mounted. Display, on a whim.
+                        // get domain/port
+                        var uri = bmark.get_uri ();
+                        var spl1 = uri.split ("://", 2);
+                        if (spl1.length < 2) continue;
+                        var spl2 = spl1[1].split ("/", 2);
+                        var domain_name = spl2[0];
+                        bm_name = _("%s on %s").printf (bmark.get_basename(), domain_name);
+                        bm_icon = Icon.new_for_string ("folder-remote");
+                    }
+                }
+                if (bm_name == null || bm_icon == null) {
+                    continue;
+                }
+
+                if (bmark.is_native ()) {
+                    listed_mounts.add (bmark.get_path());
+                }
+                menuitem = new ImageMenuItem ();
+                menuitem.set_label (bm_name);
+                menuitem.set_image (new Image.from_gicon (bm_icon, IconSize.MENU));
+                menuitem.set_always_show_image (true);
+                var click_handler = new VolumeMenuClickHandler (this,
+                                            bmark, null);
+                menuitem.activate.connect ( click_handler.on_click );
+                menuitem.button_press_event.connect ( click_handler.bm_right_click );
+
+                volmenu.append (menuitem);
+
+            }
+
+            if (!pwd_is_bookmark && !pwd.equal(home)) {
+                menuitem = new ImageMenuItem ();
+                menuitem.set_label (_("Add %s to bookmarks").printf(pwd.get_basename()));
+                menuitem.set_image (new Image.from_icon_name ("bookmark-new", IconSize.MENU));
+                menuitem.set_always_show_image (true);
+                menuitem.activate.connect ( () => {
+                        add_to_bookmarks (pwd);
+                    });
+
+                volmenu.append (menuitem);
+            }
 
             first = true;
 
             foreach (var mnt in vm.get_mounts ()) {
+                if (first) {
+                    volmenu.append (new SeparatorMenuItem ());
+                    first = false;
+                }
+
                 menuitem = new ImageMenuItem ();
                 menuitem.set_label (mnt.get_name ());
                 menuitem.set_image (new Image.from_gicon (
@@ -218,7 +315,7 @@ namespace Emperor.Modules {
                 menuitem.set_always_show_image (true);
 
                 menuitem.activate.connect (
-                    new VolumeMenuClickHandler (m_wnd, m_pane,
+                    new VolumeMenuClickHandler (this,
                         mnt.get_root(), null).on_click );
 
                 volmenu.append (menuitem);
@@ -227,11 +324,9 @@ namespace Emperor.Modules {
                 if (root_path != null) {
                     listed_mounts.add (root_path);
                 }
-
-                first = false;
             }
 
-            first = !first;
+            first = true;
 
             foreach (var vol in vm.get_volumes ()) {
                 if (first) {
@@ -252,7 +347,7 @@ namespace Emperor.Modules {
                     }
 
                     menuitem.activate.connect (
-                        new VolumeMenuClickHandler (m_wnd, m_pane,
+                        new VolumeMenuClickHandler (this,
                             (vol_mnt == null) ? null : vol_mnt.get_root(),
                             vol).on_click );
 
@@ -282,7 +377,7 @@ namespace Emperor.Modules {
                 menuitem.set_always_show_image (true);
 
                 menuitem.activate.connect (
-                    new VolumeMenuClickHandler (m_wnd, m_pane,
+                    new VolumeMenuClickHandler (this,
                         File.new_for_path(path), null).on_click );
                 
                 volmenu.append (menuitem);
@@ -297,17 +392,80 @@ namespace Emperor.Modules {
             m_volmenu = volmenu;
         }
 
+        private Collection<File> get_bookmarks ()
+        {
+            var list = new ArrayList<File> ();
+            var bookmarks_file = File.parse_name ("~/.gtk-bookmarks");
+
+            try {
+                var stream = new DataInputStream (bookmarks_file.read ());
+                string line;
+                size_t len;
+                while ((line = stream.read_line (out len, null)) != null) {
+                    try {
+                        var bmark = File.new_for_uri (line.strip ());
+                        list.add (bmark);
+                    } catch (Error e) {
+                        continue;
+                    }
+                }
+            } catch (Error e) {
+                // ignore. be forgiving.
+            }
+
+            return list;
+
+        }
+
+        private void add_to_bookmarks (File new_bm)
+        {
+            var bookmarks_file = File.parse_name ("~/.gtk-bookmarks");
+            try {
+                var file_stream = bookmarks_file.append_to (0, null);
+                var stream = new DataOutputStream (file_stream);
+                stream.put_string (new_bm.get_uri());
+                stream.put_string ("\n");
+                file_stream.close ();
+            } catch (Error e) {
+                m_pane.display_error (_("Error writing to bookmarks file."));
+            }
+        }
+
+        private void remove_from_bookmarks (File ex_bm)
+        {
+            var old_bookmarks = get_bookmarks ();
+            var bookmarks_file = File.parse_name ("~/.gtk-bookmarks");
+            try {
+                var io_stream = bookmarks_file.replace_readwrite (null, false, 0, null);
+                var stream = new DataOutputStream (io_stream.output_stream);
+                foreach (var bm in old_bookmarks) {
+                    if (!ex_bm.equal(bm)) {
+                        stream.put_string (bm.get_uri());
+                        stream.put_string ("\n");
+                    }
+                }
+                io_stream.close ();
+            } catch (Error e) {
+                m_pane.display_error (_("Error writing to bookmarks file."));
+            }
+
+            m_volmenu.popdown ();
+        }
+
         private class VolumeMenuClickHandler : Object
         {
+            private VolumeToolbar m_parent;
             private Window m_wnd;
             private FilePane m_pane;
             private File? m_path;
             private Volume? m_volume;
+            private Menu? m_context_menu;
 
-            public VolumeMenuClickHandler (Window wnd, FilePane pane, File? path, Volume? volume)
+            public VolumeMenuClickHandler (VolumeToolbar parent, File? path, Volume? volume)
             {
-                m_wnd = wnd;
-                m_pane = pane;
+                m_parent = parent;
+                m_wnd = parent.m_wnd;
+                m_pane = parent.m_pane;
                 m_path = path;
                 m_volume = volume;
                 this.@ref();
@@ -334,7 +492,35 @@ namespace Emperor.Modules {
                 }
                 m_pane.display_error (_("Error mounting volume."));
             }
-            
+
+            public bool bm_right_click (Gdk.EventButton bevent)
+            {
+                if (bevent.type != Gdk.EventType.BUTTON_PRESS
+                    || bevent.button != 3) {
+                    return false;
+                }
+
+                MenuItem menuitem;
+
+                m_context_menu = new Menu ();
+
+                menuitem = new MenuItem.with_label (_("Open"));
+                menuitem.activate.connect (on_click);
+                m_context_menu.append (menuitem);
+                menuitem = new MenuItem.with_label (_("Delete bookmark"));
+                menuitem.activate.connect (remove_from_bookmarks);
+                m_context_menu.append (menuitem);
+
+                m_context_menu.show_all();
+                m_context_menu.popup (null, null, null, 3, bevent.time);
+
+                return true;
+            }
+
+            private void remove_from_bookmarks ()
+            {
+                m_parent.remove_from_bookmarks (m_path);
+            }
         }
 
         private void position_volume_menu (Menu menu, out int x, out int y, out bool push_in)
