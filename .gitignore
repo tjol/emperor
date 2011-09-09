@@ -17,4 +17,3 @@ Makefile.in
 .libs
 /autom4te.cache
 /INSTALL
-/emperor.desktop

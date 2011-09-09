@@ -16,6 +16,7 @@
  */
 
 using GLib;
+using Gee;
 using Gtk;
 using Emperor;
 using Emperor.Application;
@@ -24,8 +25,8 @@ namespace Emperor.Modules {
 
     public void install_volume_toolbar (MainWindow main_window)
     {
-        var left_toolbar = new VolumeToolbar (main_window.left_pane);
-        var right_toolbar = new VolumeToolbar (main_window.right_pane);
+        var left_toolbar = new VolumeToolbar (main_window, main_window.left_pane);
+        var right_toolbar = new VolumeToolbar (main_window, main_window.right_pane);
         
         main_window.left_pane.pack_start (left_toolbar, false, false, 0);
         main_window.left_pane.reorder_child (left_toolbar, 0);
@@ -39,25 +40,46 @@ namespace Emperor.Modules {
 
     public class VolumeToolbar : HBox
     {
+        private Window m_wnd;
         private FilePane m_pane;
         private Label m_mount_desc;
+        private Button m_home_button;
         private Button m_root_button;
         private Button m_up_button;
+        private Button m_vol_list_button;
+        private Button m_eject_button;
 
-        public VolumeToolbar (FilePane pane)
+        private Menu m_volmenu;
+
+        public VolumeToolbar (Window wnd, FilePane pane)
         {
+            m_wnd = wnd;
             m_pane = pane;
+            var app = (EmperorCore) m_wnd.application;
 
             m_mount_desc = new Label ("");
             m_root_button = new Button.with_label ("/");
+            m_home_button = new Button.with_label ("~");
             m_up_button = new Button.with_label ("..");
+            m_vol_list_button = new Button ();
+            m_vol_list_button.image = new Image.from_file (
+                            app.get_resource_file_path("downarrow.png"));
+            m_eject_button = new Button ();
+            m_eject_button.image = new Image.from_file (
+                            app.get_resource_file_path("eject.png"));
 
+            m_home_button.clicked.connect (go_home);
             m_root_button.clicked.connect (goto_root);
             m_up_button.clicked.connect (go_up);
+            m_eject_button.clicked.connect (eject_volume);
+            m_vol_list_button.clicked.connect (open_volume_list);
 
+            pack_start (m_vol_list_button, false, false, 0);
             pack_start (m_mount_desc, true, true, 0);
             pack_end (m_up_button, false, false, 0);
             pack_end (m_root_button, false, false, 0);
+            pack_end (m_home_button, false, false, 0);
+            pack_end (m_eject_button, false, false, 0);
 
             m_pane.notify["mnt"].connect (on_new_mnt);
         }
@@ -70,6 +92,11 @@ namespace Emperor.Modules {
             string mnt_type = null;
             if (m_pane.mnt != null) {
                 mnt_name = m_pane.mnt.get_name ();
+                if (m_pane.mnt.can_eject() || m_pane.mnt.can_unmount()) {
+                    m_eject_button.show ();
+                } else {
+                    m_eject_button.hide ();
+                }
             } else {
                 // Look for the UNIX mount.
                 FileInfo fi = dir.query_info (FILE_ATTRIBUTE_ID_FILESYSTEM, 0);
@@ -91,6 +118,9 @@ namespace Emperor.Modules {
                 if (mnt_name == null) {
                     mnt_name = _("unknown");
                 }
+
+                // TODO: check if this mount can be user-unmounted.
+                m_eject_button.hide ();
             }
 
             try {
@@ -130,6 +160,11 @@ namespace Emperor.Modules {
             }
         }
 
+        private void go_home ()
+        {
+            m_pane.pwd = File.new_for_path (Environment.get_home_dir());
+        }
+
         private void goto_root ()
         {
             if (m_pane.pwd.is_native()) {
@@ -138,6 +173,184 @@ namespace Emperor.Modules {
                 m_pane.pwd = m_pane.mnt.get_root ();
             }
         }
+
+        private void eject_volume ()
+        {
+            eject_volume_async.begin ();
+        }
+
+        private async void eject_volume_async ()
+        {
+            var mnt = m_pane.mnt;
+            if (mnt == null) {
+                return;
+            }
+
+            yield m_pane.chdir (File.new_for_path (Environment.get_home_dir()), null);
+
+            if (mnt.can_eject ()) {
+                yield mnt.eject_with_operation (MountUnmountFlags.NONE,
+                        new Gtk.MountOperation (m_wnd), null);
+            } else if (mnt.can_unmount ()) {
+                yield mnt.unmount_with_operation (MountUnmountFlags.NONE,
+                        new Gtk.MountOperation (m_wnd), null);
+            } else {
+                m_pane.display_error (_("Cannot unmount “%s”.").printf (mnt.get_name));
+            }
+        }
+
+        private void open_volume_list ()
+        {
+            bool first;
+            var vm = VolumeMonitor.get ();
+            var volmenu = new Menu ();
+            ImageMenuItem menuitem;
+
+            var listed_mounts = new HashSet<string>();
+
+            first = true;
+
+            foreach (var mnt in vm.get_mounts ()) {
+                menuitem = new ImageMenuItem ();
+                menuitem.set_label (mnt.get_name ());
+                menuitem.set_image (new Image.from_gicon (
+                    mnt.get_icon (), IconSize.MENU));
+                menuitem.set_always_show_image (true);
+
+                menuitem.activate.connect (
+                    new VolumeMenuClickHandler (m_wnd, m_pane,
+                        mnt.get_root(), null).on_click );
+
+                volmenu.append (menuitem);
+
+                var root_path = mnt.get_root().get_path();
+                if (root_path != null) {
+                    listed_mounts.add (root_path);
+                }
+
+                first = false;
+            }
+
+            first = !first;
+
+            foreach (var vol in vm.get_volumes ()) {
+                if (first) {
+                    volmenu.append (new SeparatorMenuItem ());
+                    first = false;
+                }
+
+                var vol_mnt = vol.get_mount ();
+                if (vol_mnt == null) {
+                    // Not mounted => not yet listed.
+                    menuitem = new ImageMenuItem ();
+                    menuitem.set_label (vol.get_name ());
+                    menuitem.set_image (new Image.from_gicon (
+                        vol.get_icon (), IconSize.MENU));
+                    menuitem.set_always_show_image (true);
+                    if (!vol.can_mount()) {
+                        menuitem.sensitive = false;
+                    }
+
+                    menuitem.activate.connect (
+                        new VolumeMenuClickHandler (m_wnd, m_pane,
+                            (vol_mnt == null) ? null : vol_mnt.get_root(),
+                            vol).on_click );
+
+                    volmenu.append (menuitem);
+                }
+            }
+
+            first = true;
+            foreach (unowned UnixMountEntry xmnt in UnixMountEntry.@get()) {
+                var path = xmnt.get_mount_path ();
+                if (path in listed_mounts
+                 || path.has_prefix ("/dev")
+                 || path.has_prefix ("/proc")
+                 || path.has_prefix ("/sys")
+                 || xmnt.get_fs_type() == "fuse.gvfs-fuse-daemon"
+                 || xmnt.get_fs_type() == "tmpfs") {
+                    continue;
+                }
+                if (first) {
+                    volmenu.append (new SeparatorMenuItem ());
+                    first = false;
+                }
+
+                menuitem = new ImageMenuItem ();
+                menuitem.set_label (path);
+                menuitem.set_image (new Image.from_icon_name ("folder", IconSize.MENU));
+                menuitem.set_always_show_image (true);
+
+                menuitem.activate.connect (
+                    new VolumeMenuClickHandler (m_wnd, m_pane,
+                        File.new_for_path(path), null).on_click );
+                
+                volmenu.append (menuitem);
+
+                listed_mounts.add (path);
+            }
+
+            volmenu.show_all();
+            volmenu.popup (null, null, position_volume_menu, 0, get_current_event_time());
+            // Need to keep a reference to the menu around of it won't
+            // be shown.
+            m_volmenu = volmenu;
+        }
+
+        private class VolumeMenuClickHandler : Object
+        {
+            private Window m_wnd;
+            private FilePane m_pane;
+            private File? m_path;
+            private Volume? m_volume;
+
+            public VolumeMenuClickHandler (Window wnd, FilePane pane, File? path, Volume? volume)
+            {
+                m_wnd = wnd;
+                m_pane = pane;
+                m_path = path;
+                m_volume = volume;
+                this.@ref();
+            }
+
+            public void on_click ()
+            {
+                if (m_path != null) {
+                    m_pane.pwd = m_path;
+                } else if (m_volume != null) {
+                    do_mount.begin ();
+                }
+            }
+
+            private async void do_mount ()
+            {
+                if (yield m_volume.mount (MountMountFlags.NONE,
+                            new Gtk.MountOperation (m_wnd), null)) {
+                    var mnt = m_volume.get_mount ();
+                    if (mnt != null) {
+                        m_pane.pwd = mnt.get_root ();
+                        return;
+                    }
+                }
+                m_pane.display_error (_("Error mounting volume."));
+            }
+            
+        }
+
+        private void position_volume_menu (Menu menu, out int x, out int y, out bool push_in)
+        {
+            int origin_x, origin_y;
+            var gdkwnd = m_vol_list_button.get_window();
+            gdkwnd.get_origin (out origin_x, out origin_y);
+
+            Allocation alloc;
+            m_vol_list_button.get_allocation (out alloc);
+
+            x = origin_x + alloc.x;
+            y = origin_y + alloc.y + alloc.height;
+        }
+
+
     }
 
     private string _esc (string s)

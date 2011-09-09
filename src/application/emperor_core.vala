@@ -122,6 +122,16 @@ namespace Emperor.Application {
                 _("Configuration file not found: %s").printf (basename) );
         }
 
+        public string get_resource_file_path (string path)
+        {
+            var env_res_path = Environment.get_variable ("EMPEROR_RES_LOCATION");
+            if (env_res_path != null) {
+                return "%s/%s".printf (env_res_path, path);
+            } else {
+                return "%s/res/%s".printf (Config.DATA_DIR, path);
+            }
+        }
+
         private void handle_config_xml_nodes (Xml.Node* parent)
                         throws ConfigurationError
         {
