@@ -102,8 +102,18 @@ namespace Emperor.Application {
             // Register this window with the GtkApplication
             this.application = m_app;
 
+            bool icon_has_been_set = false;
             // attempt to set the icon.
-            set_icon_name ("emperor-fm");
+            if (! IconTheme.get_default().has_icon("emperor-fm")) {
+                var icon_file = File.new_for_path ("emperor-fm.png");
+                if (icon_file.query_exists ()) {
+                    set_default_icon_from_file ("emperor-fm.png");
+                    icon_has_been_set = true;
+                }
+            }
+            if (!icon_has_been_set) {
+                set_default_icon_name ("emperor-fm");
+            }
 
         }
 
