@@ -818,6 +818,7 @@ namespace Emperor.Application {
                                 return false;
                             });
                     }
+                    this.active = true;
                     return true;
                 }
             } else if (e.type == EventType.2BUTTON_PRESS) {
