@@ -11,6 +11,8 @@ TODO
 * Archive handling
 * Tabs
 * Keyboard shortcuts for every action
+* Drag&Drop
+* (perhaps) file system monitoring / inotify
 
 * Git integration
 
