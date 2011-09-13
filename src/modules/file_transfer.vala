@@ -422,6 +422,25 @@ namespace Emperor.Modules {
             var in_type = file.query_file_type (query_flags);
             var out_type = dest.query_file_type (query_flags);
 
+            string in_fs_id, out_fs_id;
+            try {
+                var in_fs_info = yield file.query_filesystem_info_async (
+                                        FILE_ATTRIBUTE_ID_FILESYSTEM,
+                                        Priority.DEFAULT, cancellable);
+                in_fs_id = in_fs_info.get_attribute_string (FILE_ATTRIBUTE_ID_FILESYSTEM);
+            } catch (Error e1) {
+                in_fs_id = "__in__";
+            }
+
+            try {
+                var out_fs_info = yield file.query_filesystem_info_async (
+                                        FILE_ATTRIBUTE_ID_FILESYSTEM,
+                                        Priority.DEFAULT, cancellable);
+                out_fs_id = out_fs_info.get_attribute_string (FILE_ATTRIBUTE_ID_FILESYSTEM);
+            } catch (Error e2) {
+                out_fs_id = "__out__";
+            }
+
             var dest_exists = false;
             if ((dest_exists = dest.query_exists(cancellable))) {
                 // Overwrite?
@@ -571,7 +590,7 @@ namespace Emperor.Modules {
                             // Done for this file:
                             return;
                         }
-                    } catch (Error e1) {
+                    } catch (Error e3) {
                         // if this fails, we simply IGNORE. It's not that important.
                     }
                 }
@@ -580,7 +599,7 @@ namespace Emperor.Modules {
                     dest.make_directory (cancellable);
                     try {
                         file.copy_attributes (dest, copy_flags, cancellable);
-                    } catch (Error e2) {
+                    } catch (Error e4) {
                         // if this fails, we simply IGNORE. It's not that important.
                     }
                 }
@@ -611,11 +630,18 @@ namespace Emperor.Modules {
                 }
 
             } else {
-                if (move) {
+                if (move && in_fs_id == out_fs_id) {
+                    // only use the move method when we're on the same file system.
+                    // It works when we're not, but it might take a while, so it's
+                    // better to use the async copy method below.
                     file.move (dest, copy_flags, cancellable, progress_cb);
                 } else {
                     yield file.copy_async (dest, copy_flags, Priority.DEFAULT,
                                            cancellable, progress_cb);
+
+                    if (move) {
+                        file.@delete (cancellable);
+                    }
                 }
             }
         }
