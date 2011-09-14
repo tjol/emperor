@@ -66,6 +66,11 @@ namespace Emperor.Application {
                 delete document;
             }
 
+            var about_action = modules.new_action ("show-about-dialog");
+            about_action.set_stock_id (Gtk.Stock.ABOUT);
+            about_action.activate.connect (show_about_dialog);
+            ui_manager.add_action_to_menu (_("_Help"), about_action, 999);
+
             main_window = new MainWindow (this);
 
             this.activate.connect (run_program);
@@ -193,6 +198,37 @@ namespace Emperor.Application {
         private void on_quit ()
         {
             prefs.save ();
+        }
+
+        public void show_about_dialog ()
+        {
+            string[] authors = {
+                "<a href=\"mailto:t@jollybox.de\">Thomas Jollans</a>"
+            };
+            string license_text =
+              _("Emperor is free software: you can redistribute it and/or modify " +
+                "it under the terms of the GNU General Public License as published by " +
+                "the Free Software Foundation, either version 3 of the License, or " +
+                "(at your option) any later version. \n\n" +
+
+                "This program is distributed in the hope that it will be useful, " +
+                "but WITHOUT ANY WARRANTY; without even the implied warranty of " +
+                "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the " +
+                "GNU General Public License for more details. \n\n" +
+
+                "You should have received a copy of the GNU General Public License " +
+                "along with Emperor.  If not, see http://www.gnu.org/licenses/");
+
+            Gtk.show_about_dialog (main_window,
+                program_name : "Emperor",
+                logo_icon_name : "emperor-fm",
+                version : Config.PACKAGE_VERSION,
+                title : _("About Emperor"),
+                authors : authors,
+                license : license_text,
+                wrap_license : true,
+                copyright : "Copyright © 2011 Thomas Jollans",
+                comments : "Orthodox file manager for GNOME." );
         }
 
         public static int main (string[] argv)
