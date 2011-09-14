@@ -1218,7 +1218,7 @@ namespace Emperor.Application {
         {
             FileInfo info;
             Mount mnt;
-            stdout.printf ("Activating: %s %s %d\n", file_info.get_name(), file_info.get_content_type(), file_info.get_file_type());
+
             switch (file_info.get_file_type()) {
             case FileType.DIRECTORY:
                 File dir;
