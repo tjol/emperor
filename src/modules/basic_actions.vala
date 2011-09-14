@@ -66,6 +66,7 @@ namespace Emperor.Modules {
             // F7: Mkdir.
             action = reg.new_action ("mkdir");
             action.label = _("New directory");
+            action.icon_name = "folder-new";
             action.set_accel_path ("<Emperor-Main>/BasicActions/Mkdir");
             Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Mkdir",
                                     Gdk.KeySym.F7, 0);
