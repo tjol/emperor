@@ -92,7 +92,9 @@ namespace Emperor.Modules {
             string mnt_type = null;
             if (m_pane.mnt != null) {
                 mnt_name = m_pane.mnt.get_name ();
-                if (m_pane.mnt.can_eject() || m_pane.mnt.can_unmount()) {
+                // Archives shouldn't be treated as mount points in the user interface.
+                if (m_pane.mnt.can_eject() || m_pane.mnt.can_unmount() 
+                    && dir.get_uri_scheme() != "archive") {
                     m_eject_button.show ();
                 } else {
                     m_eject_button.hide ();
@@ -141,20 +143,27 @@ namespace Emperor.Modules {
                 var size_str = bytesize_to_string (size);
                 var free_str = bytesize_to_string (free);
 
-                m_mount_desc.set_markup (
-                    (ronly ? _("<b>%s</b> (%s; %s of %s free; read-only)")
-                          : _("<b>%s</b> (%s; %s of %s free)")).printf (
-                                _esc(mnt_name), _esc(mnt_type), free_str, size_str) );
+                if (mnt_type != null) {
+                    m_mount_desc.set_markup (
+                        (ronly ? _("<b>%s</b> (%s; %s of %s free; read-only)")
+                              : _("<b>%s</b> (%s; %s of %s free)")).printf (
+                                    _esc(mnt_name), _esc(mnt_type), free_str, size_str) );
+                } else {
+                    m_mount_desc.set_markup (
+                        (ronly ? _("<b>%s</b> (%s of %s free; read-only)")
+                              : _("<b>%s</b> (%s of %s free)")).printf (
+                                    _esc(mnt_name), free_str, size_str) );
+                }
             } catch (Error e) {
                 m_mount_desc.set_markup ( "<b>%s</b>".printf(_esc(mnt_name)) );
             }
 
-            m_up_button.sensitive = dir.has_parent (null);
+            m_up_button.sensitive = (m_pane.parent_dir != null);
         }
 
         private void go_up ()
         {
-            var parent = m_pane.pwd.get_parent ();
+            var parent = m_pane.parent_dir;
             if (parent != null) {
                 m_pane.chdir.begin (parent, m_pane.pwd.get_basename());
             }
@@ -167,10 +176,17 @@ namespace Emperor.Modules {
 
         private void goto_root ()
         {
-            if (m_pane.pwd.is_native()) {
+            var pwd = m_pane.pwd;
+            var mnt = m_pane.mnt;
+            // treat an archive as if it were a regular directory on its parent file system.
+            if (pwd.get_uri_scheme() == "archive" && m_pane.parent_dir != null) {
+                pwd = m_pane.parent_dir;
+            }
+
+            if (pwd.is_native()) {
                 m_pane.pwd = File.new_for_path ("/");
             } else {
-                m_pane.pwd = m_pane.mnt.get_root ();
+                m_pane.pwd = mnt.get_root ();
             }
         }
 
@@ -303,6 +319,12 @@ namespace Emperor.Modules {
             first = true;
 
             foreach (var mnt in vm.get_mounts ()) {
+                // Don't display archive mounts. (special case)
+                var root = mnt.get_root ();
+                if (root.get_uri_scheme() == "archive") {
+                    continue;
+                }
+
                 if (first) {
                     volmenu.append (new SeparatorMenuItem ());
                     first = false;
@@ -320,7 +342,7 @@ namespace Emperor.Modules {
 
                 volmenu.append (menuitem);
 
-                var root_path = mnt.get_root().get_path();
+                var root_path = root.get_path();
                 if (root_path != null) {
                     listed_mounts.add (root_path);
                 }

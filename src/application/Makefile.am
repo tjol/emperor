@@ -6,7 +6,7 @@ emperor_SOURCES=emperor_core.vala file_pane.vala \
 		user_interface_manager.vala input_dialog.vala \
 		external_applications.vala \
 		prefs_machine.vala \
-		keysyms_stamp.vala
+		archive_types.vala keysyms_stamp.vala
 
 emperor_VALAFLAGS=@VALAFLAGS@ \
 		  @GMODULE_VALAFLAGS@ @LIBXML_VALAFLAGS@ \

@@ -51,6 +51,8 @@ namespace Emperor.Application {
         Map<string,FileFilterFuncWrapper> m_filters;
         Map<string,FileInfoCompareFuncWrapper> m_permanent_sort;
 
+        internal static HashMap<string,int> archive_ref_counts = null;
+
         public int COL_FILEINFO { get; private set; }
         public int COL_SELECTED { get; private set; }
         public int COL_FG_COLOR { get; private set; }
@@ -64,10 +66,16 @@ namespace Emperor.Application {
 
         public FilePane (EmperorCore app, string pane_designation)
         {
+            if (archive_ref_counts == null) {
+                archive_ref_counts = new HashMap<string,int> ();
+            }
+
             m_app = app;
             m_designation = pane_designation;
             m_filters = new HashMap<string,FileFilterFuncWrapper> ();
             m_permanent_sort = new HashMap<string,FileInfoCompareFuncWrapper> ();
+
+            this.destroy.connect (on_destroy);
 
             /*
              * Create and add the title Label
@@ -108,6 +116,7 @@ namespace Emperor.Application {
             m_file_attributes = new HashSet<string>();
             m_file_attributes.add(FILE_ATTRIBUTE_STANDARD_NAME);
             m_file_attributes.add(FILE_ATTRIBUTE_STANDARD_TYPE);
+            m_file_attributes.add(FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE);
 
             //// standard columns:
             int idx = 0;
@@ -237,6 +246,17 @@ namespace Emperor.Application {
             pack_start (m_error_message_bg, false, false);
         }
 
+        private void on_destroy ()
+        {
+            // unmount archives. Perhaps other things in modules.
+            m_mnt = null;
+            notify_property ("mnt");
+
+            // Doing the same thing for pwd and parent_dir might not be safe:
+            // they're usually never null.
+        }
+
+
         private void check_column_sizes ()
         {
             int colidx = 0;
@@ -304,7 +324,7 @@ namespace Emperor.Application {
                 return false;
             }
 
-            var file = m_pwd.resolve_relative_path (finfo.get_name ());
+            var file = get_child_by_name (finfo.get_name ());
 
             /*
             // standard behaviour: do not display non-existant files.
@@ -387,6 +407,7 @@ namespace Emperor.Application {
 
 
         File m_pwd = null;
+        File m_parent = null;
         Mount m_mnt = null;
 
         /**
@@ -405,6 +426,10 @@ namespace Emperor.Application {
             get { return m_mnt; }
         }
 
+        public File parent_dir {
+            get { return m_parent; }
+        }
+
         public async bool chdir (File pwd, string? prev_name=null)
         {
             TreeIter? prev_iter = null;
@@ -414,6 +439,8 @@ namespace Emperor.Application {
             bool is_sorted = (m_sorted_list != null
                              && m_sorted_list.get_sort_column_id (out sort_column, out sort_type));
 
+            File parent = null;
+            File archive_file = null;
             Mount mnt = null;
 
             if (m_mnt != null) {
@@ -425,6 +452,7 @@ namespace Emperor.Application {
                 m_data_store = other_pane.m_data_store;
                 m_cursor_path = other_pane.m_cursor_path;
                 mnt = other_pane.mnt;
+                parent = other_pane.parent_dir;
 
             } else {
                 try {
@@ -454,6 +482,18 @@ namespace Emperor.Application {
                     } else {
                         return false;
                     }
+                    if (pwd.get_uri_scheme() == "archive") {
+                        var archive_mount_root = mnt.get_root ();
+                        var archive_ref = archive_mount_root.get_uri();
+                        if (archive_ref in archive_ref_counts) {
+                            archive_ref_counts[archive_ref] = archive_ref_counts[archive_ref] + 1;
+                        } else {
+                            archive_ref_counts[archive_ref] = 1;
+                        }
+
+                        new ArchiveMountMonitor (this, archive_mount_root,
+                                        archive_ref, mnt, m_app.main_window);
+                    }
                 }
 
                 // chdir-proper.
@@ -474,7 +514,25 @@ namespace Emperor.Application {
                 TreeIter iter;
 
                 // Add [..]
-                var parent = pwd.get_parent();
+                parent = pwd.get_parent();
+
+                if (pwd.get_uri_scheme() == "archive") {
+                    var archive_uri = pwd.get_uri();
+                    var spl1 = archive_uri.split ("://", 2);
+                    if (spl1.length >= 2) {
+                        var spl2 = spl1[1].split ("/", 2);
+                        var archive_host = spl2[0];
+                        var archive_file_uri_esc1 = Uri.unescape_string (archive_host, null);
+                        var archive_file_uri = Uri.unescape_string (archive_file_uri_esc1, null);
+                        archive_file = File.new_for_uri (archive_file_uri);
+                    }
+                }
+
+                if (parent == null && archive_file != null) {
+                    // archive root.
+                    parent = archive_file.get_parent();
+                }
+
                 FileInfo parent_info = null;
                 if (parent != null) {
                     try {
@@ -528,8 +586,10 @@ namespace Emperor.Application {
             }
             m_pwd = pwd;
             m_mnt = mnt;
+            m_parent = parent;
             notify_property ("pwd");
             notify_property ("mnt");
+            notify_property ("parent_dir");
             if (m_mnt != null) {
                 m_mnt.unmounted.connect (on_unmounted);
             }
@@ -560,10 +620,13 @@ namespace Emperor.Application {
             }
 
             // set title.
-            string title = pwd.get_parse_name ();
-            /* TODO: once archive support is implemented, special-case their
-             *       URI here and create a nice path/uri without archive://
-             */
+            string title;
+            if (archive_file != null) {
+                var rel_path = mnt.get_root().get_relative_path (pwd);
+                title = "[ %s ] /%s".printf (archive_file.get_basename(), rel_path);
+            } else {
+                title = pwd.get_parse_name ();
+            }
             m_pane_title.set_text (title);
 
             // save pwd to prefs
@@ -584,6 +647,45 @@ namespace Emperor.Application {
                 old_pwd = File.new_for_path (".");
             }
             return yield chdir (old_pwd);
+        }
+
+        private class ArchiveMountMonitor : Object
+        {
+            string archive_uri;
+            File archive_mount_root;
+            FilePane pane;
+            Mount mnt;
+            Gtk.Window main_window;
+
+            internal ArchiveMountMonitor (FilePane pane, File archive_mount_root,
+                        string archive_uri, Mount mnt, Gtk.Window main_window)
+            {
+                this.archive_uri = archive_uri;
+                this.archive_mount_root = archive_mount_root;
+                this.pane = pane;
+                this.mnt = mnt;
+                this.main_window = main_window;
+
+                pane.notify["mnt"].connect (this.on_mnt_changed);
+                this.@ref();
+            }
+
+            internal void on_mnt_changed (ParamSpec p)
+            {
+                if (pane.mnt == null ||
+                    ! pane.mnt.get_root().equal (archive_mount_root)) {
+
+                    var refcnt = archive_ref_counts[archive_uri];
+                    refcnt--;
+                    archive_ref_counts[archive_uri] = refcnt;
+                    if (refcnt == 0) {
+                        mnt.unmount_with_operation (MountUnmountFlags.NONE,
+                            new Gtk.MountOperation (main_window));
+                        pane.notify["mnt"].disconnect (this.on_mnt_changed);
+                        this.@unref();
+                    }
+                }
+            }
         }
 
         private void on_unmounted ()
@@ -861,7 +963,7 @@ namespace Emperor.Application {
             m_editing_title = true;
             
             var dir_text = new Entry();
-            dir_text.text = m_pane_title.get_text ();
+            dir_text.text = m_pwd.get_parse_name ();
             
             dir_text.focus_out_event.connect ((e) => {
                     // Remove the Entry, switch back to plain title.
@@ -1020,7 +1122,7 @@ namespace Emperor.Application {
             case FileType.DIRECTORY:
                 File dir;
                 if (real_file == null) {
-                    dir = m_pwd.resolve_relative_path (file_info.get_name());
+                    dir = get_child_by_name (file_info.get_name());
                 } else {
                     dir = real_file;
                 }
@@ -1032,7 +1134,7 @@ namespace Emperor.Application {
                 break;
             case FileType.SYMBOLIC_LINK:
                 var target_s = file_info.get_symlink_target ();
-                var target = m_pwd.resolve_relative_path(target_s);
+                var target = get_child_by_name (target_s);
                 FileInfo info;
                 try {
                     info = yield target.query_info_async (m_file_attributes_str, 0);
@@ -1050,8 +1152,30 @@ namespace Emperor.Application {
                 } else {
                     file = real_file;
                 }
+                if (file_info.get_content_type() in ARCHIVE_TYPES) {
+                    // attempt to mount as archive.
+                    var archive_host = Uri.escape_string (file.get_uri(), null, false);
+                    // escaping percent signs need to be escaped :-/
+                    var escaped_host = Uri.escape_string (archive_host, null, false);
+                    var archive_file = File.new_for_uri ("archive://" + escaped_host);
+                    if (yield chdir (archive_file, null)) {
+                        // success!
+                        return;
+                    } else {
+                        hide_error ();
+                    }
+                }
                 m_app.open_file (file);
                 break;
+            }
+        }
+
+        public File get_child_by_name (string name)
+        {
+            if (name == "..") {
+                return m_parent;
+            } else {
+                return m_pwd.get_child (name);
             }
         }
 
@@ -1082,7 +1206,7 @@ namespace Emperor.Application {
                         model.get_value (iter, COL_FILEINFO, out finfo_val);
                         assert ( finfo_val.holds (typeof(FileInfo)) );
                         var finfo = finfo_val.get_object () as FileInfo;
-                        var file = m_pwd.resolve_relative_path (finfo.get_name());
+                        var file = get_child_by_name (finfo.get_name());
                         file_list.prepend (file);
                     }
                     return false;
@@ -1091,7 +1215,7 @@ namespace Emperor.Application {
             if (file_list.length() == 0 && m_cursor_path != null) {
                 // if no files are selected, use the cursor in stead.
                 var cursor_finfo = get_fileinfo (m_cursor_path);
-                var cursor_file = m_pwd.resolve_relative_path (cursor_finfo.get_name());
+                var cursor_file = get_child_by_name (cursor_finfo.get_name());
                 file_list.prepend (cursor_file);
             } else {
                 file_list.reverse ();
