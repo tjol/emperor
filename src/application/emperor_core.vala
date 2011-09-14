@@ -203,7 +203,7 @@ namespace Emperor.Application {
         public void show_about_dialog ()
         {
             string[] authors = {
-                "<a href=\"mailto:t@jollybox.de\">Thomas Jollans</a>"
+                "<a href=\"mailto:Thomas Jollans &lt;t@jollybox.de&gt;\">Thomas Jollans</a>"
             };
             string license_text =
               _("Emperor is free software: you can redistribute it and/or modify " +
