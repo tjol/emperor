@@ -514,6 +514,8 @@ namespace Emperor.Application {
                 if (parent_info != null) {
                     parent_info.set_display_name("..");
                     parent_info.set_name("..");
+                    parent_info.set_is_hidden(false);
+                    parent_info.set_attribute_boolean(FILE_ATTRIBUTE_STANDARD_IS_BACKUP, false);
 
                     store.append (out iter);
 
