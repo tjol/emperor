@@ -183,7 +183,7 @@ namespace Emperor.Modules {
                 pwd = m_pane.parent_dir;
             }
 
-            if (pwd.is_native()) {
+            if (pwd.is_native() || mnt == null) {
                 m_pane.pwd = File.new_for_path ("/");
             } else {
                 m_pane.pwd = mnt.get_root ();

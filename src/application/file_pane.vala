@@ -117,6 +117,8 @@ namespace Emperor.Application {
             m_file_attributes.add(FILE_ATTRIBUTE_STANDARD_NAME);
             m_file_attributes.add(FILE_ATTRIBUTE_STANDARD_TYPE);
             m_file_attributes.add(FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE);
+            m_file_attributes.add(FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET);
+            m_file_attributes.add(FILE_ATTRIBUTE_STANDARD_TARGET_URI);
 
             //// standard columns:
             int idx = 0;
@@ -455,55 +457,11 @@ namespace Emperor.Application {
                 parent = other_pane.parent_dir;
 
             } else {
-                try {
-                    mnt = yield pwd.find_enclosing_mount_async ();
-                } catch (Error mnterr1) {
-                    mnt = null;
+                if (! yield procure_mount (pwd, out mnt)) {
+                    return false;
                 }
-                if (mnt == null && ! pwd.is_native()) {
-                    // not mounted. Can I mount this?
-                    bool mounted = false;
 
-                    var waiter = new WaitingForMount (m_app.main_window);
-                    set_cursor_busy (true);
-                    try {
-                        var cancellable = waiter.go();
-
-                        yield pwd.mount_enclosing_volume (
-                                MountMountFlags.NONE, new Gtk.MountOperation (m_app.main_window),
-                                cancellable);
-
-                        mounted = true;
-                    } catch (Error mnterr2) {
-                        display_error (_("Error mounting volume. (%s)").printf(mnterr2.message));
-                        mounted = false;
-                    }
-                    set_cursor_busy (false);
-                    waiter.done ();
-
-                    if (mounted) {
-                        try {
-                            mnt = yield pwd.find_enclosing_mount_async ();
-                        } catch (Error mnterr3) {
-                            display_error (_("Error accessing mount. (%s)").printf(
-                                                mnterr3.message));
-                        }
-                    } else {
-                        return false;
-                    }
-                    if (pwd.get_uri_scheme() == "archive") {
-                        var archive_mount_root = mnt.get_root ();
-                        var archive_ref = archive_mount_root.get_uri();
-                        if (archive_ref in archive_ref_counts) {
-                            archive_ref_counts[archive_ref] = archive_ref_counts[archive_ref] + 1;
-                        } else {
-                            archive_ref_counts[archive_ref] = 1;
-                        }
-
-                        new ArchiveMountMonitor (this, archive_mount_root,
-                                        archive_ref, mnt, m_app.main_window);
-                    }
-                }
+                set_cursor_busy (true);
 
                 // chdir-proper.
                 var store = new ListStore.newv(m_store_types);
@@ -592,6 +550,8 @@ namespace Emperor.Application {
                 m_data_store = store;
                 m_cursor_path = null;
 
+                set_cursor_busy (false);
+
             }
             m_pwd = pwd;
             m_mnt = mnt;
@@ -658,6 +618,62 @@ namespace Emperor.Application {
             return yield chdir (old_pwd);
         }
 
+        public async bool procure_mount (File pwd, out Mount mnt)
+        {
+            bool mount_error = false;
+            try {
+                mnt = yield pwd.find_enclosing_mount_async ();
+            } catch (Error mnterr1) {
+                mount_error = true;
+                mnt = null;
+            }
+            if (mount_error && ! pwd.is_native()) {
+                // not mounted. Can I mount this?
+                bool mounted = false;
+
+                var waiter = new WaitingForMount (m_app.main_window);
+                set_cursor_busy (true);
+                try {
+                    var cancellable = waiter.go();
+
+                    yield pwd.mount_enclosing_volume (
+                            MountMountFlags.NONE, new Gtk.MountOperation (m_app.main_window),
+                            cancellable);
+
+                    mounted = true;
+                } catch (Error mnterr2) {
+                    display_error (_("Error mounting volume. (%s)").printf(mnterr2.message));
+                    mounted = false;
+                }
+                set_cursor_busy (false);
+                waiter.done ();
+
+                if (mounted) {
+                    try {
+                        mnt = yield pwd.find_enclosing_mount_async ();
+                    } catch (Error mnterr3) {
+                        display_error (_("Error accessing mount. (%s)").printf(
+                                            mnterr3.message));
+                    }
+                } else {
+                    return false;
+                }
+                if (pwd.get_uri_scheme() == "archive") {
+                    var archive_mount_root = mnt.get_root ();
+                    var archive_ref = archive_mount_root.get_uri();
+                    if (archive_ref in archive_ref_counts) {
+                        archive_ref_counts[archive_ref] = archive_ref_counts[archive_ref] + 1;
+                    } else {
+                        archive_ref_counts[archive_ref] = 1;
+                    }
+
+                    new ArchiveMountMonitor (this, archive_mount_root,
+                                    archive_ref, mnt, m_app.main_window);
+                }
+            }
+            return true;
+        }
+
         private class ArchiveMountMonitor : Object
         {
             string archive_uri;
@@ -702,15 +718,20 @@ namespace Emperor.Application {
             Gtk.Window m_wnd;
             Cancellable m_cancellable;
             InputDialog m_dialog;
+            bool m_done;
 
             internal WaitingForMount (Gtk.Window wnd)
             {
                 m_wnd = wnd;
                 m_dialog = null;
+                m_done = false;
             }
 
             private bool show_dialog ()
             {
+                if (m_done) {
+                    return false;
+                }
                 m_dialog = new InputDialog (_("Mounting"), m_wnd);
                 m_dialog.deletable = false;
                 m_dialog.resizable = false;
@@ -740,6 +761,7 @@ namespace Emperor.Application {
 
             internal void done ()
             {
+                m_done = true;
                 if (m_dialog != null) {
                     m_dialog.destroy ();
                     m_dialog = null;
@@ -1192,6 +1214,9 @@ namespace Emperor.Application {
 
         private async void activate_file (FileInfo file_info, File? real_file)
         {
+            FileInfo info;
+            Mount mnt;
+            stdout.printf ("Activating: %s %s %d\n", file_info.get_name(), file_info.get_content_type(), file_info.get_file_type());
             switch (file_info.get_file_type()) {
             case FileType.DIRECTORY:
                 File dir;
@@ -1208,16 +1233,35 @@ namespace Emperor.Application {
                 break;
             case FileType.SYMBOLIC_LINK:
                 var target_s = file_info.get_symlink_target ();
-                var target = get_child_by_name (target_s);
-                FileInfo info;
+                var target = m_pwd.resolve_relative_path (target_s);
+                if (!yield procure_mount (target, out mnt)) {
+                    return;
+                }
                 try {
                     info = yield target.query_info_async (m_file_attributes_str, 0);
-                } catch {
-                    display_error (_("Could not resolve symbolic link: %s")
-                                    .printf(target_s));
+                } catch (Error sl_err) {
+                    display_error (_("Could not resolve symbolic link: %s (%s)")
+                                    .printf(target_s, sl_err.message));
                     return;
                 }
                 yield activate_file (info, target);
+                break;
+            case FileType.MOUNTABLE:
+            case FileType.SHORTCUT:
+                var sc_target_s = file_info.get_attribute_string (
+                                        FILE_ATTRIBUTE_STANDARD_TARGET_URI);
+                var sc_target = File.new_for_uri (sc_target_s);
+                if (!yield procure_mount (sc_target, out mnt)) {
+                    return;
+                }
+                try {
+                    info = yield sc_target.query_info_async (m_file_attributes_str, 0);
+                } catch (Error sc_err) {
+                    display_error (_("Error following shortcut: %s (%s)")
+                                    .printf(sc_target_s, sc_err.message));
+                    return;
+                }
+                yield activate_file (info, sc_target);
                 break;
             default:
                 File file;
