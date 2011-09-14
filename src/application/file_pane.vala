@@ -550,8 +550,6 @@ namespace Emperor.Application {
                 m_data_store = store;
                 m_cursor_path = null;
 
-                set_cursor_busy (false);
-
             }
             m_pwd = pwd;
             m_mnt = mnt;
@@ -602,6 +600,8 @@ namespace Emperor.Application {
             m_app.prefs.set_string (m_designation + "-pwd", m_pwd.get_parse_name());
 
             restyle_complete_list ();
+
+            set_cursor_busy (false);
 
             return true;
         }
