@@ -463,15 +463,24 @@ namespace Emperor.Application {
                 if (mnt == null && ! pwd.is_native()) {
                     // not mounted. Can I mount this?
                     bool mounted = false;
+
+                    var waiter = new WaitingForMount (m_app.main_window);
+                    set_cursor_busy (true);
                     try {
+                        var cancellable = waiter.go();
+
                         yield pwd.mount_enclosing_volume (
                                 MountMountFlags.NONE, new Gtk.MountOperation (m_app.main_window),
-                                null);
+                                cancellable);
+
                         mounted = true;
                     } catch (Error mnterr2) {
                         display_error (_("Error mounting volume. (%s)").printf(mnterr2.message));
                         mounted = false;
                     }
+                    set_cursor_busy (false);
+                    waiter.done ();
+
                     if (mounted) {
                         try {
                             mnt = yield pwd.find_enclosing_mount_async ();
@@ -685,6 +694,71 @@ namespace Emperor.Application {
                         this.@unref();
                     }
                 }
+            }
+        }
+
+        private class WaitingForMount : Object
+        {
+            Gtk.Window m_wnd;
+            Cancellable m_cancellable;
+            InputDialog m_dialog;
+
+            internal WaitingForMount (Gtk.Window wnd)
+            {
+                m_wnd = wnd;
+                m_dialog = null;
+            }
+
+            private bool show_dialog ()
+            {
+                m_dialog = new InputDialog (_("Mounting"), m_wnd);
+                m_dialog.deletable = false;
+                m_dialog.resizable = false;
+                m_dialog.add_button (Stock.CANCEL, ResponseType.CANCEL);
+                m_dialog.add_text ("Please wait while the location is being mounted.");
+                m_dialog.decisive_response.connect ((id) => {
+                        if (id == ResponseType.CANCEL) {
+                            m_cancellable.cancel ();
+                            m_dialog.destroy ();
+                            m_dialog = null;
+                            return false;
+                        }
+                        return true;
+                    });
+                m_dialog.show ();
+                var cursor = new Cursor (CursorType.WATCH);
+                m_dialog.get_window().set_cursor (cursor);
+                return false;
+            }
+
+            internal Cancellable go ()
+            {
+                m_cancellable = new Cancellable ();
+                Timeout.add (1000, show_dialog);
+                return m_cancellable;
+            }
+
+            internal void done ()
+            {
+                if (m_dialog != null) {
+                    m_dialog.destroy ();
+                    m_dialog = null;
+                }
+            }
+        }
+
+        private void set_cursor_busy (bool busy)
+        {
+            var gdk_wnd = get_window ();
+            if (gdk_wnd == null) {
+                return;
+            }
+
+            if (busy) {
+                var cursor = new Cursor (CursorType.WATCH);
+                gdk_wnd.set_cursor (cursor);
+            } else {
+                gdk_wnd.set_cursor (null);
             }
         }
 
