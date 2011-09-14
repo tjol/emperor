@@ -274,10 +274,13 @@ namespace Emperor.Application {
 
         private void fix_column_sizes ()
         {
+            TreeViewColumn last_col = null;
             foreach (var tvcol in m_list.get_columns()) {
                 tvcol.fixed_width = tvcol.width;
-                //tvcol.sizing = TreeViewColumnSizing.FIXED;
+                tvcol.sizing = TreeViewColumnSizing.FIXED;
+                last_col = tvcol;
             }
+            last_col.sizing = TreeViewColumnSizing.GROW_ONLY;
         }
 
         public void display_error (string message)
