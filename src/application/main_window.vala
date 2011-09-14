@@ -24,6 +24,7 @@ namespace Emperor.Application {
     public class MainWindow : Window
     {
         EmperorCore m_app;
+        bool m_initialized;
 
         VBox m_main_box;
         HPaned m_panes;
@@ -54,6 +55,7 @@ namespace Emperor.Application {
         public MainWindow (EmperorCore app)
         {
             m_app = app;
+            m_initialized = false;
 
             // add widgets.
             m_main_box = new VBox (false, 0);
@@ -119,14 +121,17 @@ namespace Emperor.Application {
 
         bool on_paned_map (Gdk.Event e)
         {
-            // make sure the HPaned is split in the middle at the start.
-            int w = m_panes.get_allocated_width ();
-            m_panes.position = w / 2;
-            active_pane = left_pane;
+            if (!m_initialized) {
+                // make sure the HPaned is split in the middle at the start.
+                int w = m_panes.get_allocated_width ();
+                m_panes.position = w / 2;
+                active_pane = left_pane;
 
-            set_directories.begin ();
+                set_directories.begin ();
 
-            m_app.ui_manager.main_window_ready (this);
+                m_app.ui_manager.main_window_ready (this);
+                m_initialized = true;
+            }
 
             return false;
         }
