@@ -1248,7 +1248,6 @@ namespace Emperor.Application {
                 }
                 yield activate_file (info, target);
                 break;
-            case FileType.MOUNTABLE:
             case FileType.SHORTCUT:
                 var sc_target_s = file_info.get_attribute_string (
                                         FILE_ATTRIBUTE_STANDARD_TARGET_URI);
