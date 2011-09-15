@@ -8,6 +8,7 @@
         <load name="file_transfer"/>
         <load name="sort"/>
         <load name="volume_toolbar"/>
+        <load name="netmenu"/>
     </modules>
     <user-interface>
         <file-pane>
