@@ -107,6 +107,20 @@ namespace Emperor.Modules {
                 } );
             action.connect_accelerator ();
 
+            // Ctrl+R: Refresh
+            action = reg.new_action ("refresh");
+            action.label = _("Reload directories");
+            action.icon_name = "view-refresh";
+            action.set_accel_path ("<Emperor-Main>/BasicActions/Refresh");
+            Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Refresh",
+                                    Gdk.KeySym.R, Gdk.ModifierType.CONTROL_MASK);
+            action.activate.connect ( () => { 
+                    app.main_window.active_pane.refresh.begin ();
+                    app.main_window.passive_pane.refresh.begin ();
+                } );
+            app.ui_manager.add_action_to_menu (_("_View"), action, 70);
+            action.connect_accelerator ();
+
         }
 
         public BasicActionsModule (EmperorCore app)
