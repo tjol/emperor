@@ -33,12 +33,19 @@ namespace Emperor.Modules {
 
             app.ui_manager.get_menu (_("_Net"), 7);
 
+            /*
+            This command is disabled for the moment. network:/// takes some time to
+            be properly filled. Instead of implementing a timed refresh here (which
+            should work), this will stay disabled until file system monitoring is
+            implemented.
+
             // Browse network
             action = reg.new_action ("netmenu/browse");
             action.label = _("Browse Network");
             action.icon_name = "network-workgroup";
             action.activate.connect (module.browse_network);
             app.ui_manager.add_action_to_menu (_("_Net"), action, 1);
+            */
 
             module.@ref ();
         }
