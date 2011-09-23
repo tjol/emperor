@@ -15,4 +15,6 @@ libfilters_la_SOURCES=filters.vala
 libfile_transfer_la_SOURCES=file_transfer.vala
 libvolume_toolbar_la_SOURCES=volume_toolbar.vala
 libnetmenu_la_SOURCES=netmenu.vala
+libnetmenu_la_VALAFLAGS=$(AM_VALAFLAGS) @LIBXML_VALAFLAGS@
+libnetmenu_la_CFLAGS=$(AM_CFLAGS) @LIBXML_CFLAGS@
 
