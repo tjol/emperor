@@ -262,6 +262,11 @@ namespace Emperor.Application {
                                    options, null);
             } catch (Error e) {
                 stderr.printf (_("Error loading application: %s\n"), e.message);
+                return 1;
+            }
+
+            if (!Notify.init("Emperor")) {
+                stderr.printf (_("Error initializing notification system.\n"));
             }
 
             EmperorCore app;

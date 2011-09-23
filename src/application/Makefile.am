@@ -9,11 +9,11 @@ emperor_SOURCES=emperor_core.vala file_pane.vala \
 		archive_types.vala keysyms_stamp.vala
 
 emperor_VALAFLAGS=@VALAFLAGS@ \
-		  @GMODULE_VALAFLAGS@ @LIBXML_VALAFLAGS@ \
+		  @GMODULE_VALAFLAGS@ @LIBXML_VALAFLAGS@ @LIBNOTIFY_VALAFLAGS@ \
 		  --vapi=emperor.vapi --header=emperor.h
 emperor_CFLAGS=@GLOBAL_CFLAGS@ \
-	       @GMODULE_CFLAGS@ @LIBXML_CFLAGS@
-emperor_LDADD=@GTK_LIBS@ @GMODULE_LIBS@ @LIBXML_LIBS@ @GEE_LIBS@
+	       @GMODULE_CFLAGS@ @LIBXML_CFLAGS@ @LIBNOTIFY_CFLAGS@
+emperor_LDADD=@GTK_LIBS@ @GMODULE_LIBS@ @LIBXML_LIBS@ @GEE_LIBS@ @LIBNOTIFY_LIBS@
 
 EXTRA_DIST = emperor.vapi emperor.h \
 	     gen_keysym_files.py keynames.h keynames.c gdkkeysyms.vapi

@@ -19,6 +19,7 @@ using GLib;
 using Gtk;
 using Gdk;
 using Gee;
+using Notify;
 
 namespace Emperor.Application {
 
@@ -722,54 +723,46 @@ namespace Emperor.Application {
         {
             Gtk.Window m_wnd;
             Cancellable m_cancellable;
-            InputDialog m_dialog;
+            Notification m_notification;
             bool m_done;
 
             internal WaitingForMount (Gtk.Window wnd)
             {
                 m_wnd = wnd;
-                m_dialog = null;
+                m_notification = null;
                 m_done = false;
             }
 
-            private bool show_dialog ()
+            private bool show_notification ()
             {
                 if (m_done) {
                     return false;
                 }
-                m_dialog = new InputDialog (_("Mounting"), m_wnd);
-                m_dialog.deletable = false;
-                m_dialog.resizable = false;
-                m_dialog.add_button (Stock.CANCEL, ResponseType.CANCEL);
-                m_dialog.add_text ("Please wait while the location is being mounted.");
-                m_dialog.decisive_response.connect ((id) => {
-                        if (id == ResponseType.CANCEL) {
-                            m_cancellable.cancel ();
-                            m_dialog.destroy ();
-                            m_dialog = null;
-                            return false;
-                        }
-                        return true;
+                m_notification = new Notification (_("Mounting"),
+                                    _("Please wait while the location is being mounted."),
+                                    "emperor-fm");
+                m_notification.add_action ("cancel", _("Cancel"), (n,a) => {
+                        m_cancellable.cancel ();
+                        m_notification.close ();
+                        m_notification = null;
                     });
-                m_dialog.show ();
-                var cursor = new Cursor (CursorType.WATCH);
-                m_dialog.get_window().set_cursor (cursor);
+                m_notification.show ();
                 return false;
             }
 
             internal Cancellable go ()
             {
                 m_cancellable = new Cancellable ();
-                Timeout.add (1000, show_dialog);
+                Timeout.add (1000, show_notification);
                 return m_cancellable;
             }
 
             internal void done ()
             {
                 m_done = true;
-                if (m_dialog != null) {
-                    m_dialog.destroy ();
-                    m_dialog = null;
+                if (m_notification != null) {
+                    m_notification.close ();
+                    m_notification = null;
                 }
             }
         }
