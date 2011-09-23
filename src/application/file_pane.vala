@@ -436,7 +436,7 @@ namespace Emperor.Application {
             get { return m_parent; }
         }
 
-        public async bool chdir (File pwd, string? prev_name=null)
+        public async bool chdir (File pwd, string? prev_name=null, GLib.MountOperation? mnt_op=null)
         {
             TreeIter? prev_iter = null;
 
@@ -461,7 +461,7 @@ namespace Emperor.Application {
                 parent = other_pane.parent_dir;
 
             } else {
-                if (! yield procure_mount (pwd, out mnt)) {
+                if (! yield procure_mount (pwd, out mnt, mnt_op)) {
                     return false;
                 }
 
@@ -624,7 +624,7 @@ namespace Emperor.Application {
             return yield chdir (old_pwd);
         }
 
-        public async bool procure_mount (File pwd, out Mount mnt)
+        public async bool procure_mount (File pwd, out Mount mnt, GLib.MountOperation? mnt_op)
         {
             bool mount_error = false;
             try {
@@ -642,8 +642,15 @@ namespace Emperor.Application {
                 try {
                     var cancellable = waiter.go();
 
+                    GLib.MountOperation real_mnt_op;
+                    if (mnt_op == null) {
+                        real_mnt_op = new Gtk.MountOperation (m_app.main_window);
+                    } else {
+                        real_mnt_op = mnt_op;
+                    }
+
                     yield pwd.mount_enclosing_volume (
-                            MountMountFlags.NONE, new Gtk.MountOperation (m_app.main_window),
+                            MountMountFlags.NONE, real_mnt_op,
                             cancellable);
 
                     mounted = true;
@@ -1258,7 +1265,7 @@ namespace Emperor.Application {
             case FileType.SYMBOLIC_LINK:
                 var target_s = file_info.get_symlink_target ();
                 var target = m_pwd.resolve_relative_path (target_s);
-                if (!yield procure_mount (target, out mnt)) {
+                if (!yield procure_mount (target, out mnt, null)) {
                     return;
                 }
                 try {
@@ -1274,7 +1281,7 @@ namespace Emperor.Application {
                 var sc_target_s = file_info.get_attribute_string (
                                         FILE_ATTRIBUTE_STANDARD_TARGET_URI);
                 var sc_target = File.new_for_uri (sc_target_s);
-                if (!yield procure_mount (sc_target, out mnt)) {
+                if (!yield procure_mount (sc_target, out mnt, null)) {
                     return;
                 }
                 try {
