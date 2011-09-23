@@ -867,14 +867,12 @@ namespace Emperor.Application {
                         model.get_value (iter, COL_FILEINFO, out finfo_val);
                         var finfo = (FileInfo) finfo_val.get_object ();
                         if (finfo != null) {
-                            if (exists && finfo.get_name() == file.get_basename()) {
+                            if (finfo.get_name() == file.get_basename()) {
                                 // same file.
-                                file_found = true;
-                                query_and_update.begin (iter, file);
-                            } else {
-                                var this_file = m_pwd.get_child (finfo.get_name());
-                                if (!this_file.query_exists()) {
-                                    // get rid.
+                                if (exists) {
+                                    file_found = true;
+                                    query_and_update.begin (iter, file);
+                                } else {
                                     finfo_val.set_object (null);
                                     ((ListStore)model).set_value (iter, COL_FILEINFO, finfo_val);
                                 }
@@ -896,32 +894,60 @@ namespace Emperor.Application {
         public async void refresh ()
             requires (m_pwd != null)
         {
+            set_cursor_busy (true);
             try {
-                var enumerator = yield m_pwd.enumerate_children_async (
-                                            FILE_ATTRIBUTE_STANDARD_NAME,
+                var file_infos = new HashMap<string,FileInfo>();
+                var pwd = m_pwd;
+
+                // Get list of file names in this directory.
+                var enumerator = yield pwd.enumerate_children_async (
+                                            m_file_attributes_str,
                                             FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-                GLib.List<FileInfo> fileinfos;
-                bool at_least_one_child = false;
-                while ((fileinfos = yield enumerator.next_files_async (20)) != null) {
-                    foreach (var finfo in fileinfos) {
-                        var file = m_pwd.get_child (finfo.get_name ());
-                        update_file (file);
-                        at_least_one_child = true;
+                GLib.List<FileInfo> child_fileinfos;
+                while ((child_fileinfos = yield enumerator.next_files_async (20)) != null) {
+                    foreach (var finfo in child_fileinfos) {
+                        file_infos[finfo.get_name()] = finfo;
                     }
                 }
-                if (!at_least_one_child) {
-                    // if there were no children, that means that the rows weren't all
-                    // checked above. It also means that it really doesn't matter if we
-                    // forget what was selected. So just go and chdir to .
-                    yield chdir (m_pwd);
+
+                // Query all file in the list. Remove all others.
+                m_data_store.@foreach ((model, path, iter) => {
+                    Value finfo_val;
+                    model.get_value (iter, COL_FILEINFO, out finfo_val);
+                    var finfo = (FileInfo) finfo_val.get_object ();
+                    if (finfo != null) {
+                        var file_name = finfo.get_name ();
+                        if (file_name == "..") {
+                            // do not touch the parent reference.
+                            return false;
+                        }
+                        if (!file_infos.has_key(file_name)) {
+                            // file does not exist. Get rid.
+                            finfo_val.set_object(null);
+                            ((ListStore)model).set_value (iter, COL_FILEINFO, finfo_val);
+                            return false;
+                        }
+                        update_row (iter, file_infos[file_name], (ListStore)model);
+                        // every file may appear only once.
+                        file_infos.unset (file_name);
+                    }
+                    return false;
+                } );
+
+                // Add remaining files.
+                foreach (var e in file_infos.entries) {
+                    TreeIter iter;
+                    m_data_store.append (out iter);
+                    update_row (iter, e.@value, m_data_store);
                 }
 
                 m_list_filter.refilter ();
 
-            } catch (Error e) {
+            } catch (Error err) {
                 display_error (_("Error reading directory. (%s)")
-                               .printf(e.message));
+                               .printf(err.message));
             }
+            set_cursor_busy (false);
 
         }
 
