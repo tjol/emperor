@@ -996,7 +996,7 @@ namespace GLib {
 		public virtual signal void ask_question (string message, [CCode (array_length = false, array_null_terminated = true)] string[] choices);
 		[HasEmitter]
 		public virtual signal void reply (GLib.MountOperationResult result);
-		public virtual signal void show_processes (string message, GLib.Array<GLib.Pid> processes, [CCode (array_length = false, array_null_terminated = true)] string[] choices);
+		public virtual signal void show_processes (string message, GLib.Array processes, [CCode (array_length = false, array_null_terminated = true)] string[] choices);
 	}
 	[CCode (cheader_filename = "gio/gio.h")]
 	public class NativeVolumeMonitor : GLib.VolumeMonitor {
