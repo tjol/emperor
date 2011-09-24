@@ -9,6 +9,7 @@
         <load name="sort"/>
         <load name="volume_toolbar"/>
         <load name="netmenu"/>
+        <load name="monitor_directory"/>
     </modules>
     <user-interface>
         <file-pane>
