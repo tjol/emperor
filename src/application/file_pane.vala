@@ -816,8 +816,19 @@ namespace Emperor.Application {
             }
         }
 
+        private HashSet<string> m_uris_being_updated = null;
+
         private async void query_and_update (TreeIter unsorted_iter, File file)
         {
+            if (m_uris_being_updated == null) {
+                m_uris_being_updated = new HashSet<string>();
+            }
+            var uri = file.get_uri();
+            if (uri in m_uris_being_updated) {
+                return;
+            }
+            m_uris_being_updated.add (uri);
+
             try {
                 var fileinfo = yield file.query_info_async (
                         m_file_attributes_str,
@@ -827,6 +838,8 @@ namespace Emperor.Application {
             } catch (Error e) {
                 display_error (_("Error fetching file information. (%s)").printf(e.message));
             }
+
+            m_uris_being_updated.remove (uri);
         }
 
         public TreePath cursor_path {
