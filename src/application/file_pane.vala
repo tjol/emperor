@@ -857,9 +857,9 @@ namespace Emperor.Application {
             requires (m_pwd != null)
         {
             var parent = file.get_parent ();
-            bool exists = file.query_exists ();
             if (m_pwd.equal (parent)) {
                 // okay, it should be in the list.
+                bool exists = file.query_exists ();
                 bool file_found = false;
 
                 m_data_store.@foreach ((model, path, iter) => {
@@ -876,9 +876,11 @@ namespace Emperor.Application {
                                     finfo_val.set_object (null);
                                     ((ListStore)model).set_value (iter, COL_FILEINFO, finfo_val);
                                 }
+                                // break loop:
+                                return true;
                             }
                         }
-
+                        // continue:
                         return false;
                     });
 
