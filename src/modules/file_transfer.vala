@@ -636,11 +636,33 @@ namespace Emperor.Modules {
                     // better to use the async copy method below.
                     file.move (dest, copy_flags, cancellable, progress_cb);
                 } else {
-                    yield file.copy_async (dest, copy_flags, Priority.DEFAULT,
-                                           cancellable, progress_cb);
+                    if (in_type == FileType.SYMBOLIC_LINK) {
 
-                    if (move) {
-                        file.@delete (cancellable);
+                        /* This fact implies NOFOLLOW_SYMLINKS.
+                           Some VFS (notably, GVfs SFTP and FTP) might still
+                           dereference the link on copy.
+                           Ergo, to be on the safe side, create the new link
+                           manually. */
+
+                        var in_info = yield file.query_info_async (
+                                        FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
+                                        FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
+                                        Priority.DEFAULT, cancellable);
+                        var symlink_target = in_info.get_symlink_target ();
+                        if (dest_exists) {
+                            dest.@delete (cancellable);
+                        }
+                        dest.make_symbolic_link (symlink_target, cancellable);
+
+                    } else {
+
+                        yield file.copy_async (dest, copy_flags, Priority.DEFAULT,
+                                               cancellable, progress_cb);
+
+                        if (move) {
+                            file.@delete (cancellable);
+                        }
+
                     }
                 }
             }
