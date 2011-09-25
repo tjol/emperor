@@ -328,8 +328,7 @@ namespace Emperor.Modules {
                 // do we always delete directories with their contents?
                 if (! (*recurse_always_p)) {
                     // Check if the directory is empty
-                    var enumerator = yield file.enumerate_children_async ("", 0,
-                                                Priority.DEFAULT, cancellable);
+                    var enumerator = file.enumerate_children("", 0, cancellable);
                     if (enumerator.next_file(cancellable) != null) {
                         // ask.
                         var recurse_dialog = new MessageDialog (application.main_window,
