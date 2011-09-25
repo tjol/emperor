@@ -436,8 +436,16 @@ namespace Emperor.Application {
             get { return m_parent; }
         }
 
+        private Cancellable m_chdir_cancellable = null;
+
         public async bool chdir (File pwd, string? prev_name=null, GLib.MountOperation? mnt_op=null)
         {
+            var cancellable = new Cancellable ();
+            if (m_chdir_cancellable != null) {
+                m_chdir_cancellable.cancel ();
+            }
+            m_chdir_cancellable = cancellable;
+
             TreeIter? prev_iter = null;
 
             int sort_column = -1;
@@ -461,8 +469,12 @@ namespace Emperor.Application {
                 parent = other_pane.parent_dir;
 
             } else {
-                if (! yield procure_mount (pwd, out mnt, mnt_op)) {
-                    return false;
+                if (! yield procure_mount (pwd, out mnt, mnt_op, cancellable)) {
+                    if (cancellable.is_cancelled()) {
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
 
                 set_cursor_busy (true);
@@ -474,8 +486,11 @@ namespace Emperor.Application {
                 try {
                     enumerator = yield pwd.enumerate_children_async (
                                                 m_file_attributes_str,
-                                                FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+                                                FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
+                                                Priority.DEFAULT, cancellable);
                 } catch (Error err1) {
+                    if (cancellable.is_cancelled()) return true;
+
                     display_error (_("Error reading directory: %s (%s)")
                                    .printf(pwd.get_parse_name(),
                                            err1.message));
@@ -508,8 +523,11 @@ namespace Emperor.Application {
                 if (parent != null) {
                     try {
                         parent_info = yield parent.query_info_async(m_file_attributes_str,
-                                                    FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+                                                    FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
+                                                    Priority.DEFAULT, cancellable);
                     } catch (Error err2) {
+                        if (cancellable.is_cancelled()) return true;
+
                         display_error (_("Error querying parent directory: %s (%s)")
                                         .printf(parent.get_parse_name(),
                                                 err2.message));
@@ -534,8 +552,11 @@ namespace Emperor.Application {
                 while (true) {
                     GLib.List<FileInfo> fileinfos;
                     try {
-                        fileinfos = yield enumerator.next_files_async(20);
+                        fileinfos = yield enumerator.next_files_async (20, Priority.DEFAULT,
+                                                                       cancellable);
                     } catch (Error err3) {
+                        if (cancellable.is_cancelled()) return true;
+
                         display_error (_("Error querying some files. (%s)")
                                         .printf(err3.message));
                         continue;
@@ -557,6 +578,8 @@ namespace Emperor.Application {
                 m_cursor_path = null;
 
             }
+            if (cancellable.is_cancelled ()) return true;
+
             m_pwd = pwd;
             m_mnt = mnt;
             m_parent = parent;
@@ -609,6 +632,8 @@ namespace Emperor.Application {
 
             set_cursor_busy (false);
 
+            m_chdir_cancellable = null;
+
             return true;
         }
 
@@ -624,11 +649,13 @@ namespace Emperor.Application {
             return yield chdir (old_pwd);
         }
 
-        public async bool procure_mount (File pwd, out Mount mnt, GLib.MountOperation? mnt_op)
+        public async bool procure_mount (File pwd, out Mount mnt,
+                                         GLib.MountOperation? mnt_op,
+                                         Cancellable? cancellable=null)
         {
             bool mount_error = false;
             try {
-                mnt = yield pwd.find_enclosing_mount_async ();
+                mnt = yield pwd.find_enclosing_mount_async (Priority.DEFAULT, cancellable);
             } catch (Error mnterr1) {
                 mount_error = true;
                 mnt = null;
@@ -637,10 +664,10 @@ namespace Emperor.Application {
                 // not mounted. Can I mount this?
                 bool mounted = false;
 
-                var waiter = new WaitingForMount (m_app.main_window);
+                var waiter = new WaitingForMount (m_app.main_window, cancellable);
                 set_cursor_busy (true);
                 try {
-                    var cancellable = waiter.go();
+                    waiter.go();
 
                     GLib.MountOperation real_mnt_op;
                     if (mnt_op == null) {
@@ -655,7 +682,9 @@ namespace Emperor.Application {
 
                     mounted = true;
                 } catch (Error mnterr2) {
-                    display_error (_("Error mounting volume. (%s)").printf(mnterr2.message));
+                    if (! cancellable.is_cancelled ()) {
+                        display_error (_("Error mounting volume. (%s)").printf(mnterr2.message));
+                    }
                     mounted = false;
                 }
                 set_cursor_busy (false);
@@ -665,13 +694,23 @@ namespace Emperor.Application {
                     try {
                         mnt = yield pwd.find_enclosing_mount_async ();
                     } catch (Error mnterr3) {
-                        display_error (_("Error accessing mount. (%s)").printf(
-                                            mnterr3.message));
+                        if (! cancellable.is_cancelled ()) {
+                            display_error (_("Error accessing mount. (%s)").printf(
+                                                mnterr3.message));
+                        }
+                        return false;
                     }
                 } else {
                     return false;
                 }
+
                 if (pwd.get_uri_scheme() == "archive") {
+                    if (cancellable.is_cancelled()) {
+                        mnt.unmount_with_operation (MountUnmountFlags.NONE,
+                            new Gtk.MountOperation (m_app.main_window));
+                        return false;
+                    }
+
                     var archive_mount_root = mnt.get_root ();
                     var archive_ref = archive_mount_root.get_uri();
                     if (archive_ref in archive_ref_counts) {
@@ -733,16 +772,17 @@ namespace Emperor.Application {
             Notification m_notification;
             bool m_done;
 
-            internal WaitingForMount (Gtk.Window wnd)
+            internal WaitingForMount (Gtk.Window wnd, Cancellable? cancellable=null)
             {
                 m_wnd = wnd;
                 m_notification = null;
                 m_done = false;
+                m_cancellable = cancellable;
             }
 
             private bool show_notification ()
             {
-                if (m_done) {
+                if (m_done || m_cancellable.is_cancelled()) {
                     return false;
                 }
                 m_notification = new Notification (_("Mounting"),
@@ -759,7 +799,9 @@ namespace Emperor.Application {
 
             internal Cancellable go ()
             {
-                m_cancellable = new Cancellable ();
+                if (m_cancellable == null) {
+                    m_cancellable = new Cancellable ();
+                }
                 Timeout.add (1000, show_notification);
                 return m_cancellable;
             }
