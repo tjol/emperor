@@ -5,7 +5,7 @@ desktopdir = $(datadir)/applications
 desktop_DATA = emperor.desktop
 
 resdir = $(pkgdatadir)/res
-res_DATA = eject.png downarrow.png
+res_DATA = eject.png downarrow.png @PACKAGE_VERSION_NAME@.png
 
 gtk_update_icon_cache = gtk-update-icon-cache -f -t $(datadir)/icons/hicolor
 

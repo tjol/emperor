@@ -219,16 +219,20 @@ namespace Emperor.Application {
                 "You should have received a copy of the GNU General Public License " +
                 "along with Emperor.  If not, see http://www.gnu.org/licenses/");
 
+            string name_text = "Emperor " + Config.PACKAGE_VERSION_NAME;
+            string effigy_file_name = Config.PACKAGE_VERSION_NAME + ".png";
+            var logo = new Gdk.Pixbuf.from_file (get_resource_file_path(effigy_file_name));
+
             Gtk.show_about_dialog (main_window,
-                program_name : "Emperor",
-                logo_icon_name : "emperor-fm",
+                program_name : name_text,
+                logo : logo, 
                 version : Config.PACKAGE_VERSION,
                 title : _("About Emperor"),
                 authors : authors,
                 license : license_text,
                 wrap_license : true,
-                copyright : "Copyright © 2011 Thomas Jollans",
-                comments : "Orthodox file manager for GNOME." );
+                copyright : _("Copyright © 2011 Thomas Jollans"),
+                comments : _("Orthodox File Manager for GNOME") );
         }
 
         public static int main (string[] argv)

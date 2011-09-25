@@ -4,5 +4,6 @@ namespace Emperor.Config {
     public const string DATA_DIR;
     public const string PACKAGE_NAME;
     public const string PACKAGE_VERSION;
+    public const string PACKAGE_VERSION_NAME;
 }
 
