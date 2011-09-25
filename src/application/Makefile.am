@@ -6,7 +6,7 @@ emperor_SOURCES=emperor_core.vala file_pane.vala \
 		user_interface_manager.vala input_dialog.vala \
 		external_applications.vala \
 		prefs_machine.vala \
-		archive_types.vala keysyms_stamp.vala
+		archive_types.vala keysyms_stamp.c
 
 emperor_VALAFLAGS=@VALAFLAGS@ \
 		  @GMODULE_VALAFLAGS@ @LIBXML_VALAFLAGS@ @LIBNOTIFY_VALAFLAGS@ \
@@ -16,15 +16,17 @@ emperor_CFLAGS=@GLOBAL_CFLAGS@ \
 emperor_LDADD=@GTK_LIBS@ @GMODULE_LIBS@ @LIBXML_LIBS@ @GEE_LIBS@ @LIBNOTIFY_LIBS@
 
 EXTRA_DIST = emperor.vapi emperor.h \
-	     gen_keysym_files.py keynames.h keynames.c gdkkeysyms.vapi
+	     gen_keysym_files.py keynames.h keynames.c gdkkeysyms.vapi \
+	     gio-2.0.vapi libnotify.vapi
+
 MAINTAINERCLEANFILES = emperor.vapi emperor.h \
 		       keynames.c gdkkeysyms.vapi \
-		       keysyms_stamp.vala
+		       keysyms_stamp.c
 
-keysyms_stamp.vala: gen_keysym_files.py
+keysyms_stamp.c: gen_keysym_files.py
 	python3 gen_keysym_files.py
-	touch keysyms_stamp.vala
+	touch keysyms_stamp.c
 
-gdkkeysyms.vapi: keysyms_stamp.vala
+gdkkeysyms.vapi: keysyms_stamp.c
 
 

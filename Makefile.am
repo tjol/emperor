@@ -1,6 +1,8 @@
 SUBDIRS = po src xml data
 
-EXTRA_DIST = config/config.rpath  bootstrap.sh
+EXTRA_DIST = config/config.rpath \
+	     config/gitlog-to-changelog \
+	     bootstrap.sh
 
 ACLOCAL_AMFLAGS = -I m4
 
