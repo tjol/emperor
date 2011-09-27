@@ -269,9 +269,11 @@ namespace Emperor.Application {
                 return 1;
             }
 
+        #if HAVE_LIBNOTIFY
             if (!Notify.init("Emperor")) {
                 stderr.printf (_("Error initializing notification system.\n"));
             }
+        #endif
 
             EmperorCore app;
             try {

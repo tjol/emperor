@@ -10,6 +10,12 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
 LT_INIT([disable-static])
 
+AC_ARG_WITH([libnotify],
+            [AS_HELP_STRING([--without-libnotify],
+                            [Disable code that uses libnotify])],
+            [],
+            [with_libnotify=yes])
+
 AC_PROG_CC
 AM_PROG_CC_C_O
 AM_PROG_VALAC([0.12.0])
@@ -23,8 +29,25 @@ PKG_CHECK_MODULES([GTK], [gtk+-3.0])
 PKG_CHECK_MODULES([GIO], [gio-unix-2.0])
 PKG_CHECK_MODULES([GMODULE], [gmodule-2.0])
 PKG_CHECK_MODULES([LIBXML], [libxml-2.0])
-PKG_CHECK_MODULES([LIBNOTIFY], [libnotify])
 PKG_CHECK_MODULES([GEE], [gee-0.8 >= 0.7.0])
+
+dnl Check for libnotify unless disabled.
+if test x$with_libnotify = xyes
+then
+    PKG_CHECK_MODULES([LIBNOTIFY], [libnotify >= 0.7],
+                      [ dnl - found
+                       AM_CONDITIONAL([HAVE_LIBNOTIFY], [true])
+                       HAVE_LIBNOTIFY=yes
+                      ],
+                      [ dnl - not found
+                       AM_CONDITIONAL([HAVE_LIBNOTIFY], [false])
+                       HAVE_LIBNOTIFY=no
+                       AC_MSG_WARN([Libnotify >= 0.7 not found. Notifications have been disabled.])
+                      ])
+else
+  AM_CONDITIONAL([HAVE_LIBNOTIFY], [false])
+  HAVE_LIBNOTIFY=no
+fi
 
 dnl
 dnl Configure VALAFLAGS and CFLAGS
@@ -41,7 +64,11 @@ GMODULE_VALAFLAGS="--pkg=gmodule-2.0"
 AC_SUBST([GMODULE_VALAFLAGS])
 LIBXML_VALAFLAGS="--pkg=libxml-2.0"
 AC_SUBST([LIBXML_VALAFLAGS])
-LIBNOTIFY_VALAFLAGS="--pkg=libnotify"
+
+if test x$HAVE_LIBNOTIFY = xyes
+then
+    LIBNOTIFY_VALAFLAGS="--pkg=libnotify -D HAVE_LIBNOTIFY"
+fi
 AC_SUBST([LIBNOTIFY_VALAFLAGS])
 
 SOURCE_ROOT=`cd $srcdir; pwd`

@@ -17,9 +17,13 @@ Configure the package with `./configure', build with `make', and install
 with `make install` (usually as root). Type `./configure --help' for a 
 full list of configuration options. See the file `INSTALL' for details.
 
+If you wish to build Emperor without libnotify support, either because your
+system does not have libnotify version 0.7, or because you wish to disable
+it, you will need also the Vala compiler.
+
 To run Emperor from the source tree without installing, use `make run'.
 
-If you got the source with git, you will also need:
+To bootstrap, e.g. if you got the source with git, you will also need:
 
  * Vala (version 0.12 or newer is supported)
  * GNU Autoconf, Automake, and Libtool

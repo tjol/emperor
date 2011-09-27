@@ -19,7 +19,6 @@ using GLib;
 using Gtk;
 using Gdk;
 using Gee;
-using Notify;
 
 namespace Emperor.Application {
 
@@ -761,57 +760,6 @@ namespace Emperor.Application {
                         pane.notify["mnt"].disconnect (this.on_mnt_changed);
                         this.@unref();
                     }
-                }
-            }
-        }
-
-        private class WaitingForMount : Object
-        {
-            Gtk.Window m_wnd;
-            Cancellable m_cancellable;
-            Notification m_notification;
-            bool m_done;
-
-            internal WaitingForMount (Gtk.Window wnd, Cancellable? cancellable=null)
-            {
-                m_wnd = wnd;
-                m_notification = null;
-                m_done = false;
-                m_cancellable = cancellable;
-            }
-
-            private bool show_notification ()
-            {
-                if (m_done || m_cancellable.is_cancelled()) {
-                    return false;
-                }
-                m_notification = new Notification (_("Mounting"),
-                                    _("Please wait while the location is being mounted."),
-                                    "emperor-fm");
-                m_notification.add_action ("cancel", _("Cancel"), (n,a) => {
-                        m_cancellable.cancel ();
-                        m_notification.close ();
-                        m_notification = null;
-                    });
-                m_notification.show ();
-                return false;
-            }
-
-            internal Cancellable go ()
-            {
-                if (m_cancellable == null) {
-                    m_cancellable = new Cancellable ();
-                }
-                Timeout.add (1000, show_notification);
-                return m_cancellable;
-            }
-
-            internal void done ()
-            {
-                m_done = true;
-                if (m_notification != null) {
-                    m_notification.close ();
-                    m_notification = null;
                 }
             }
         }

@@ -1,11 +1,18 @@
 bin_PROGRAMS=emperor
 
+if HAVE_LIBNOTIFY
+MOUNTWAITER_VALA = mountwait-notification.vala
+else
+MOUNTWAITER_VALA = mountwait-dialog.vala
+endif
+
+
 emperor_SOURCES=emperor_core.vala file_pane.vala \
 		module_delegates.vala file_info_column.vala \
 		main_window.vala module_registry.vala \
 		user_interface_manager.vala input_dialog.vala \
-		external_applications.vala \
-		prefs_machine.vala \
+		external_applications.vala prefs_machine.vala \
+		$(MOUNTWAITER_VALA) \
 		archive_types.vala keysyms_stamp.c
 
 emperor_VALAFLAGS=@VALAFLAGS@ \
