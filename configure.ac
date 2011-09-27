@@ -1,5 +1,5 @@
 dnl This needs some file it can stat
-AC_INIT([emperor], [0.1])
+AC_INIT([emperor], [0.1.1])
 PACKAGE_VERSION_NAME=Aurelian
 AC_SUBST([PACKAGE_VERSION_NAME])
 
@@ -68,6 +68,10 @@ AC_SUBST([LIBXML_VALAFLAGS])
 if test x$HAVE_LIBNOTIFY = xyes
 then
     LIBNOTIFY_VALAFLAGS="--pkg=libnotify -D HAVE_LIBNOTIFY"
+else
+    # These need to be rebuilt.
+    rm -f src/application/emperor_core.c
+    rm -f src/application/mountwait-dialog.c
 fi
 AC_SUBST([LIBNOTIFY_VALAFLAGS])
 
