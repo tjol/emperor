@@ -876,7 +876,7 @@ namespace Emperor.Application {
                                     file_found = true;
                                     query_and_update.begin (iter, file);
                                 } else {
-                                    finfo_val.set_object (null);
+                                    finfo_val.set_object ((Object)null);
                                     ((ListStore)model).set_value (iter, COL_FILEINFO, finfo_val);
                                 }
                                 // break loop:
@@ -928,7 +928,7 @@ namespace Emperor.Application {
                         }
                         if (!file_infos.has_key(file_name)) {
                             // file does not exist. Get rid.
-                            finfo_val.set_object(null);
+                            finfo_val.set_object((Object)null);
                             ((ListStore)model).set_value (iter, COL_FILEINFO, finfo_val);
                             return false;
                         }
@@ -1307,9 +1307,9 @@ namespace Emperor.Application {
                 }
                 if (file_info.get_content_type() in ARCHIVE_TYPES) {
                     // attempt to mount as archive.
-                    var archive_host = Uri.escape_string (file.get_uri(), null, false);
+                    var archive_host = Uri.escape_string (file.get_uri(), "", false);
                     // escaping percent signs need to be escaped :-/
-                    var escaped_host = Uri.escape_string (archive_host, null, false);
+                    var escaped_host = Uri.escape_string (archive_host, "", false);
                     var archive_file = File.new_for_uri ("archive://" + escaped_host);
                     if (yield chdir (archive_file, null)) {
                         // success!

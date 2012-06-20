@@ -81,8 +81,8 @@ namespace Emperor.Application {
         internal Value default_foreground_value { get; private set; }
         internal Value default_background_value { get; private set; }
 
-        internal MenuBar menu_bar { get; private set; }
-        private Map<string,Menu> m_menus;
+        internal Gtk.MenuBar menu_bar { get; private set; }
+        private Map<string,Gtk.Menu> m_menus;
 
         internal UserInterfaceManager (EmperorCore app)
                     throws ConfigurationError
@@ -99,20 +99,20 @@ namespace Emperor.Application {
             panel_columns = new LinkedList<FilePaneColumn> ();
             command_buttons = new LinkedList<Gtk.Action> ();
 
-            m_menus = new HashMap<string,Menu> ();
-            menu_bar = new MenuBar ();
+            m_menus = new HashMap<string,Gtk.Menu> ();
+            menu_bar = new Gtk.MenuBar ();
 
-            m_menu_items = new HashMap<string,TreeMap<int,MenuItem> > ();
+            m_menu_items = new HashMap<string,TreeMap<int,Gtk.MenuItem> > ();
 
         }
 
-        public Menu get_menu (string title, int pos = -1)
+        public Gtk.Menu get_menu (string title, int pos = -1)
         {
             if (m_menus.has_key(title)) {
                 return m_menus[title];
             } else {
-                var title_menu_item = new MenuItem.with_mnemonic (title);
-                var menu = new Menu ();
+                var title_menu_item = new Gtk.MenuItem.with_mnemonic (title);
+                var menu = new Gtk.Menu ();
                 title_menu_item.set_submenu (menu);
                 if (pos == -1) {
                     menu_bar.append (title_menu_item);
@@ -120,17 +120,17 @@ namespace Emperor.Application {
                     menu_bar.insert (title_menu_item, pos);
                 }
                 m_menus[title] = menu;
-                m_menu_items[title] = new TreeMap<int,MenuItem> ();
+                m_menu_items[title] = new TreeMap<int,Gtk.MenuItem> ();
                 return menu;
             }
         }
 
-        private HashMap<string,TreeMap<int,MenuItem> > m_menu_items;
+        private HashMap<string,TreeMap<int,Gtk.MenuItem> > m_menu_items;
 
         public void add_action_to_menu (string menu_title, Gtk.Action act, int pos = -1)
         {
             var menu = get_menu (menu_title);
-            var item = act.create_menu_item() as MenuItem;
+            var item = act.create_menu_item() as Gtk.MenuItem;
 
             menu.append (item);
             var menu_item_map = m_menu_items[menu_title];
@@ -403,24 +403,24 @@ namespace Emperor.Application {
 
             m_style_context.set_path(path);
 
-            m_style_context.get_color(StateFlags.NORMAL, m_default_foreground);
+            m_default_foreground = m_style_context.get_color(StateFlags.NORMAL);
             default_foreground_value = Value(typeof(Gdk.RGBA));
             default_foreground_value.set_boxed(&m_default_foreground);
 
-            m_style_context.get_background_color(StateFlags.NORMAL, m_default_background);
+            m_default_background = m_style_context.get_background_color(StateFlags.NORMAL);
             default_background_value = Value(typeof(Gdk.RGBA));
             default_background_value.set_boxed(&m_default_background);
 
-            m_style_context.get_color(StateFlags.SELECTED, m_selected_foreground);
-            m_style_context.get_background_color(StateFlags.SELECTED, m_selected_background);
+            m_selected_foreground = m_style_context.get_color(StateFlags.SELECTED);
+            m_selected_background = m_style_context.get_background_color(StateFlags.SELECTED);
 
             path = new WidgetPath();
             path.append_type(typeof(Label));
             path.iter_add_class(-1, STYLE_CLASS_DEFAULT);
             m_style_context.set_path(path);
 
-            m_style_context.get_color(StateFlags.NORMAL, m_label_foreground);
-            m_style_context.get_background_color(StateFlags.NORMAL, m_label_background);
+            m_label_foreground = m_style_context.get_color(StateFlags.NORMAL);
+            m_label_background = m_style_context.get_background_color(StateFlags.NORMAL);
         }
 
         public Gdk.RGBA? make_color(string? spec)

@@ -49,7 +49,7 @@ namespace Emperor.Modules {
         private Button m_vol_list_button;
         private Button m_eject_button;
 
-        private Menu m_volmenu;
+        private Gtk.Menu m_volmenu;
 
         public VolumeToolbar (Window wnd, FilePane pane)
         {
@@ -219,7 +219,7 @@ namespace Emperor.Modules {
         {
             bool first;
             var vm = VolumeMonitor.get ();
-            var volmenu = new Menu ();
+            var volmenu = new Gtk.Menu ();
             ImageMenuItem menuitem;
             var pwd = m_pane.pwd;
 
@@ -481,7 +481,7 @@ namespace Emperor.Modules {
             private FilePane m_pane;
             private File? m_path;
             private Volume? m_volume;
-            private Menu? m_context_menu;
+            private Gtk.Menu? m_context_menu;
 
             public VolumeMenuClickHandler (VolumeToolbar parent, File? path, Volume? volume)
             {
@@ -522,14 +522,14 @@ namespace Emperor.Modules {
                     return false;
                 }
 
-                MenuItem menuitem;
+                Gtk.MenuItem menuitem;
 
-                m_context_menu = new Menu ();
+                m_context_menu = new Gtk.Menu ();
 
-                menuitem = new MenuItem.with_label (_("Open"));
+                menuitem = new Gtk.MenuItem.with_label (_("Open"));
                 menuitem.activate.connect (on_click);
                 m_context_menu.append (menuitem);
-                menuitem = new MenuItem.with_label (_("Delete bookmark"));
+                menuitem = new Gtk.MenuItem.with_label (_("Delete bookmark"));
                 menuitem.activate.connect (remove_from_bookmarks);
                 m_context_menu.append (menuitem);
 
@@ -545,7 +545,7 @@ namespace Emperor.Modules {
             }
         }
 
-        private void position_volume_menu (Menu menu, out int x, out int y, out bool push_in)
+        private void position_volume_menu (Gtk.Menu menu, out int x, out int y, out bool push_in)
         {
             int origin_x, origin_y;
             var gdkwnd = m_vol_list_button.get_window();

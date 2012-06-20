@@ -132,7 +132,7 @@ namespace Emperor.Application {
          */
         public signal bool decisive_response (int response_id);
 
-        private bool on_map (Gdk.Event e)
+        private bool on_map (Gdk.EventAny e)
         {
             show_all ();
             if (m_focus_widget != null) {

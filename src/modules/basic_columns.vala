@@ -122,7 +122,7 @@ namespace Emperor.Modules {
         {
             var v = Value(typeof(DateTime));
             TimeVal tv;
-            fi.get_modification_time (out tv);
+            tv = fi.get_modification_time ();
             var dt = new DateTime.from_timeval_local(tv);
             v.set_boxed(dt);
             return v;

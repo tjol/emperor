@@ -119,7 +119,7 @@ namespace Emperor.Application {
 
         }
 
-        bool on_paned_map (Gdk.Event e)
+        bool on_paned_map (Gdk.EventAny e)
         {
             if (!m_initialized) {
                 // make sure the HPaned is split in the middle at the start.
