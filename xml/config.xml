@@ -22,14 +22,14 @@
                 <symlink style="italic"/>
             </style>
             <columns>
-                <column title="Name">
+                <column title="Name" default-width="190">
                     <cell data="icon"/>
                     <cell data="filename-F" sort="filename-collation"/>
                 </column>
-                <column title="Size">
+                <column title="Size" default-width="75">
                     <cell data="size" sort="size"/>
                 </column>
-                <column title="Date">
+                <column title="Date" default-width="120">
                     <cell data="mtime" sort="datetime"/>
                 </column>
                 <column title="Mode">

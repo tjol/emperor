@@ -28,6 +28,7 @@ namespace Emperor.Application {
         internal class FilePaneColumn
         {
             internal string title;
+            internal int default_width;
             internal LinkedList<FileInfoColumn> cells;
             internal FileInfoColumn sort_column;
             internal CompareFunc cmp_function;
@@ -196,7 +197,12 @@ namespace Emperor.Application {
                             if (title == null) {
                                 title = "";
                             }
+                            var width_s = node->get_prop("default-width");
+                            if (width_s == null) {
+                                width_s = "0";
+                            }
                             _current_column.title = title;
+                            _current_column.default_width = int.parse(width_s);
                             _current_column.cells = new LinkedList<FileInfoColumn>();
                             handle_config_xml_nodes (node);
                             panel_columns.add(_current_column);

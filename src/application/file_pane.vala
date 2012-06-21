@@ -185,6 +185,9 @@ namespace Emperor.Application {
                 if (pref_w > 0) {
                     tvcol.sizing = TreeViewColumnSizing.FIXED;
                     tvcol.fixed_width = pref_w;
+                } else if (col.default_width > 0) {
+                    tvcol.sizing = TreeViewColumnSizing.FIXED;
+                    tvcol.fixed_width = col.default_width;
                 }
                 
                 foreach (var cell in col.cells) {
