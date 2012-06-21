@@ -114,11 +114,11 @@ namespace Emperor.Application {
             var store_types = new LinkedList<Type>();
             m_cmp_funcs = new HashMap<int,TreeIterCompareFuncWrapper>();
             m_file_attributes = new HashSet<string>();
-            m_file_attributes.add(FILE_ATTRIBUTE_STANDARD_NAME);
-            m_file_attributes.add(FILE_ATTRIBUTE_STANDARD_TYPE);
-            m_file_attributes.add(FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE);
-            m_file_attributes.add(FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET);
-            m_file_attributes.add(FILE_ATTRIBUTE_STANDARD_TARGET_URI);
+            m_file_attributes.add(FileAttribute.STANDARD_NAME);
+            m_file_attributes.add(FileAttribute.STANDARD_TYPE);
+            m_file_attributes.add(FileAttribute.STANDARD_CONTENT_TYPE);
+            m_file_attributes.add(FileAttribute.STANDARD_SYMLINK_TARGET);
+            m_file_attributes.add(FileAttribute.STANDARD_TARGET_URI);
 
             //// standard columns:
             int idx = 0;
@@ -536,7 +536,7 @@ namespace Emperor.Application {
                     parent_info.set_display_name("..");
                     parent_info.set_name("..");
                     parent_info.set_is_hidden(false);
-                    parent_info.set_attribute_boolean(FILE_ATTRIBUTE_STANDARD_IS_BACKUP, false);
+                    parent_info.set_attribute_boolean(FileAttribute.STANDARD_IS_BACKUP, false);
 
                     store.append (out iter);
 
@@ -1284,7 +1284,7 @@ namespace Emperor.Application {
                 break;
             case FileType.SHORTCUT:
                 var sc_target_s = file_info.get_attribute_string (
-                                        FILE_ATTRIBUTE_STANDARD_TARGET_URI);
+                                        FileAttribute.STANDARD_TARGET_URI);
                 var sc_target = File.new_for_uri (sc_target_s);
                 if (!yield procure_mount (sc_target, out mnt, null)) {
                     return;
