@@ -107,10 +107,15 @@ namespace Emperor.Application {
             bool icon_has_been_set = false;
             // attempt to set the icon.
             if (! IconTheme.get_default().has_icon("emperor-fm")) {
-                var icon_file = File.new_for_path ("emperor-fm.png");
+                string icon_file_path = app.get_resource_file_path("emperor-fm.png");
+                var icon_file = File.new_for_path (icon_file_path);
                 if (icon_file.query_exists ()) {
-                    set_default_icon_from_file ("emperor-fm.png");
-                    icon_has_been_set = true;
+                    try {
+                        set_default_icon_from_file (icon_file_path);
+                        icon_has_been_set = true;
+                    } catch {
+                        icon_has_been_set = false;
+                    }
                 }
             }
             if (!icon_has_been_set) {
