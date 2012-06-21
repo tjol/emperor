@@ -427,6 +427,24 @@ namespace Emperor.Application {
             }
         }
 
+        public async bool chdir_then_focus (File pwd, string? prev_name=null, GLib.MountOperation? mnt_op=null)
+        {
+            var prev_name_ = prev_name;
+            if (prev_name_ == null) {
+                // we care about correct focus here. Check if we're going to the parent, perchance.
+                if (m_pwd.has_parent(pwd)) {
+                    prev_name_ = m_pwd.get_basename ();
+                }
+            }
+
+            bool success =  yield chdir (pwd, prev_name_, mnt_op);
+            if (success) {
+                this.active = true;
+                m_list.grab_focus();
+            }
+            return success;
+        }
+
         public Mount mnt {
             get { return m_mnt; }
         }

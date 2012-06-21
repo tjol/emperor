@@ -165,29 +165,32 @@ namespace Emperor.Modules {
         {
             var parent = m_pane.parent_dir;
             if (parent != null) {
-                m_pane.chdir.begin (parent, m_pane.pwd.get_basename());
+                m_pane.chdir_then_focus.begin (parent, m_pane.pwd.get_basename());
             }
         }
 
         private void go_home ()
         {
-            m_pane.pwd = File.new_for_path (Environment.get_home_dir());
+            m_pane.chdir_then_focus.begin (File.new_for_path (Environment.get_home_dir()));
         }
 
         private void goto_root ()
         {
             var pwd = m_pane.pwd;
             var mnt = m_pane.mnt;
+            File chdir_to;
             // treat an archive as if it were a regular directory on its parent file system.
             if (pwd.get_uri_scheme() == "archive" && m_pane.parent_dir != null) {
                 pwd = m_pane.parent_dir;
             }
 
             if (pwd.is_native() || mnt == null) {
-                m_pane.pwd = File.new_for_path ("/");
+                chdir_to = File.new_for_path ("/");
             } else {
-                m_pane.pwd = mnt.get_root ();
+                chdir_to = mnt.get_root();
             }
+
+            m_pane.chdir_then_focus.begin (chdir_to);
         }
 
         private void eject_volume ()
@@ -496,7 +499,7 @@ namespace Emperor.Modules {
             public void on_click ()
             {
                 if (m_path != null) {
-                    m_pane.pwd = m_path;
+                    m_pane.chdir_then_focus (m_path);
                 } else if (m_volume != null) {
                     do_mount.begin ();
                 }
@@ -508,7 +511,7 @@ namespace Emperor.Modules {
                             new Gtk.MountOperation (m_wnd), null)) {
                     var mnt = m_volume.get_mount ();
                     if (mnt != null) {
-                        m_pane.pwd = mnt.get_root ();
+                        m_pane.chdir_then_focus (mnt.get_root ());
                         return;
                     }
                 }
