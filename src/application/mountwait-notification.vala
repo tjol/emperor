@@ -19,14 +19,14 @@ using Notify;
 
 namespace Emperor.Application {
 
-    internal class WaitingForMount : Object
+    internal class WaitingForMountNotify : Object, WaitingForMountIface
     {
         Gtk.Window m_wnd;
         Cancellable m_cancellable;
         Notification m_notification;
         bool m_done;
 
-        internal WaitingForMount (Gtk.Window wnd, Cancellable? cancellable=null)
+        internal WaitingForMountNotify (Gtk.Window wnd, Cancellable? cancellable=null)
         {
             m_wnd = wnd;
             m_notification = null;

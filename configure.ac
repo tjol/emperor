@@ -71,7 +71,7 @@ then
 else
     # These need to be rebuilt.
     rm -f src/application/emperor_core.c
-    rm -f src/application/mountwait-dialog.c
+    rm -f src/application/mountwait.c
 fi
 AC_SUBST([LIBNOTIFY_VALAFLAGS])
 

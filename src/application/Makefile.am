@@ -1,12 +1,9 @@
 bin_PROGRAMS=emperor
 
 if HAVE_LIBNOTIFY
-MOUNTWAITER_VALA = mountwait-notification.vala
-# This is needed for dist to work. The configure script removes it.
-mountwait-dialog.c:
-	touch mountwait-dialog.c
+NOTIFY_COMPONENTS_VALA = mountwait-notification.vala
 else
-MOUNTWAITER_VALA = mountwait-dialog.vala
+NOTIFY_COMPONENTS_VALA = 
 endif
 
 
@@ -15,7 +12,8 @@ emperor_SOURCES=emperor_core.vala file_pane.vala \
 		main_window.vala module_registry.vala \
 		user_interface_manager.vala input_dialog.vala \
 		external_applications.vala prefs_machine.vala \
-		$(MOUNTWAITER_VALA) \
+		mountwait.vala mountwait-dialog.vala \
+		$(NOTIFY_COMPONENTS_VALA) \
 		archive_types.vala keysyms_stamp.c
 
 emperor_VALAFLAGS=@VALAFLAGS@ \

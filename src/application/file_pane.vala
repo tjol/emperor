@@ -663,7 +663,7 @@ namespace Emperor.Application {
                 // not mounted. Can I mount this?
                 bool mounted = false;
 
-                var waiter = new WaitingForMount (m_app.main_window, cancellable);
+                var waiter = new_waiting_for_mount (m_app.main_window, cancellable);
                 set_cursor_busy (true);
                 try {
                     waiter.go();
