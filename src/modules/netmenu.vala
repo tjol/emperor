@@ -627,7 +627,13 @@ namespace Emperor.Modules {
 
             public void connect_to_selected ()
             {
-                connect_to (get_selected_server());
+                var server = get_selected_server();
+                if (server != null) {
+                    connect_to (server);
+                } else {
+                    // no server selected; cunningly switch to "New Connection" dialog.
+                    new_connection ();
+                }
             }
 
             public void connect_to (SavedServer server)
