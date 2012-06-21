@@ -26,8 +26,7 @@ emperor_CFLAGS=@GLOBAL_CFLAGS@ \
 emperor_LDADD=@GTK_LIBS@ @GMODULE_LIBS@ @LIBXML_LIBS@ @GEE_LIBS@ @LIBNOTIFY_LIBS@
 
 EXTRA_DIST = emperor.vapi emperor.h \
-	     gen_keysym_files.py keynames.h keynames.c gdkkeysyms.vapi \
-	     gio-2.0.vapi libnotify.vapi
+	     gen_keysym_files.py keynames.h keynames.c gdkkeysyms.vapi
 
 MAINTAINERCLEANFILES = emperor.vapi emperor.h \
 		       keynames.c gdkkeysyms.vapi \
