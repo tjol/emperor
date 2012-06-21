@@ -1,6 +1,6 @@
 dnl This needs some file it can stat
-AC_INIT([emperor], [0.1.1])
-PACKAGE_VERSION_NAME=Aurelian
+AC_INIT([emperor], [0.2dev])
+PACKAGE_VERSION_NAME=Basil
 AC_SUBST([PACKAGE_VERSION_NAME])
 
 AC_CONFIG_SRCDIR([Makefile.am])
