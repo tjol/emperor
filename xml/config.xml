@@ -11,6 +11,7 @@
         <load name="netmenu"/>
         <load name="monitor_directory"/>
         <load name="externalist"/>
+        <load name="preview"/>
     </modules>
     <user-interface>
         <file-pane>
