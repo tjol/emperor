@@ -231,7 +231,7 @@ namespace Emperor.Application {
                 authors : authors,
                 license : license_text,
                 wrap_license : true,
-                copyright : _("Copyright © 2011 Thomas Jollans"),
+                copyright : _("Copyright © 2011-2012 Thomas Jollans"),
                 comments : _("Orthodox File Manager for GNOME") );
         }
 
