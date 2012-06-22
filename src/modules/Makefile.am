@@ -7,7 +7,8 @@ pkglib_LTLIBRARIES = libbasic_columns.la libbasic_actions.la \
 		     libsort.la libfilters.la \
 		     libvolume_toolbar.la \
 		     libnetmenu.la \
-		     libmonitor_directory.la
+		     libmonitor_directory.la \
+		     libexternalist.la
 
 libbasic_columns_la_SOURCES=basic_columns.vala
 
@@ -26,4 +27,6 @@ libnetmenu_la_VALAFLAGS=$(AM_VALAFLAGS) @LIBXML_VALAFLAGS@
 libnetmenu_la_CFLAGS=$(AM_CFLAGS) @LIBXML_CFLAGS@
 
 libmonitor_directory_la_SOURCES=monitor_directory.vala
+
+libexternalist_la_SOURCES=externalist.vala
 

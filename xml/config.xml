@@ -10,6 +10,7 @@
         <load name="volume_toolbar"/>
         <load name="netmenu"/>
         <load name="monitor_directory"/>
+        <load name="externalist"/>
     </modules>
     <user-interface>
         <file-pane>
@@ -45,7 +46,7 @@
             <command-button action="move"/>
             <command-button action="mkdir"/>
             <command-button action="delete"/>
-            <command-button action="quit"/>
+            <command-button action="openterm"/>
         </command-bar>
     </user-interface>
 </emperor-config>
