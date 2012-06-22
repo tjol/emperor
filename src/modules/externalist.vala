@@ -70,25 +70,29 @@ namespace Emperor.Modules {
             var pane = application.main_window.active_pane;
             var pwd = pane.pwd;
 
-            // TODO: Use user's default terminal!
-            var term_app = new DesktopAppInfo ("gnome-terminal.desktop");
-
-            var real_cwd = Environment.get_current_dir ();
             var dir_path = pwd.get_path ();
-            if (dir_path != null) {
-                Environment.set_current_dir (dir_path);
-            }
-            if (term_app != null) {
-                try {
-                    term_app.launch(null, null);
-                } catch {
-                    pane.display_error (_("Failed to launch terminal! How very odd."));
-                }
-            } else {
-                pane.display_error (_("Oh, bother! Gnome-Terminal is missing."));
+            if (dir_path == null) {
+                dir_path = Environment.get_current_dir ();
             }
 
-            Environment.set_current_dir (real_cwd);
+            // find terminal to use.
+            // check GSettings system:
+            var term_settings = new GLib.Settings ("org.gnome.desktop.default-applications.terminal");
+            var preferred_term = term_settings.get_string ("exec");
+            var argv = new string[1];
+
+            Pid pid;
+            try {
+                argv[0] = preferred_term;
+                Process.spawn_async (dir_path, argv, null, SpawnFlags.SEARCH_PATH, null, out pid);
+            } catch {
+                try {
+                    argv[0] = "xterm";
+                    Process.spawn_async (dir_path, argv, null, SpawnFlags.SEARCH_PATH, null, out pid);
+                } catch {
+                    pane.display_error (_("Failed to launch xterm! How very odd."));
+                }
+            }
         }
 
         public async void do_run_meld ()
