@@ -1400,6 +1400,17 @@ namespace Emperor.Application {
             return (owned) file_list;
         }
 
+        public File? get_file_at_cursor ()
+        {
+            if (m_cursor_path != null) {
+                var finfo = get_fileinfo (m_cursor_path);
+                var file = get_child_by_name (finfo.get_name ());
+                return file;
+            } else {
+                return null;
+            }
+        }
+
         private void restyle_complete_list ()
         {
 

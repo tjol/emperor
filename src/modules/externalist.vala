@@ -47,11 +47,17 @@ namespace Emperor.Modules {
 
             // Does Meld exist?
             if (module.meld_appinfo != null) {
-                // Run Meld.
-                action = reg.new_action ("runmeld");
+                // Meld Directories.
+                action = reg.new_action ("melddirs");
                 action.label = _("Compare directories with Meld");
-                action.activate.connect ( () => { module.do_run_meld.begin (); } );
+                action.activate.connect ( () => { module.do_run_meld_dirs.begin (); } );
                 app.ui_manager.add_action_to_menu (_("_View"), action, 80);
+
+                // Meld Files.
+                action = reg.new_action ("meldfiles");
+                action.label = _("Compare files with Meld");
+                action.activate.connect ( () => { module.do_run_meld_files.begin (); } );
+                app.ui_manager.add_action_to_menu (_("_View"), action, 81);
             }
         }
 
@@ -95,7 +101,7 @@ namespace Emperor.Modules {
             }
         }
 
-        public async void do_run_meld ()
+        public async void do_run_meld_dirs ()
         {
             var pane1 = application.main_window.active_pane;
             var pane2 = application.main_window.passive_pane;
@@ -106,6 +112,38 @@ namespace Emperor.Modules {
 
             try {
                 meld_appinfo.launch (dirs, null);
+            } catch (Error err) {
+                show_error_message_dialog (application.main_window,
+                    _("Failed to launch Meld! What a mess."), err.message);
+            }
+        }
+
+        public async void do_run_meld_files ()
+        {
+            var pane1 = application.main_window.active_pane;
+            var pane2 = application.main_window.passive_pane;
+
+            var files = new GLib.List<File> ();
+            GLib.List<File> selected;
+            // get selected file in active pane:
+            var cursor_file = pane1.get_file_at_cursor ();
+            if (cursor_file == null) {
+                selected = pane1.get_selected_files ();
+                if (selected.length () == 0) {
+                    return;
+                }
+                cursor_file = selected.nth_data (0);
+            }
+            files.append (cursor_file);
+            // passive pane:
+            selected = pane2.get_selected_files ();
+            if (selected.length () == 0) {
+                return;
+            }
+            files.append (selected.nth_data (0));
+
+            try {
+                meld_appinfo.launch (files, null);
             } catch (Error err) {
                 show_error_message_dialog (application.main_window,
                     _("Failed to launch Meld! What a mess."), err.message);
