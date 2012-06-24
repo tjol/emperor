@@ -237,6 +237,10 @@ namespace Emperor.Application {
 
         public static int main (string[] argv)
         {
+            Intl.bindtextdomain (Config.GETTEXT_PACKAGE, Config.PROGRAMNAME_LOCALEDIR);
+            Intl.bind_textdomain_codeset (Config.GETTEXT_PACKAGE, "UTF-8");
+            Intl.textdomain (Config.GETTEXT_PACKAGE);
+
             string? module_location = null;
             string? config_file = null;
             void* p_module_location = & module_location;
