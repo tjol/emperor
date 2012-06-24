@@ -1,4 +1,4 @@
 /POTFILES
 /emperor.pot
-/stamp-po
-/remove-potcdate.sed
+/Makefile.in.in
+/stamp-it

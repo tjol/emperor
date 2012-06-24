@@ -1,5 +1,7 @@
 #!/bin/sh
 
+echo +++ Running intltoolize ... &&
+intltoolize -f &&
 echo +++ Running libtoolize ... &&
 libtoolize --copy &&
 echo +++ Running aclocal ... &&
