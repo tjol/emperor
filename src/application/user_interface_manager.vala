@@ -196,7 +196,12 @@ namespace Emperor.Application {
 
                             var title = node->get_prop("title");
                             if (title == null) {
-                                title = "";
+                                var xtitle = node->get_prop("xtitle");
+                                if (xtitle != null) {
+                                    title = _(xtitle);
+                                } else {
+                                    title = "";
+                                }
                             }
                             var width_s = node->get_prop("default-width");
                             if (width_s == null) {

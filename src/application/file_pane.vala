@@ -101,7 +101,7 @@ namespace Emperor.Application {
             var selector = m_list.get_selection();
             selector.set_mode(SelectionMode.NONE);
 
-            m_list.cursor_changed.connect (cursor_changed);
+            m_list.cursor_changed.connect (handle_cursor_change);
 
             m_list.button_press_event.connect (on_mouse_event);
             m_list.button_release_event.connect (on_mouse_event);
@@ -1010,7 +1010,9 @@ namespace Emperor.Application {
 
         }
 
-        private void cursor_changed ()
+        public signal void cursor_changed ();
+
+        private void handle_cursor_change ()
         {
             TreePath new_cursor_path = null;
 
@@ -1024,6 +1026,8 @@ namespace Emperor.Application {
                 restyle_path (new_cursor_path, true);
             }
             m_cursor_path = new_cursor_path;
+
+            cursor_changed ();
         }
     
         private TreePath m_select_cache = null;

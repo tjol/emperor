@@ -1,4 +1,3 @@
-# List of source files which contain translatable strings.
 src/application/emperor_core.vala
 src/application/external_applications.vala
 src/application/file_info_column.vala
@@ -7,8 +6,19 @@ src/application/input_dialog.vala
 src/application/main_window.vala
 src/application/module_delegates.vala
 src/application/module_registry.vala
+src/application/mountwait-dialog.vala
+src/application/mountwait-notification.vala
+src/application/mountwait.vala
+src/application/prefs_machine.vala
 src/application/user_interface_manager.vala
-src/modules/basic_columns.vala
 src/modules/basic_actions.vala
+src/modules/basic_columns.vala
+src/modules/externalist.vala
+src/modules/file_transfer.vala
 src/modules/filters.vala
+src/modules/monitor_directory.vala
+src/modules/netmenu.vala
 src/modules/sort.vala
+src/modules/volume_toolbar.vala
+xml/_config_xml_strings.h
+src/modules/preview.vala

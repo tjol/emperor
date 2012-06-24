@@ -206,18 +206,7 @@ namespace Emperor.Application {
                 "<a href=\"mailto:Thomas Jollans &lt;t@jollybox.de&gt;\">Thomas Jollans</a>"
             };
             string license_text =
-              _("Emperor is free software: you can redistribute it and/or modify " +
-                "it under the terms of the GNU General Public License as published by " +
-                "the Free Software Foundation, either version 3 of the License, or " +
-                "(at your option) any later version. \n\n" +
-
-                "This program is distributed in the hope that it will be useful, " +
-                "but WITHOUT ANY WARRANTY; without even the implied warranty of " +
-                "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the " +
-                "GNU General Public License for more details. \n\n" +
-
-                "You should have received a copy of the GNU General Public License " +
-                "along with Emperor.  If not, see http://www.gnu.org/licenses/");
+              _("Emperor is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. \n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. \n\nYou should have received a copy of the GNU General Public License along with Emperor.  If not, see http://www.gnu.org/licenses/");
 
             string name_text = "Emperor " + Config.PACKAGE_VERSION_NAME;
             string effigy_file_name = Config.PACKAGE_VERSION_NAME + ".png";
@@ -237,6 +226,10 @@ namespace Emperor.Application {
 
         public static int main (string[] argv)
         {
+            Intl.bindtextdomain (Config.GETTEXT_PACKAGE, Config.PROGRAMNAME_LOCALEDIR);
+            Intl.bind_textdomain_codeset (Config.GETTEXT_PACKAGE, "UTF-8");
+            Intl.textdomain (Config.GETTEXT_PACKAGE);
+
             string? module_location = null;
             string? config_file = null;
             void* p_module_location = & module_location;
@@ -262,10 +255,10 @@ namespace Emperor.Application {
             };
 
             try {
-                Gtk.init_with_args(ref argv, _("Orthodox file manager for GNOME"),
+                Gtk.init_with_args(ref argv, _("Orthodox File Manager for GNOME"),
                                    options, null);
             } catch (Error e) {
-                stderr.printf (_("Error loading application: %s\n"), e.message);
+                stderr.printf (_("Error starting application: %s\n"), e.message);
                 return 1;
             }
 
