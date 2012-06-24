@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: emperor 0.2dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-06-25 00:06+0200\n"
-"PO-Revision-Date: 2012-06-25 00:06+0200\n"
+"POT-Creation-Date: 2012-06-25 00:23+0200\n"
+"PO-Revision-Date: 2012-06-25 00:23+0200\n"
 "Last-Translator: Thomas Jollans <t@jollybox.de>\n"
 "Language-Team: German <>\n"
 "Language: \n"
@@ -35,13 +35,13 @@ msgstr ""
 #: ../src/application/external_applications.vala:133
 #: ../src/application/external_applications.vala:183
 #: ../src/application/module_registry.vala:137
-#: ../src/application/user_interface_manager.vala:171
-#: ../src/application/user_interface_manager.vala:185
-#: ../src/application/user_interface_manager.vala:217
-#: ../src/application/user_interface_manager.vala:259
-#: ../src/application/user_interface_manager.vala:302
-#: ../src/application/user_interface_manager.vala:388
-#: ../src/application/user_interface_manager.vala:395
+#: ../src/application/user_interface_manager.vala:172
+#: ../src/application/user_interface_manager.vala:186
+#: ../src/application/user_interface_manager.vala:218
+#: ../src/application/user_interface_manager.vala:260
+#: ../src/application/user_interface_manager.vala:303
+#: ../src/application/user_interface_manager.vala:389
+#: ../src/application/user_interface_manager.vala:396
 #, c-format
 msgid "Unexpected element: %s"
 msgstr ""
@@ -255,12 +255,12 @@ msgstr "Fehler beim Lesen von Dateiinformationen. (%s)"
 msgid "Error reading directory. (%s)"
 msgstr "Fehler beim Lesen des Ordners. (%s)"
 
-#: ../src/application/file_pane.vala:1300
+#: ../src/application/file_pane.vala:1304
 #, c-format
 msgid "Could not resolve symbolic link: %s (%s)"
 msgstr "Kann dem Verweis „%s” nicht folgen. (%s)"
 
-#: ../src/application/file_pane.vala:1316
+#: ../src/application/file_pane.vala:1320
 #, c-format
 msgid "Error following shortcut: %s (%s)"
 msgstr "Kann dem Verweis „%s” nicht folgen. (%s)"
@@ -282,44 +282,44 @@ msgstr "Bitte haben Sie einen Moment Geduld."
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: ../src/application/user_interface_manager.vala:229
+#: ../src/application/user_interface_manager.vala:230
 msgid "Cannot have cell without data"
 msgstr ""
 
-#: ../src/application/user_interface_manager.vala:235
+#: ../src/application/user_interface_manager.vala:236
 #, c-format
 msgid "Unknown column type: %s"
 msgstr ""
 
-#: ../src/application/user_interface_manager.vala:244
+#: ../src/application/user_interface_manager.vala:245
 #, c-format
 msgid "Illegal value for \"sort\": \"%s\""
 msgstr ""
 
-#: ../src/application/user_interface_manager.vala:251
+#: ../src/application/user_interface_manager.vala:252
 msgid "There can be only one sorting cell per column."
 msgstr ""
 
-#: ../src/application/user_interface_manager.vala:320
+#: ../src/application/user_interface_manager.vala:321
 #, c-format
 msgid "Illegal value for \"pane\": \"%s\""
 msgstr ""
 
-#: ../src/application/user_interface_manager.vala:343
+#: ../src/application/user_interface_manager.vala:344
 #, c-format
 msgid "Illegal value for \"weight\": \"%s\""
 msgstr ""
 
-#: ../src/application/user_interface_manager.vala:359
+#: ../src/application/user_interface_manager.vala:360
 #, c-format
 msgid "Illegal value for \"style\": \"%s\""
 msgstr ""
 
-#: ../src/application/user_interface_manager.vala:375
+#: ../src/application/user_interface_manager.vala:376
 msgid "Each command button must an associated action."
 msgstr ""
 
-#: ../src/application/user_interface_manager.vala:380
+#: ../src/application/user_interface_manager.vala:381
 #, c-format
 msgid "Unknown action: %s"
 msgstr ""
@@ -367,6 +367,7 @@ msgstr "Neu laden"
 #: ../src/modules/externalist.vala:54 ../src/modules/externalist.vala:60
 #: ../src/modules/filters.vala:63 ../src/modules/filters.vala:79
 #: ../src/modules/filters.vala:92 ../src/modules/sort.vala:147
+#: ../src/modules/volume_toolbar.vala:95 ../src/modules/preview.vala:44
 msgid "_View"
 msgstr "_Ansicht"
 
@@ -633,7 +634,7 @@ msgid "Show Backup Files"
 msgstr "Backup-Dateien anzeigen"
 
 #: ../src/modules/netmenu.vala:35 ../src/modules/netmenu.vala:42
-#: ../src/modules/netmenu.vala:48 ../src/modules/netmenu.vala:53
+#: ../src/modules/netmenu.vala:52 ../src/modules/netmenu.vala:57
 msgid "_Net"
 msgstr "_Netz"
 
@@ -641,88 +642,88 @@ msgstr "_Netz"
 msgid "Browse Network"
 msgstr "Netzwerk durchsuchen"
 
-#: ../src/modules/netmenu.vala:45 ../src/modules/netmenu.vala:836
+#: ../src/modules/netmenu.vala:45 ../src/modules/netmenu.vala:840
 msgid "Connect to Server"
 msgstr "Mit Server verbinden"
 
-#: ../src/modules/netmenu.vala:51 ../src/modules/netmenu.vala:542
+#: ../src/modules/netmenu.vala:55 ../src/modules/netmenu.vala:546
 msgid "Network Servers"
 msgstr "Netzwerkserver"
 
-#: ../src/modules/netmenu.vala:200
+#: ../src/modules/netmenu.vala:204
 msgid "Anonymous login"
 msgstr "Anonym einloggen"
 
-#: ../src/modules/netmenu.vala:204
+#: ../src/modules/netmenu.vala:208
 msgid "Remember password"
 msgstr "Password speichen"
 
-#: ../src/modules/netmenu.vala:206
+#: ../src/modules/netmenu.vala:210
 msgid "Title:"
 msgstr "Bezeichnung:"
 
-#: ../src/modules/netmenu.vala:207
+#: ../src/modules/netmenu.vala:211
 msgid "Server:"
 msgstr "Server:"
 
-#: ../src/modules/netmenu.vala:208
+#: ../src/modules/netmenu.vala:212
 msgid "Port:"
 msgstr "Port-Nr.:"
 
-#: ../src/modules/netmenu.vala:209
+#: ../src/modules/netmenu.vala:213
 msgid "Protocol:"
 msgstr "Protokoll:"
 
-#: ../src/modules/netmenu.vala:210
+#: ../src/modules/netmenu.vala:214
 msgid "Directory:"
 msgstr "Verzeichnis:"
 
-#: ../src/modules/netmenu.vala:211
+#: ../src/modules/netmenu.vala:215
 msgid "Login Domain:"
 msgstr "Login-Domain:"
 
-#: ../src/modules/netmenu.vala:212
+#: ../src/modules/netmenu.vala:216
 msgid "User Name:"
 msgstr "Benutzername:"
 
-#: ../src/modules/netmenu.vala:213
+#: ../src/modules/netmenu.vala:217
 msgid "Password:"
 msgstr "Passwort:"
 
 #. Widget configuration.
-#: ../src/modules/netmenu.vala:221
+#: ../src/modules/netmenu.vala:225
 msgid "SSH/SFTP"
 msgstr ""
 
-#: ../src/modules/netmenu.vala:222
+#: ../src/modules/netmenu.vala:226
 msgid "FTP"
 msgstr ""
 
-#: ../src/modules/netmenu.vala:223
+#: ../src/modules/netmenu.vala:227
 msgid "Windows share (smb)"
 msgstr "Windows-Ordner (smb)"
 
-#: ../src/modules/netmenu.vala:224
+#: ../src/modules/netmenu.vala:228
 msgid "WebDAV (HTTP)"
 msgstr ""
 
-#: ../src/modules/netmenu.vala:225
+#: ../src/modules/netmenu.vala:229
 msgid "Secure WebDAV (HTTPS)"
 msgstr ""
 
-#: ../src/modules/netmenu.vala:580
+#: ../src/modules/netmenu.vala:584
 msgid "_New Connection"
 msgstr "_Neue Verbindung"
 
-#: ../src/modules/netmenu.vala:660
+#: ../src/modules/netmenu.vala:664
 msgid "New Connection"
 msgstr "Neue Verbindung"
 
-#: ../src/modules/netmenu.vala:697
+#: ../src/modules/netmenu.vala:701
 msgid "Edit Server"
 msgstr "Server bearbeiten"
 
-#: ../src/modules/netmenu.vala:783
+#: ../src/modules/netmenu.vala:787
 msgid "Please enter a connection title."
 msgstr "Bitte geben Sie eine Bezeichnung ein"
 
@@ -730,63 +731,81 @@ msgstr "Bitte geben Sie eine Bezeichnung ein"
 msgid "Sort directories first"
 msgstr "Verzeichnisse zuerst anzeigen"
 
-#: ../src/modules/volume_toolbar.vala:121
+#: ../src/modules/volume_toolbar.vala:55 ../src/modules/volume_toolbar.vala:65
+#: ../src/modules/volume_toolbar.vala:75 ../src/modules/volume_toolbar.vala:85
+msgid "_Go"
+msgstr "_Gehe zu"
+
+#: ../src/modules/volume_toolbar.vala:59
+#: ../src/modules/volume_toolbar.vala:294
+msgid "Home"
+msgstr "Heimverzeichnis"
+
+#: ../src/modules/volume_toolbar.vala:69
+msgid "Go to parent"
+msgstr "Elternverzeichnis"
+
+#: ../src/modules/volume_toolbar.vala:79
+msgid "Go to root"
+msgstr "Wurzelverzeichnis"
+
+#: ../src/modules/volume_toolbar.vala:89
+msgid "Open volume list"
+msgstr "Medienliste öffnen"
+
+#: ../src/modules/volume_toolbar.vala:180
 msgid "unknown"
 msgstr "unbekannt"
 
-#: ../src/modules/volume_toolbar.vala:148
+#: ../src/modules/volume_toolbar.vala:207
 #, c-format
 msgid "<b>%s</b> (%s; %s of %s free; read-only)"
 msgstr "<b>%s</b> (%s; frei: %s von %s; schreibgeschützt)"
 
-#: ../src/modules/volume_toolbar.vala:149
+#: ../src/modules/volume_toolbar.vala:208
 #, c-format
 msgid "<b>%s</b> (%s; %s of %s free)"
 msgstr "<b>%s</b> (%s; frei: %s von %s)"
 
-#: ../src/modules/volume_toolbar.vala:153
+#: ../src/modules/volume_toolbar.vala:212
 #, c-format
 msgid "<b>%s</b> (%s of %s free; read-only)"
 msgstr "<b>%s</b> (frei: %s von %s; schreibgeschützt)"
 
-#: ../src/modules/volume_toolbar.vala:154
+#: ../src/modules/volume_toolbar.vala:213
 #, c-format
 msgid "<b>%s</b> (%s of %s free)"
 msgstr "<b>%s</b> (frei: %s von %s)"
 
-#: ../src/modules/volume_toolbar.vala:217
+#: ../src/modules/volume_toolbar.vala:276
 #, c-format
 msgid "Cannot unmount “%s”."
 msgstr "Kann „%s” nicht aushängen."
 
-#: ../src/modules/volume_toolbar.vala:235
-msgid "Home"
-msgstr "Heimverzeichnis"
-
-#: ../src/modules/volume_toolbar.vala:286
+#: ../src/modules/volume_toolbar.vala:345
 #, c-format
 msgid "%s on %s"
 msgstr "%s auf %s"
 
-#: ../src/modules/volume_toolbar.vala:312
+#: ../src/modules/volume_toolbar.vala:371
 #, c-format
 msgid "Add %s to bookmarks"
 msgstr "Neues Lesezeichen: %s"
 
-#: ../src/modules/volume_toolbar.vala:455
-#: ../src/modules/volume_toolbar.vala:474
+#: ../src/modules/volume_toolbar.vala:514
+#: ../src/modules/volume_toolbar.vala:533
 msgid "Error writing to bookmarks file."
 msgstr "Lesezeichendatei konnte nicht geschrieben werden."
 
-#: ../src/modules/volume_toolbar.vala:518
+#: ../src/modules/volume_toolbar.vala:577
 msgid "Error mounting volume."
 msgstr "Fehler beim Einhängen des Datenträgers"
 
-#: ../src/modules/volume_toolbar.vala:532
+#: ../src/modules/volume_toolbar.vala:591
 msgid "Open"
 msgstr "Öffnen"
 
-#: ../src/modules/volume_toolbar.vala:535
+#: ../src/modules/volume_toolbar.vala:594
 msgid "Delete bookmark"
 msgstr "Lesezeichen entfernen"
 
@@ -804,4 +823,12 @@ msgstr "Datum"
 
 #: ../xml/_config_xml_strings.h:5
 msgid "Mode"
+msgstr "Modus"
+
+#: ../src/modules/preview.vala:34
+msgid "Preview Pane"
+msgstr "Vorschauansicht"
+
+#: ../src/modules/preview.vala:152
+msgid "Preview"
 msgstr ""
