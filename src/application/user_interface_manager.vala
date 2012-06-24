@@ -122,6 +122,7 @@ namespace Emperor.Application {
                 }
                 m_menus[title] = menu;
                 m_menu_items[title] = new TreeMap<int,Gtk.MenuItem> ();
+                title_menu_item.show ();
                 return menu;
             }
         }

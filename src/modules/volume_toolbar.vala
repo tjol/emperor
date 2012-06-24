@@ -23,8 +23,11 @@ using Emperor.Application;
 
 namespace Emperor.Modules {
 
+    delegate VolumeToolbar ReturnsToolbar ();
+
     public void install_volume_toolbar (MainWindow main_window)
     {
+        var app = (EmperorCore) main_window.application;
         var left_toolbar = new VolumeToolbar (main_window, main_window.left_pane);
         var right_toolbar = new VolumeToolbar (main_window, main_window.right_pane);
         
@@ -36,6 +39,60 @@ namespace Emperor.Modules {
 
         left_toolbar.show_all ();
         right_toolbar.show_all ();
+
+        // function
+        ReturnsToolbar get_active_toolbar = () => {
+            if (main_window.left_pane.active == true) {
+                return left_toolbar;
+            } else {
+                return right_toolbar;
+            }
+        };
+
+        // set up keyboard shortcuts
+        Gtk.Action action;
+
+        app.ui_manager.get_menu (_("_Go"), 3);
+
+        // Alt-Home = go home. As in Krusader.
+        action = app.modules.new_action ("volumes/go-home");
+        action.label = _("Home");
+        action.set_accel_path ("<Emperor-Main>/Volumes/GoHome");
+        Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/GoHome",
+                                Gdk.KeySym.Home, Gdk.ModifierType.MOD1_MASK);
+        action.activate.connect (() => { get_active_toolbar().go_home(); });
+        action.connect_accelerator ();
+        app.ui_manager.add_action_to_menu (_("_Go"), action);
+
+        // Ctrl+PgUp = go up. As in Krusader, Total Cmd, Gnome Cmd.
+        action = app.modules.new_action ("volumes/go-up");
+        action.label = _("Go to parent");
+        action.set_accel_path ("<Emperor-Main>/Volumes/GoUp");
+        Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/GoUp",
+                                Gdk.KeySym.Page_Up, Gdk.ModifierType.CONTROL_MASK);
+        action.activate.connect (() => { get_active_toolbar().go_up(); });
+        action.connect_accelerator ();
+        app.ui_manager.add_action_to_menu (_("_Go"), action);
+
+        // Ctrl+Backsp = go to root. As in Krusader. 
+        action = app.modules.new_action ("volumes/goto-root");
+        action.label = _("Go to root");
+        action.set_accel_path ("<Emperor-Main>/Volumes/GotoRoot");
+        Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/GotoRoot",
+                                Gdk.KeySym.BackSpace, Gdk.ModifierType.CONTROL_MASK);
+        action.activate.connect (() => { get_active_toolbar().goto_root(); });
+        action.connect_accelerator ();
+        app.ui_manager.add_action_to_menu (_("_Go"), action);
+
+        // Ctrl+M = open volume list. As in Krusader (vulgo media list)
+        action = app.modules.new_action ("volumes/open-list");
+        action.label = _("Open volume list");
+        action.set_accel_path ("<Emperor-Main>/Volumes/OpenList");
+        Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/OpenList",
+                                Gdk.KeySym.M, Gdk.ModifierType.CONTROL_MASK);
+        action.activate.connect (() => { get_active_toolbar().open_volume_list(); });
+        action.connect_accelerator ();
+        app.ui_manager.add_action_to_menu (_("_View"), action);
     }
 
     public class VolumeToolbar : HBox
@@ -57,6 +114,7 @@ namespace Emperor.Modules {
             m_pane = pane;
             var app = (EmperorCore) m_wnd.application;
 
+            // set up toolbar (with buttons)
             m_mount_desc = new Label ("");
             m_root_button = new Button.with_label ("/");
             m_home_button = new Button.with_label ("~");
@@ -82,6 +140,7 @@ namespace Emperor.Modules {
             pack_end (m_eject_button, false, false, 0);
 
             m_pane.notify["mnt"].connect (on_new_mnt);
+
         }
 
         private void on_new_mnt (ParamSpec p)
@@ -161,7 +220,7 @@ namespace Emperor.Modules {
             m_up_button.sensitive = (m_pane.parent_dir != null);
         }
 
-        private void go_up ()
+        internal void go_up ()
         {
             var parent = m_pane.parent_dir;
             if (parent != null) {
@@ -169,12 +228,12 @@ namespace Emperor.Modules {
             }
         }
 
-        private void go_home ()
+        internal void go_home ()
         {
             m_pane.chdir_then_focus.begin (File.new_for_path (Environment.get_home_dir()));
         }
 
-        private void goto_root ()
+        internal void goto_root ()
         {
             var pwd = m_pane.pwd;
             var mnt = m_pane.mnt;
@@ -193,7 +252,7 @@ namespace Emperor.Modules {
             m_pane.chdir_then_focus.begin (chdir_to);
         }
 
-        private void eject_volume ()
+        internal void eject_volume ()
         {
             eject_volume_async.begin ();
         }
@@ -218,7 +277,7 @@ namespace Emperor.Modules {
             }
         }
 
-        private void open_volume_list ()
+        internal void open_volume_list ()
         {
             bool first;
             var vm = VolumeMonitor.get ();
