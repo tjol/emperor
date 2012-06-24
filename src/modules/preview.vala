@@ -58,6 +58,7 @@ namespace Emperor.Modules {
                 m_preview_wnd = new PreviewWindow (appwnd);
 
                 m_preview_wnd.update_geometry ();
+                m_preview_wnd.preview_file.begin (appwnd.active_pane.get_file_at_cursor ());
 
                 setup_events ();
             } else {
@@ -69,6 +70,8 @@ namespace Emperor.Modules {
         private bool m_events_set_up = false;
         public void setup_events ()
         {
+            if (m_events_set_up) return;
+
             var appwnd = application.main_window;
 
             appwnd.add_events (Gdk.EventMask.STRUCTURE_MASK);
@@ -81,9 +84,27 @@ namespace Emperor.Modules {
                 }
             } );
 
-            appwnd.active_pane.notify["active"].connect ( p => {
+            var pane1 = appwnd.left_pane;
+            var pane2 = appwnd.right_pane;
+
+            pane1.notify["active"].connect ( p => {
                 if (m_preview_wnd != null) {
                     m_preview_wnd.update_geometry ();
+                    m_preview_wnd.preview_file.begin (appwnd.active_pane.get_file_at_cursor ());
+                }
+            } );
+
+            pane1.cursor_changed.connect ( () => {
+                if (pane1.active && m_preview_wnd != null) { // almost certainly true...
+                    // preview it!
+                    m_preview_wnd.preview_file.begin (pane1.get_file_at_cursor ());
+                }
+            } );
+
+            pane2.cursor_changed.connect ( () => {
+                if (pane2.active && m_preview_wnd != null) { // almost certainly true...
+                    // preview it!
+                    m_preview_wnd.preview_file.begin (pane2.get_file_at_cursor ());
                 }
             } );
 
@@ -133,6 +154,74 @@ namespace Emperor.Modules {
 
                 set_keep_below (true);
             }
+
+            public async void preview_file (File? f)
+            {
+                if (f == null) {
+                    return;
+                }
+
+                try {
+                    var finfo = yield f.query_info_async (FileAttribute.STANDARD_CONTENT_TYPE + "," + 
+                                                          FileAttribute.STANDARD_ICON + "," +
+                                                          FileAttribute.PREVIEW_ICON,
+                                                          FileQueryInfoFlags.NONE);
+                    // Step 1: check the content-type and see if we know how to preview.
+                    var ctype = finfo.get_content_type ();
+                    if (ctype in IMAGE_TYPES) {
+                        show_image.begin (f);
+                        return;
+                    }
+
+                    // Step 2: check if there's a preview icon.
+                    Icon? icon;
+                    icon = (Icon) finfo.get_attribute_object (FileAttribute.PREVIEW_ICON);
+                    if (icon != null) {
+                        show_icon (icon);
+                        return;
+                    }
+
+                    // Step 3: Use the normal icon
+                    icon = finfo.get_icon ();
+                    if (icon != null) {
+                        show_icon (icon);
+                        return;
+                    }
+                } catch {
+                    // Do I care that this failed? Not really.
+                }
+            }
+
+            private void show_icon (Icon icon)
+            {
+                var img = new Image.from_gicon (icon, IconSize.DIALOG);
+                img.pixel_size = get_allocated_width();
+                set_child (img);
+            }
+
+            private async void show_image (File f)
+            {
+                try {
+                    var in_stream = f.read ();
+                    var pixbuf = yield Gdk.Pixbuf.new_from_stream_at_scale_async (in_stream,
+                                    get_allocated_width (), get_allocated_height (),
+                                    true /* preserve aspect ratio */);
+                    var img = new Image.from_pixbuf (pixbuf);
+                    set_child (img);
+                } catch {
+                    // Do I care that this failed? Not really.
+                }
+            }
+
+            private void set_child (Widget new_child)
+            {
+                var old_child = this.get_child ();
+                if (old_child != null) {
+                    this.remove (old_child);
+                }
+                this.child = new_child;
+                new_child.show_all ();
+            }
         }
 
         private PreviewWindow? m_preview_wnd;
@@ -145,5 +234,31 @@ public void load_module (ModuleRegistry reg)
 {
     Emperor.Modules.PreviewModule.register (reg);
 }
+
+// Extracted from EOG's desktop entry.
+public const string[] IMAGE_TYPES = {
+    "image/bmp",
+    "image/gif",
+    "image/jpeg",
+    "image/jpg",
+    "image/pjpeg",
+    "image/png",
+    "image/tiff",
+    "image/x-bmp",
+    "image/x-gray",
+    "image/x-icb",
+    "image/x-ico",
+    "image/x-png",
+    "image/x-portable-anymap",
+    "image/x-portable-bitmap",
+    "image/x-portable-graymap",
+    "image/x-portable-pixmap",
+    "image/x-xbitmap",
+    "image/x-xpixmap",
+    "image/x-pcx",
+    "image/svg+xml",
+    "image/svg+xml-compressed",
+    "image/vnd.wap.wbmp"
+};
 
 
