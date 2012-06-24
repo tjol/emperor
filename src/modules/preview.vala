@@ -55,16 +55,42 @@ namespace Emperor.Modules {
         {
             if (m_preview_wnd == null) {
                 var appwnd = application.main_window;
-                m_preview_wnd = new PreviewWindow (appwnd);
+                m_preview_wnd = new PreviewWindow (appwnd, false);
+                m_preview_wnd.request_detach.connect (detach_preview);
 
                 m_preview_wnd.update_geometry ();
                 m_preview_wnd.preview_file.begin (appwnd.active_pane.get_file_at_cursor ());
+                m_preview_wnd.show_all ();
 
                 setup_events ();
             } else {
                 m_preview_wnd.destroy ();
                 m_preview_wnd = null;
             }
+        }
+
+        private void detach_preview ()
+        {
+            var appwnd = application.main_window;
+            m_preview_wnd.destroy ();
+            m_preview_wnd = new PreviewWindow (appwnd, true);
+            m_preview_wnd.request_attach.connect (attach_preview);
+            m_preview_wnd.default_width = 400;
+            m_preview_wnd.default_height = 400;
+            m_preview_wnd.show_all ();
+            m_preview_wnd.preview_file.begin (appwnd.active_pane.get_file_at_cursor ());
+            m_preview_wnd.show_all ();
+        }
+
+        private void attach_preview ()
+        {
+            var appwnd = application.main_window;
+            m_preview_wnd.destroy ();
+            m_preview_wnd = new PreviewWindow (appwnd, false);
+            m_preview_wnd.request_detach.connect (detach_preview);
+            m_preview_wnd.update_geometry ();
+            m_preview_wnd.preview_file.begin (appwnd.active_pane.get_file_at_cursor ());
+            m_preview_wnd.show_all ();
         }
 
         private bool m_events_set_up = false;
@@ -89,8 +115,8 @@ namespace Emperor.Modules {
 
             pane1.notify["active"].connect ( p => {
                 if (m_preview_wnd != null) {
-                    m_preview_wnd.update_geometry ();
                     m_preview_wnd.preview_file.begin (appwnd.active_pane.get_file_at_cursor ());
+                    m_preview_wnd.update_geometry ();
                 }
             } );
 
@@ -113,22 +139,68 @@ namespace Emperor.Modules {
 
         public class PreviewWindow : Gtk.Window
         {
-            public PreviewWindow (MainWindow parent)
+            public PreviewWindow (MainWindow parent, bool detached)
             {
                 Object ( app_window : parent,
                          transient_for : parent,
-                         decorated : false,
-                         skip_pager_hint : true,
-                         skip_taskbar_hint : true,
-                         accept_focus : false,
+                         is_detached : detached,
+                         decorated : detached,
+                         skip_pager_hint : !detached,
+                         skip_taskbar_hint : !detached,
+                         accept_focus : detached,
                          focus_on_map: false,
-                         type : WindowType.POPUP );
+                         title : _("Preview"),
+                         type : WindowType.TOPLEVEL,
+                         content_box : new VBox (false, 2),
+                         detach_button : new Button () );
+
+                this.child = content_box;
+
+                var detach_icon = new Image.from_stock (Stock.GO_UP, IconSize.SMALL_TOOLBAR);
+                detach_button.image = detach_icon;
+                detach_button.clicked.connect (() => {
+                    request_detach ();
+                });
+                detach_button.halign = Gtk.Align.END;
+                detach_button.expand = false;
+
+                if (detached) {
+                    add_events (Gdk.EventMask.STRUCTURE_MASK);
+                    window_state_event.connect ( (ev) => {
+                        if ((ev.changed_mask & Gdk.WindowState.ICONIFIED) != 0) {
+                            request_attach ();
+                        }
+                        return true;
+                    });
+                    configure_event.connect ( (ev) => {
+                        // refresh on resize.
+                        preview_file (parent.active_pane.get_file_at_cursor ());
+                        return false;
+                    });
+                    delete_event.connect ( (ev) => {
+                        request_attach ();
+                        return true;
+                    });
+                } else {
+                    content_box.pack_start (detach_button, false, false);
+                    set_type_hint (Gdk.WindowTypeHint.TOOLTIP);
+                    gravity = Gdk.Gravity.STATIC;
+                }
+
             }
 
             public MainWindow app_window { get; construct; }
+            public VBox content_box { get; construct; }
+            public Button detach_button { get; construct; }
+            public bool is_detached { get; construct; }
+
+            public signal void request_detach ();
+            public signal void request_attach ();
 
             public void update_geometry ()
             {
+                if (is_detached) return;
+
                 var pane = app_window.active_pane;
                 bool is_left = (pane == app_window.left_pane);
                 int width = pane.get_allocated_width () / 2;
@@ -143,16 +215,16 @@ namespace Emperor.Modules {
 
                 if (is_left) {
                     posx -= width;
+                    detach_button.halign = Gtk.Align.END;
                 } else {
                     posx += app_window.get_allocated_width ();
+                    detach_button.halign = Gtk.Align.START;
                 }
 
                 default_width = width;
                 default_height = height;
-                show_all ();
+                //show_all ();
                 move (posx, posy);
-
-                set_keep_below (true);
             }
 
             public async void preview_file (File? f)
@@ -192,35 +264,74 @@ namespace Emperor.Modules {
                 }
             }
 
+            public int available_height {
+                get {
+                    if (is_detached) {
+                        return get_allocated_height ();
+                    } else {
+                        return get_allocated_height () - 2 - detach_button.get_allocated_height ();
+                    }
+                }
+            }
+
+            public int available_width {
+                get {
+                    return get_allocated_width ();
+                }
+            }
+
             private void show_icon (Icon icon)
             {
                 var img = new Image.from_gicon (icon, IconSize.DIALOG);
-                img.pixel_size = get_allocated_width();
-                set_child (img);
+                img.pixel_size = int.min (available_height, available_width);
+                set_child_in_scrolledwindow (img);
             }
 
             private async void show_image (File f)
             {
                 try {
                     var in_stream = f.read ();
-                    var pixbuf = yield Gdk.Pixbuf.new_from_stream_at_scale_async (in_stream,
-                                    get_allocated_width (), get_allocated_height (),
-                                    true /* preserve aspect ratio */);
+                    var pixbuf = yield Gdk.Pixbuf.new_from_stream_async (in_stream);
+                    if (pixbuf.width > available_width || pixbuf.height > available_height) {
+                        // scale.
+                        var ratio_pb = (double)pixbuf.width / (double)pixbuf.height;
+                        var ratio_wnd = (double)available_width / (double)available_height;
+                        if (ratio_pb <= ratio_wnd) {
+                            pixbuf = pixbuf.scale_simple ((int)(ratio_pb * available_height), available_height,
+                                                          Gdk.InterpType.HYPER);
+                        } else {
+                            pixbuf = pixbuf.scale_simple (available_width, (int)(available_width / ratio_pb),
+                                                          Gdk.InterpType.HYPER);
+                        }
+                    }
                     var img = new Image.from_pixbuf (pixbuf);
-                    set_child (img);
+                    set_child_in_scrolledwindow (img);
                 } catch {
                     // Do I care that this failed? Not really.
                 }
             }
 
+            private Widget? m_child = null;
             private void set_child (Widget new_child)
             {
-                var old_child = this.get_child ();
-                if (old_child != null) {
-                    this.remove (old_child);
+                if (m_child != null) {
+                    content_box.remove (m_child);
                 }
-                this.child = new_child;
+                content_box.pack_start (new_child, true, true);
+                m_child = new_child;
                 new_child.show_all ();
+            }
+
+            private void set_child_in_scrolledwindow (Widget new_child)
+            {
+                var sw = new ScrolledWindow (null, null);
+                sw.set_policy (PolicyType.AUTOMATIC, PolicyType.AUTOMATIC);
+                sw.set_shadow_type (ShadowType.NONE);
+                var vp = new Viewport (null, null);
+                vp.set_shadow_type (ShadowType.NONE);
+                vp.child = new_child;
+                sw.child = vp;
+                set_child (sw);
             }
         }
 
