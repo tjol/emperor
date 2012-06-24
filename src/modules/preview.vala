@@ -58,7 +58,7 @@ namespace Emperor.Modules {
                 m_preview_wnd = new PreviewWindow (appwnd, false);
                 m_preview_wnd.request_detach.connect (detach_preview);
 
-                m_preview_wnd.update_geometry ();
+                m_preview_wnd.update_geometry (true);
                 m_preview_wnd.preview_file.begin (appwnd.active_pane.get_file_at_cursor ());
                 m_preview_wnd.show_all ();
 
@@ -88,7 +88,7 @@ namespace Emperor.Modules {
             m_preview_wnd.destroy ();
             m_preview_wnd = new PreviewWindow (appwnd, false);
             m_preview_wnd.request_detach.connect (detach_preview);
-            m_preview_wnd.update_geometry ();
+            m_preview_wnd.update_geometry (true);
             m_preview_wnd.preview_file.begin (appwnd.active_pane.get_file_at_cursor ());
             m_preview_wnd.show_all ();
         }
@@ -116,7 +116,7 @@ namespace Emperor.Modules {
             pane1.notify["active"].connect ( p => {
                 if (m_preview_wnd != null) {
                     m_preview_wnd.preview_file.begin (appwnd.active_pane.get_file_at_cursor ());
-                    m_preview_wnd.update_geometry ();
+                    m_preview_wnd.update_geometry (true);
                 }
             } );
 
@@ -197,7 +197,7 @@ namespace Emperor.Modules {
             public signal void request_detach ();
             public signal void request_attach ();
 
-            public void update_geometry ()
+            public void update_geometry (bool okay_to_reposition_parent=false)
             {
                 if (is_detached) return;
 
@@ -206,19 +206,64 @@ namespace Emperor.Modules {
                 int width = pane.get_allocated_width () / 2;
                 int height = (int) (pane.get_allocated_height () * 0.8);
 
+                int mwposx;
+                int mwposy;
                 int posx;
                 int posy;
-                app_window.get_position (out posx, out posy);
+                app_window.get_position (out mwposx, out mwposy);
                 Allocation alloc;
                 pane.get_allocation (out alloc);
-                posy += (app_window.get_allocated_height() / 2) - (height / 2) + 32;
+                posy = mwposy + (app_window.get_allocated_height() / 2) - (height / 2) + 32;
 
+                int refx;
+                int mwwidth = app_window.get_allocated_width ();
                 if (is_left) {
-                    posx -= width;
+                    refx = mwposx;
+                    posx = mwposx - width;
                     detach_button.halign = Gtk.Align.END;
                 } else {
-                    posx += app_window.get_allocated_width ();
+                    posx = refx = mwposx + mwwidth;
                     detach_button.halign = Gtk.Align.START;
+                }
+
+                if (okay_to_reposition_parent) {
+                    var screen = app_window.screen;
+                    var screenrect = screen.get_monitor_workarea (screen.get_monitor_at_point (refx, mwposy));
+
+                    int dx;
+                    if (is_left) {
+                        dx = posx - screenrect.x;
+                        if (dx < 0) {
+                            // left edge of window is out-of-bounds.
+                            if (   (mwposx + mwwidth) > (screenrect.x + screenrect.width) // beyond edge already
+                                || (mwposx + mwwidth - dx) <= (screenrect.x + screenrect.width) ) { // space to the right 
+                                // move main window to the right.
+                                app_window.move (mwposx - dx, mwposy);
+                            } else {
+                                // window in screen now, but would be moved off screen if not resized.
+                                // ergo, resize!
+                                int new_width = screenrect.width - width;
+                                app_window.resize (new_width, app_window.get_allocated_height ());
+                                app_window.move (screenrect.x + width, mwposy);
+                            }
+                        } // else: it's okay.
+                    } else { // right
+                        dx = (screenrect.x + screenrect.width) - (posx + width);
+                        if (dx < 0) {
+                            // right edge of window is out-of-bounds.
+                            if (   mwposx < screenrect.x             // beyond edge already
+                                || (mwposx + dx) >= screenrect.x ) { // space to the left
+                                // move main window to the left
+                                app_window.move (mwposx + dx, mwposy);
+                            } else {
+                                // window in screen now, but would be moved off screen if not resized.
+                                // ergo, resize!
+                                int new_width = screenrect.width - width;
+                                app_window.resize (new_width, app_window.get_allocated_height ());
+                                app_window.move (screenrect.x, mwposy);
+                            }
+                        } // else: it's okay.
+                    }
                 }
 
                 default_width = width;
