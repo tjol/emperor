@@ -1,4 +1,4 @@
-SUBDIRS = po src xml data
+SUBDIRS = xml po src data
 
 INTLTOOL_FILES = intltool-extract.in \
 		 intltool-merge.in \

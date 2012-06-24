@@ -1,7 +1,13 @@
 #!/bin/sh
 
 echo +++ Running intltoolize ... &&
-intltoolize -f &&
+intltoolize --force --copy &&
+cat >>po/Makefile.in.in <<EOF
+
+../xml/_config_xml_strings.h:
+	cd ../xml && \$(MAKE) _config_xml_strings.h
+
+EOF
 echo +++ Running libtoolize ... &&
 libtoolize --copy &&
 echo +++ Running aclocal ... &&
