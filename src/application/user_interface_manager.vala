@@ -197,7 +197,7 @@ namespace Emperor.Application {
                             if (title == null) {
                                 var xtitle = node->get_prop("xtitle");
                                 if (xtitle != null) {
-                                    title = gettext(xtitle);
+                                    title = _(xtitle);
                                 } else {
                                     title = "";
                                 }
