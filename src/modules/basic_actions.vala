@@ -133,16 +133,13 @@ namespace Emperor.Modules {
         private async void do_rename ()
         {
             var pane = application.main_window.active_pane;
+            var file = pane.get_file_at_cursor ();
+            if (file == null || file.equal(pane.parent_dir)) {
+                return;
+            }
             var path = pane.cursor_path;
-            if (path == null) {
-                return;
-            }
-            var fileinfo = pane.get_fileinfo (path);
-            if (fileinfo.get_display_name() == "..") {
-                return;
-            }
-            var file = pane.pwd.get_child (fileinfo.get_name());
 
+            FileInfo fileinfo;
             try {
                 fileinfo = yield file.query_info_async (
                                     FILE_ATTRIBUTE_STANDARD_EDIT_NAME,
