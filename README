@@ -28,7 +28,6 @@ To bootstrap, e.g. if you got the source with git, you will also need:
  * Vala from git or in a version NEWER THAN 0.17.2
  * GNU Autoconf, Automake, and Libtool
  * Intltool
- * Python 3.x, with "python3" in your PATH
 
 To generate the `./configure' script from a git clone, run `./bootstrap.sh'
 
