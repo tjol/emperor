@@ -36,7 +36,7 @@ namespace Emperor.Modules {
             reg.register_action (action);
             action.set_accel_path ("<Emperor-Main>/Preview/PreviewPane");
             Gtk.AccelMap.add_entry ("<Emperor-Main>/Preview/PreviewPane",
-                                    Gdk.KeySym.P, Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.MOD1_MASK);
+                                    Gdk.Key.P, Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.MOD1_MASK);
             action.toggled.connect ( () => {
                     module.toggle_preview_window ();
                 } );

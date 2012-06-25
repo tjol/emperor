@@ -69,7 +69,7 @@ public void load_module (ModuleRegistry reg)
     reg.register_action (hidden_action);
     hidden_action.set_accel_path ("<Emperor-Main>/Filters/Toggle_Hidden");
     Gtk.AccelMap.add_entry ("<Emperor-Main>/Filters/Toggle_Hidden",
-                        Gdk.KeySym.H, Gdk.ModifierType.CONTROL_MASK);
+                        Gdk.Key.H, Gdk.ModifierType.CONTROL_MASK);
     hidden_action.toggled.connect ( () => {
             Emperor.Modules.toggle_filter (app.main_window,
                 "filters/hidden", Emperor.Modules.filter_hidden,

@@ -38,7 +38,7 @@ namespace Emperor.Modules {
             action.label = _("Rename");
             action.set_accel_path ("<Emperor-Main>/BasicActions/Rename");
             Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Rename",
-                                    Gdk.KeySym.F2, 0);
+                                    Gdk.Key.F2, 0);
             action.activate.connect ( () => { module.do_rename.begin (); } );
             action.connect_accelerator ();
             app.ui_manager.add_action_to_menu (_("_File"), action, 40);
@@ -48,7 +48,7 @@ namespace Emperor.Modules {
             action.label = _("View");
             action.set_accel_path ("<Emperor-Main>/BasicActions/View");
             Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/View",
-                                    Gdk.KeySym.F3, 0);
+                                    Gdk.Key.F3, 0);
             action.activate.connect ( () => { module.open_files (AppManager.FileAction.VIEW); } );
             action.connect_accelerator ();
             app.ui_manager.add_action_to_menu (_("_File"), action, 20);
@@ -58,7 +58,7 @@ namespace Emperor.Modules {
             action.label = _("Edit");
             action.set_accel_path ("<Emperor-Main>/BasicActions/Edit");
             Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Edit",
-                                    Gdk.KeySym.F4, 0);
+                                    Gdk.Key.F4, 0);
             action.activate.connect ( () => { module.open_files (AppManager.FileAction.EDIT); } );
             action.connect_accelerator ();
             app.ui_manager.add_action_to_menu (_("_File"), action, 21);
@@ -69,7 +69,7 @@ namespace Emperor.Modules {
             action.icon_name = "folder-new";
             action.set_accel_path ("<Emperor-Main>/BasicActions/Mkdir");
             Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Mkdir",
-                                    Gdk.KeySym.F7, 0);
+                                    Gdk.Key.F7, 0);
             action.activate.connect ( () => { module.do_mkdir.begin (); } );
             action.connect_accelerator ();
             app.ui_manager.add_action_to_menu (_("_File"), action, 10);
@@ -79,7 +79,7 @@ namespace Emperor.Modules {
             action.label = _("Delete");
             action.set_accel_path ("<Emperor-Main>/BasicActions/Delete");
             Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Delete",
-                                    Gdk.KeySym.F8, 0);
+                                    Gdk.Key.F8, 0);
             action.activate.connect ( () => { module.do_delete.begin (); } );
             action.connect_accelerator ();
             app.ui_manager.add_action_to_menu (_("_File"), action, 69);
@@ -89,7 +89,7 @@ namespace Emperor.Modules {
             action.stock_id = Stock.QUIT;
             action.set_accel_path ("<Emperor-Main>/BasicActions/Quit");
             Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Quit",
-                                    Gdk.KeySym.Q, Gdk.ModifierType.CONTROL_MASK);
+                                    Gdk.Key.Q, Gdk.ModifierType.CONTROL_MASK);
             action.activate.connect ( () => { 
                     app.main_window.destroy ();
                 } );
@@ -101,7 +101,7 @@ namespace Emperor.Modules {
             action.label = _("Change Directory");
             action.set_accel_path ("<Emperor-Main>/BasicActions/Chdir");
             Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Chdir",
-                                    Gdk.KeySym.L, Gdk.ModifierType.CONTROL_MASK);
+                                    Gdk.Key.L, Gdk.ModifierType.CONTROL_MASK);
             action.activate.connect ( () => { 
                     app.main_window.active_pane.edit_title ();
                 } );
@@ -113,7 +113,7 @@ namespace Emperor.Modules {
             action.icon_name = "view-refresh";
             action.set_accel_path ("<Emperor-Main>/BasicActions/Refresh");
             Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Refresh",
-                                    Gdk.KeySym.R, Gdk.ModifierType.CONTROL_MASK);
+                                    Gdk.Key.R, Gdk.ModifierType.CONTROL_MASK);
             action.activate.connect ( () => { 
                     app.main_window.active_pane.refresh.begin ();
                     app.main_window.passive_pane.refresh.begin ();

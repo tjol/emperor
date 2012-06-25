@@ -40,7 +40,7 @@ namespace Emperor.Modules {
             action.label = _("Open Terminal");
             action.set_accel_path ("<Emperor-Main>/BasicActions/OpenTerm");
             Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/OpenTerm",
-                                    Gdk.KeySym.F9, 0);
+                                    Gdk.Key.F9, 0);
             action.activate.connect ( () => { module.do_open_term.begin (); } );
             action.connect_accelerator ();
             app.ui_manager.add_action_to_menu (_("_File"), action, 80);

@@ -36,7 +36,7 @@ namespace Emperor.Modules {
             action.label = _("Copy");
             action.set_accel_path ("<Emperor-Main>/FileTransfers/Copy");
             AccelMap.add_entry ("<Emperor-Main>/FileTransfers/Copy",
-                                    Gdk.KeySym.F5, 0);
+                                    Gdk.Key.F5, 0);
             action.activate.connect ( () => { module.do_transfer.begin (false); } );
             action.connect_accelerator ();
             app.ui_manager.add_action_to_menu (_("_File"), action, 60);
@@ -46,7 +46,7 @@ namespace Emperor.Modules {
             action.label = _("Move");
             action.set_accel_path ("<Emperor-Main>/FileTransfers/Move");
             AccelMap.add_entry ("<Emperor-Main>/FileTransfers/Move",
-                                    Gdk.KeySym.F6, 0);
+                                    Gdk.Key.F6, 0);
             action.activate.connect ( () => { module.do_transfer.begin (true); } );
             action.connect_accelerator ();
             app.ui_manager.add_action_to_menu (_("_File"), action, 61);

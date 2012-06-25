@@ -46,7 +46,7 @@ namespace Emperor.Modules {
             action.icon_name = "gtk-connect";
             action.set_accel_path ("<Emperor-Main>/NetMenu/NewConnection");
             Gtk.AccelMap.add_entry ("<Emperor-Main>/NetMenu/NewConnection",
-                                    Gdk.KeySym.F, Gdk.ModifierType.CONTROL_MASK);
+                                    Gdk.Key.F, Gdk.ModifierType.CONTROL_MASK);
             action.activate.connect (module.new_connection);
             action.connect_accelerator ();
             app.ui_manager.add_action_to_menu (_("_Net"), action, 2);
@@ -604,7 +604,7 @@ namespace Emperor.Modules {
 
                 set_default_size (500, 300);
                 key_press_event.connect ((e) => {
-                        if (e.keyval == Gdk.KeySym.Escape) {
+                        if (e.keyval == Gdk.Key.Escape) {
                             destroy ();
                             return true;
                         }

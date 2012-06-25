@@ -59,7 +59,7 @@ namespace Emperor.Modules {
         action.label = _("Home");
         action.set_accel_path ("<Emperor-Main>/Volumes/GoHome");
         Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/GoHome",
-                                Gdk.KeySym.Home, Gdk.ModifierType.MOD1_MASK);
+                                Gdk.Key.Home, Gdk.ModifierType.MOD1_MASK);
         action.activate.connect (() => { get_active_toolbar().go_home(); });
         action.connect_accelerator ();
         app.ui_manager.add_action_to_menu (_("_Go"), action);
@@ -69,7 +69,7 @@ namespace Emperor.Modules {
         action.label = _("Go to parent");
         action.set_accel_path ("<Emperor-Main>/Volumes/GoUp");
         Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/GoUp",
-                                Gdk.KeySym.Page_Up, Gdk.ModifierType.CONTROL_MASK);
+                                Gdk.Key.Page_Up, Gdk.ModifierType.CONTROL_MASK);
         action.activate.connect (() => { get_active_toolbar().go_up(); });
         action.connect_accelerator ();
         app.ui_manager.add_action_to_menu (_("_Go"), action);
@@ -79,7 +79,7 @@ namespace Emperor.Modules {
         action.label = _("Go to root");
         action.set_accel_path ("<Emperor-Main>/Volumes/GotoRoot");
         Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/GotoRoot",
-                                Gdk.KeySym.BackSpace, Gdk.ModifierType.CONTROL_MASK);
+                                Gdk.Key.BackSpace, Gdk.ModifierType.CONTROL_MASK);
         action.activate.connect (() => { get_active_toolbar().goto_root(); });
         action.connect_accelerator ();
         app.ui_manager.add_action_to_menu (_("_Go"), action);
@@ -89,7 +89,7 @@ namespace Emperor.Modules {
         action.label = _("Open volume list");
         action.set_accel_path ("<Emperor-Main>/Volumes/OpenList");
         Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/OpenList",
-                                Gdk.KeySym.M, Gdk.ModifierType.CONTROL_MASK);
+                                Gdk.Key.M, Gdk.ModifierType.CONTROL_MASK);
         action.activate.connect (() => { get_active_toolbar().open_volume_list(); });
         action.connect_accelerator ();
         app.ui_manager.add_action_to_menu (_("_View"), action);

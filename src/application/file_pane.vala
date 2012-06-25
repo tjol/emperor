@@ -1366,7 +1366,7 @@ namespace Emperor.Application {
                 });
                 
             dir_text.key_press_event.connect ((e) => {
-                    if (e.keyval == KeySym.Escape) { // Escape
+                    if (e.keyval == Key.Escape) { // Escape
                         // This moves the focus to the list, and focus_out_event 
                         // is called (see above)
                         this.active = true;
@@ -1477,21 +1477,21 @@ namespace Emperor.Application {
             if (e.type == EventType.KEY_PRESS) {
                 hide_error ();
                 switch (e.keyval) {
-                case KeySym.Tab:
+                case Key.Tab:
                     // activate other panel.
                     active = false;
                     return true;
-                case KeySym.space:
+                case Key.space:
                     if (m_cursor_path != null) {
                         toggle_selected (m_cursor_path);
                     }
                     return true;
-                case KeySym.Return:
+                case Key.Return:
                     if (m_cursor_path != null) {
                         activate_row (m_cursor_path);
                     }
                     return true;
-                case KeySym.Menu:
+                case Key.Menu:
                     if (m_cursor_path != null) {
                         popup_menu_for (m_cursor_path);
                     }
