@@ -58,6 +58,9 @@ namespace Emperor.Application {
             m_columns[name] = col;
         }
 
+        /**
+         * Get a FileInfoColumn previously set with {@link register_column}
+         */
         public FileInfoColumn? get_column (string name)
         {
             if (m_columns.has_key(name)) {
@@ -76,6 +79,9 @@ namespace Emperor.Application {
             m_cmp_funcs[name] = new CompareFuncWrapper(func);
         }
 
+        /**
+         * Get a sorting function registered with {@link register_sort_function}
+         */
         public CompareFunc? get_sort_function (string name)
         {
             if (m_cmp_funcs.has_key(name)) {
@@ -93,6 +99,9 @@ namespace Emperor.Application {
             m_commands[name] = new CommandWrapper (command);
         }
 
+        /**
+         * Get a command registered with {@link register_command}.
+         */
         public Command? get_command (string name)
         {
             if (m_commands.has_key(name)) {
@@ -112,6 +121,9 @@ namespace Emperor.Application {
             return action;
         }
 
+        /**
+         * Register an existing Gtk.Action.
+         */
         public void register_action (Gtk.Action action)
         {
             action.set_accel_group (default_accel_group);
@@ -145,6 +157,12 @@ namespace Emperor.Application {
          */
         public delegate void LoadFunction (ModuleRegistry reg); 
 
+        /**
+         * Load a module.
+         *
+         * @param name Name of the module file as installed in the module \
+         *              directory. Need not include '.so' suffix.
+         */
         private void load_module (string name)
                     throws ConfigurationError
         {

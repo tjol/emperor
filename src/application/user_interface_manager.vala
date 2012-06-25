@@ -21,10 +21,21 @@ using Gee;
 
 namespace Emperor.Application {
 
+    /**
+     * Class responsible for handling user interface configuration.
+     */
     public class UserInterfaceManager : Object
     {
+        /**
+         * Signal emitted when the application window has been fully set up
+         * and mapped. Use this for module configuration that requires
+         * initialized {@link FilePane} objects.
+         */
         public signal void main_window_ready (MainWindow main_window);
         
+        /**
+         * File pane column configuration
+         */
         internal class FilePaneColumn
         {
             internal string title;
@@ -34,6 +45,9 @@ namespace Emperor.Application {
             internal CompareFunc cmp_function;
         }
 
+        /**
+         * File list styling directive
+         */
         internal class StyleDirective
         {
             internal enum Target {
@@ -52,6 +66,10 @@ namespace Emperor.Application {
             internal Gdk.RGBA? bg = null;
         }
 
+        /**
+         * Information about the nature of the style that allows
+         * FilePane to only restyle the rows that need it.
+         */
         internal struct AboutStyle
         {
             public bool selected_style_uses_focus;
@@ -107,6 +125,15 @@ namespace Emperor.Application {
 
         }
 
+        /**
+         * Return the menu with the given title, creating it if it does
+         * not yet exist.
+         *
+         * @param title Menu title. (should be translatable)
+         * @param pos   Position at which the menu is inserted. Resulting \
+         *              behaviour depends on which menus have already been \
+         *              added.
+         */
         public Gtk.Menu get_menu (string title, int pos = -1)
         {
             if (m_menus.has_key(title)) {
@@ -129,6 +156,9 @@ namespace Emperor.Application {
 
         private HashMap<string,TreeMap<int,Gtk.MenuItem> > m_menu_items;
 
+        /**
+         * Add a Gtk.Action to a menu
+         */
         public void add_action_to_menu (string menu_title, Gtk.Action act, int pos = -1)
         {
             var menu = get_menu (menu_title);
@@ -144,6 +174,10 @@ namespace Emperor.Application {
             reorder_menu (menu_title);
         }
 
+        /**
+         * Ensure that all menu items are in the correct order. Called
+         * automatically by add_action_to_menu.
+         */
         public void reorder_menu (string menu_title)
         {
             int idx = 0;
@@ -400,6 +434,10 @@ namespace Emperor.Application {
         }
 
         private StyleContext m_style_context;
+
+        /**
+         * Retrieve default colour values from theme
+         */
         private void create_style_context ()
         {
             m_style_context = new StyleContext();
@@ -435,6 +473,23 @@ namespace Emperor.Application {
             m_label_background = m_style_context.get_background_color(StateFlags.NORMAL);
         }
 
+        /**
+         * Get a colour from a colour specification string. This can have the
+         * format:
+         *
+         *  * //gtk:flags// where //flags// has the format //flag1|flag2|...// with the possible flags being:
+         *    * normal
+         *    * active
+         *    * prelight
+         *    * selected
+         *    * insensitive
+         *    * inconsistent
+         *    * focused
+         *  * A standard name (Taken from the X11 rgb.txt file).
+         *  * A hex value in the form '#rgb' '#rrggbb' '#rrrgggbbb' or '#rrrrggggbbbb'
+         *  * A RGB color in the form 'rgb(r,g,b)' (In this case the color will have full opacity) 
+         *  * A RGBA color in the form 'rgba(r,g,b,a)' 
+         */
         public Gdk.RGBA? make_color(string? spec)
         {
             if (spec == null) {

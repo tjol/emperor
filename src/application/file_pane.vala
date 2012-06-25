@@ -28,8 +28,20 @@ namespace Emperor.Application {
         EITHER
     }
 
+    /**
+     * The heart of the file manager
+     */
     public class FilePane : VBox
     {
+        /**
+         * Method that determines whether a file is shown in the list or not.
+         * 
+         * @param f     The file in question
+         * @param fi    A FileInfo object describing the file, with default attributes
+         * @param currently_visible \
+         *              If this filter didn't exist, would the file be displayed? Return this \
+         *              as default value.
+         */
         public delegate bool FileFilterFunc (File f, FileInfo fi, bool currently_visible);
 
         EmperorCore m_app;
@@ -51,9 +63,13 @@ namespace Emperor.Application {
         Map<string,FileFilterFuncWrapper> m_filters;
         Map<string,FileInfoCompareFuncWrapper> m_permanent_sort;
 
+        /**
+         * Housekeeping to allow automatic unmounting of mounted archives.
+         */
         internal static HashMap<string,int> archive_ref_counts = null;
         HashSet<string> archive_ref_monitors;
 
+        // Indices of well-known data columns in the TreeModel
         public int COL_FILEINFO { get; private set; }
         public int COL_SELECTED { get; private set; }
         public int COL_FG_COLOR { get; private set; }
@@ -65,6 +81,12 @@ namespace Emperor.Application {
         public int COL_STYLE { get; private set; }
         public int COL_STYLE_SET { get; private set; }
 
+        /**
+         * Constructor - initialize FilePane
+         *
+         * @param app   EmperorCore application object.
+         * @param pane_designation Either "left" or "right" -- used for preferences
+         */
         public FilePane (EmperorCore app, string pane_designation)
         {
             if (archive_ref_counts == null) {
@@ -110,7 +132,9 @@ namespace Emperor.Application {
             m_list.key_press_event.connect (on_key_event);
             m_list.motion_notify_event.connect (on_motion_notify);
 
-            // get columns and do setup work.
+            /*
+             * Create tree columns based on configuration file.
+             */
 
             var store_cells = new LinkedList<FileInfoColumn?>();
             var store_types = new LinkedList<Type>();
@@ -177,11 +201,16 @@ namespace Emperor.Application {
 
             int colidx = 0;
             TreeViewColumn last_col = null;
-            // get the actual columns from configuration.
+
+            // get the actual, visible columns from configuration.
+
             foreach (var col in m_app.ui_manager.panel_columns) {
+                // get column
                 var tvcol = new TreeViewColumn();
                 tvcol.title = col.title;
                 tvcol.resizable = true;
+
+                // get width from prefs
                 var pref_w_name = "%s-col-width-%d".printf(m_designation,colidx);
                 var pref_w = m_app.prefs.get_int32 (pref_w_name, -1);
                 if (pref_w > 0) {
@@ -192,6 +221,7 @@ namespace Emperor.Application {
                     tvcol.fixed_width = col.default_width;
                 }
                 
+                // Add cells within column
                 foreach (var cell in col.cells) {
                     store_cells.add (cell);
                     store_types.add (cell.column_type);
@@ -202,16 +232,21 @@ namespace Emperor.Application {
                                         COL_BG_COLOR, COL_BG_SET,
                                         COL_WEIGHT, COL_WEIGHT_SET,
                                         COL_STYLE, COL_STYLE_SET);
+                    // only one cell per column can be sortable
                     if (cell == col.sort_column) {
                         tvcol.set_sort_column_id(idx);
                         m_cmp_funcs[idx] = new TreeIterCompareFuncWrapper(idx,
                                                     col.cmp_function,
                                                     this.compare_using_global_sort);
                     }
+                    // next cell / column of data
                     idx++;
                 }
+
+                // done with column.
                 m_list.append_column(tvcol);
                 last_col = tvcol;
+                // next visible column
                 colidx ++;
             }
             
@@ -219,9 +254,11 @@ namespace Emperor.Application {
                 last_col.sizing = TreeViewColumnSizing.GROW_ONLY;
             }
 
-            // finish.
+            // finalize TreeView configuration.
+            // convert lists to arrays.
             m_store_cells = store_cells.to_array();
             m_store_types = store_types.to_array();
+            // Attributes: join up string that we can pass to query_info
             var sb = new StringBuilder();
             bool first = true;
             foreach (string attr in m_file_attributes) {
@@ -232,6 +269,7 @@ namespace Emperor.Application {
             }
             m_file_attributes_str = sb.str;
 
+            // Add TreeView widget, within a ScrolledWindow to make it behave.
             var scrwnd = new ScrolledWindow (null, null);
             if (m_designation.has_prefix ("left")) {
                 scrwnd.set_placement (CornerType.TOP_RIGHT);
@@ -239,6 +277,7 @@ namespace Emperor.Application {
             scrwnd.add(m_list);
             pack_start (scrwnd, true, true);
 
+            // Add widget for displaying error messages.
             m_error_message = new Label ("");
             m_error_message_bg = new EventBox ();
             m_error_message.margin = 10;
@@ -263,7 +302,9 @@ namespace Emperor.Application {
             // they're usually never null.
         }
 
-
+        /**
+         * Saves column widths to preferences.
+         */
         private void check_column_sizes ()
         {
             int colidx = 0;
@@ -277,6 +318,9 @@ namespace Emperor.Application {
             last_col.sizing = TreeViewColumnSizing.GROW_ONLY;
         }
 
+        /**
+         * Make columns fixed-width so that they aren't resized to fit new content.
+         */
         private void fix_column_sizes ()
         {
             TreeViewColumn last_col = null;
@@ -288,17 +332,30 @@ namespace Emperor.Application {
             last_col.sizing = TreeViewColumnSizing.GROW_ONLY;
         }
 
+        /**
+         * Show error underneath list.
+         *
+         * @param message Error message, should be translatable.
+         */
         public void display_error (string message)
         {
             m_error_message.set_text(message);
             m_error_message_bg.visible = true;
         }
 
+        /**
+         * Hide the error message, if any.
+         */
         public void hide_error ()
         {
             m_error_message_bg.visible = false;
         }
 
+        /**
+         * Install file filter.
+         *
+         * @param id Unique identifier, can be used to remove filter later with {@link remove_filter}
+         */
         public void add_filter (string id, FileFilterFunc filter)
         {
             m_filters[id] = new FileFilterFuncWrapper (filter);
@@ -307,6 +364,11 @@ namespace Emperor.Application {
             }
         }
 
+        /**
+         * Remove filter added with {@link add_filter}
+         *
+         * @param id Identifier as passed to {@link add_filter}
+         */
         public bool remove_filter (string id)
         {
             bool removed = m_filters.unset (id);
@@ -316,15 +378,25 @@ namespace Emperor.Application {
             return removed;
         }
 
+        /**
+         * Check if given filter is installed at the moment.
+         *
+         * @see add_filter
+         * @see remove_filter
+         */
         public bool using_filter (string id)
         {
             return m_filters.has_key (id);
         }
 
+        /**
+         * "TreeModelFilterVisibleFunc" that applies Emperor filters
+         */
         private bool filter_list_row (TreeModel model, TreeIter iter)
         {
             bool visible = true;
 
+            // Retrieve FileInfo
             Value finfo_val;
             model.get_value (iter, COL_FILEINFO, out finfo_val);
             var finfo = finfo_val.get_object () as FileInfo;
@@ -350,6 +422,10 @@ namespace Emperor.Application {
             return visible;
         }
 
+        /**
+         * Register a file attribute to be automatically queried and available in FileInfo objects
+         * created in this file pane.
+         */
         public void add_query_attribute (string att)
         {
             m_file_attributes.add (att);
@@ -365,6 +441,13 @@ namespace Emperor.Application {
             m_file_attributes_str = sb.str;
         }
 
+        /**
+         * Add a sort function that is applied to the files in the list, in addition to,
+         * and with priority over, the sort column selected by the user.
+         * Example: directories being sorted first
+         *
+         * @see remove_sort
+         */
         public void add_sort (string id, FileInfoCompareFunc cmp)
         {
             m_permanent_sort[id] = new FileInfoCompareFuncWrapper (cmp);
@@ -377,6 +460,9 @@ namespace Emperor.Application {
             }
         }
 
+        /**
+         * Remove a sort function installed with {@link add_sort}
+         */
         public bool remove_sort (string id)
         {
             bool removed = m_permanent_sort.unset (id);
@@ -390,11 +476,20 @@ namespace Emperor.Application {
             return removed;
         }
 
+        /**
+         * Check if given sort function is in use.
+         *
+         * @see add_sort
+         * @see remove_sort
+         */
         public bool using_sort (string id)
         {
             return m_permanent_sort.has_key (id);
         }
 
+        /**
+         * Apply permanent sort functions installed with {@link add_sort}
+         */
         private int compare_using_global_sort (TreeModel model, TreeIter it1, TreeIter it2)
         {
             Value finfo1_val, finfo2_val;
@@ -423,6 +518,9 @@ namespace Emperor.Application {
         /**
          * The directory currently being listed. Setting the property changes
          * directory asynchronously
+         *
+         * @see chdir_then_focus
+         * @see chdir
          */
         [CCode(notify = false)]
         public File pwd {
@@ -432,6 +530,11 @@ namespace Emperor.Application {
             }
         }
 
+        /**
+         * Change directory and focus the file list when done.
+         *
+         * @see chdir
+         */
         public async bool chdir_then_focus (File pwd, string? prev_name=null, GLib.MountOperation? mnt_op=null)
         {
             var prev_name_ = prev_name;
@@ -450,18 +553,36 @@ namespace Emperor.Application {
             return success;
         }
 
+        /**
+         * The GIO Mount object the current working directory is on.
+         */
         public Mount mnt {
             get { return m_mnt; }
         }
 
+        /**
+         * Parent of the current working directory.
+         */
         public File parent_dir {
             get { return m_parent; }
         }
 
         private Cancellable m_chdir_cancellable = null;
 
+        /**
+         * Change directory.
+         *
+         * @param pwd Directory to change to
+         * @param prev_name \
+         *          Name of the file to place the cursor on when done.
+         * @param mnt_op \ 
+         *          GIO MountOperation used in case the location has to be mounted first. \
+         * @return false on error, true if successful or cancelled.
+         */
         public async bool chdir (File pwd, string? prev_name=null, GLib.MountOperation? mnt_op=null)
         {
+            // If another directory is currently being changed to, cancel that operation.
+            // Also, make this chdir operation cancellable in the same way.
             var cancellable = new Cancellable ();
             if (m_chdir_cancellable != null) {
                 m_chdir_cancellable.cancel ();
@@ -470,6 +591,8 @@ namespace Emperor.Application {
 
             TreeIter? prev_iter = null;
 
+            // Save the sorting of the list.
+            // Will create a new TreeModelSort later that needs this info.
             int sort_column = -1;
             SortType sort_type = 0;
             bool is_sorted = (m_sorted_list != null
@@ -479,12 +602,13 @@ namespace Emperor.Application {
             File archive_file = null;
             Mount mnt = null;
 
+            // No longer care if volume is unmounted. Will reconnect signal if still on same mount.
             if (m_mnt != null) {
                 m_mnt.unmounted.disconnect (on_unmounted);
             }
 
             if (other_pane.pwd != null && pwd.equal(other_pane.pwd)) {
-                // re-use other pane's list store.
+                // If the other pane is in the same directory, simply re-use its ListStore.
                 m_data_store = other_pane.m_data_store;
                 m_cursor_path = other_pane.m_cursor_path;
                 if (! yield procure_mount (pwd, out mnt, mnt_op, cancellable)) {
@@ -493,6 +617,9 @@ namespace Emperor.Application {
                 parent = other_pane.parent_dir;
 
             } else {
+                // Otherwise, read out the directory!
+
+                // Make sure the volume is mounted.
                 if (! yield procure_mount (pwd, out mnt, mnt_op, cancellable)) {
                     if (cancellable.is_cancelled()) {
                         return true;
@@ -503,9 +630,10 @@ namespace Emperor.Application {
 
                 set_cursor_busy (true);
 
-                // chdir-proper.
+                // Create a new list and fill it with file information.
                 var store = new ListStore.newv(m_store_types);
 
+                // Enumerate files
                 FileEnumerator enumerator;
                 try {
                     enumerator = yield pwd.enumerate_children_async (
@@ -526,6 +654,7 @@ namespace Emperor.Application {
                 // Add [..]
                 parent = pwd.get_parent();
 
+                // Are we in an archive?
                 if (pwd.get_uri_scheme() == "archive") {
                     var archive_uri = pwd.get_uri();
                     var spl1 = archive_uri.split ("://", 2);
@@ -538,11 +667,14 @@ namespace Emperor.Application {
                     }
                 }
 
+                // If this is the root of the archive, make [..] refer to the directory the
+                // archive is in. Archives should behave just like directories where possible.
                 if (parent == null && archive_file != null) {
-                    // archive root.
                     parent = archive_file.get_parent();
                 }
 
+                // The parent needs to be treated specially. Get all the file information
+                // for it.
                 FileInfo parent_info = null;
                 if (parent != null) {
                     try {
@@ -558,13 +690,14 @@ namespace Emperor.Application {
                     }
                 }
                 if (parent_info != null) {
+                    // Don't use the actual file name, just call it ".."
                     parent_info.set_display_name("..");
                     parent_info.set_name("..");
+                    // Even if we're in a hidden directory, we definitely want to see [..]
                     parent_info.set_is_hidden(false);
                     parent_info.set_attribute_boolean(FileAttribute.STANDARD_IS_BACKUP, false);
 
                     store.append (out iter);
-
                     update_row (iter, parent_info, store, pwd);
 
                     if (prev_name == "..") {
@@ -572,8 +705,9 @@ namespace Emperor.Application {
                     }
                 }
 
-                // Add the rest.
+                // Add the other non special case files one by one.
                 while (true) {
+                    // get a batch of FileInfo objects
                     GLib.List<FileInfo> fileinfos;
                     try {
                         fileinfos = yield enumerator.next_files_async (20, Priority.DEFAULT,
@@ -587,9 +721,9 @@ namespace Emperor.Application {
                     }
                     if (fileinfos == null) break;
 
+                    // add the batch of FileInfo objects to the list
                     foreach (var file in fileinfos) {
                         store.append (out iter);
-
                         update_row (iter, file, store, pwd);
 
                         if (prev_name == file.get_name()) {
@@ -598,22 +732,27 @@ namespace Emperor.Application {
                     }
                 }
 
+                // We're done. Install.
                 m_data_store = store;
                 m_cursor_path = null;
 
             }
             if (cancellable.is_cancelled ()) return true;
 
+            // Update class properties and emit signals so the rest of the program
+            // can react to the directory change.
             m_pwd = pwd;
             m_mnt = mnt;
             m_parent = parent;
             notify_property ("pwd");
             notify_property ("mnt");
             notify_property ("parent_dir");
+            // Make sure we know when our volume disappears.
             if (m_mnt != null) {
                 m_mnt.unmounted.connect (on_unmounted);
             }
 
+            // Filter and sort the list, and display it in the TreeView.
             m_list_filter = new TreeModelFilter (m_data_store, null);
             m_list_filter.set_visible_func (this.filter_list_row);
             m_sorted_list = new TreeModelSort.with_model (m_list_filter);
@@ -622,14 +761,18 @@ namespace Emperor.Application {
             fix_column_sizes ();
             m_list.set_model(m_sorted_list);
 
+            // Configure the TreeModelSort for our columns
             foreach (var e in m_cmp_funcs.entries) {
                 m_sorted_list.set_sort_func(e.key, e.value.compare_treeiter);
             }
+            // Re-enable the sorting, as saved above.
             if (is_sorted) {
                 m_sorted_list.set_sort_column_id (sort_column, sort_type);
             } else {
                 get_sort_from_prefs (m_sorted_list);
             }
+
+            // Move the cursor to the right spot.
             if (prev_iter != null) {
                 TreeIter sort_prev_iter;
                 TreeIter filter_prev_iter;
@@ -661,6 +804,9 @@ namespace Emperor.Application {
             return true;
         }
 
+        /**
+         * Change directory to the location saved in the preferences file
+         */
         public async bool chdir_from_pref ()
         {
             var old_pwd_str = m_app.prefs.get_string (m_designation + "-pwd", null);
@@ -673,6 +819,15 @@ namespace Emperor.Application {
             return yield chdir (old_pwd);
         }
 
+        /**
+         * Get the GIO mount object for a location. If the location is not mounted,
+         * attempt to mount.
+         *
+         * @param pwd Location to be examined
+         * @param mnt Variable to save mount to
+         * @param mnt_op MountOperation to use when mounting
+         * @return True if mounted without error and Mount object writter to "mnt"
+         */
         public async bool procure_mount (File pwd, out Mount mnt,
                                          GLib.MountOperation? mnt_op,
                                          Cancellable? cancellable=null)
@@ -688,9 +843,11 @@ namespace Emperor.Application {
                 // not mounted. Can I mount this?
                 bool mounted = false;
 
+                // create notification in case this takes a while.
                 var waiter = new_waiting_for_mount (m_app.main_window, cancellable);
                 set_cursor_busy (true);
                 try {
+                    // queue notification
                     waiter.go();
 
                     GLib.MountOperation real_mnt_op;
@@ -700,6 +857,7 @@ namespace Emperor.Application {
                         real_mnt_op = mnt_op;
                     }
 
+                    // Mount.
                     yield pwd.mount_enclosing_volume (
                             MountMountFlags.NONE, real_mnt_op,
                             cancellable);
@@ -711,11 +869,14 @@ namespace Emperor.Application {
                     }
                     mounted = false;
                 }
+                // Finished - for better or for worse
                 set_cursor_busy (false);
                 waiter.done ();
 
                 if (mounted) {
                     try {
+                        // This should always succeed since we just created the very mount
+                        // being retrieved here.
                         mnt = yield pwd.find_enclosing_mount_async ();
                     } catch (Error mnterr3) {
                         if (! cancellable.is_cancelled ()) {
@@ -725,9 +886,11 @@ namespace Emperor.Application {
                         return false;
                     }
                 } else {
+                    // not mounted
                     return false;
                 }
 
+                // Special case for archives: We don't want any dangling archive mounts hanging around.
                 if (pwd.get_uri_scheme() == "archive") {
                     if (cancellable.is_cancelled()) {
                         mnt.unmount_with_operation (MountUnmountFlags.NONE,
@@ -736,6 +899,8 @@ namespace Emperor.Application {
                     }
                 }
             }
+            // If this is an archive and we don't have a mount monitor for this pane and archive,
+            // create one.
             if (pwd.get_uri_scheme() == "archive") {
                 var archive_mount_root = mnt.get_root ();
                 var archive_ref = archive_mount_root.get_uri();
@@ -753,6 +918,9 @@ namespace Emperor.Application {
             return true;
         }
 
+        /**
+         * Keeps an eye on which Mount is being accessed. When navigating away from an archive, unmount.
+         */
         private class ArchiveMountMonitor : Object
         {
             string archive_uri;
@@ -767,7 +935,6 @@ namespace Emperor.Application {
                         string archive_uri, HashSet<string> archive_ref_monitor_set,
                         Mount mnt, Gtk.Window main_window)
             {
-                stderr.printf ("creating an archive mount monitor.\n");
                 this.archive_uri = archive_uri;
                 this.archive_mount_root = archive_mount_root;
                 this.pane = pane;
@@ -789,7 +956,6 @@ namespace Emperor.Application {
                     var refcnt = archive_ref_counts[archive_uri];
                     refcnt--;
                     am_in_archive = false;
-                    stderr.printf ("left archive... %d\n", refcnt);
                     archive_ref_counts[archive_uri] = refcnt;
                     if (refcnt == 0) {
                         mnt.unmount_with_operation (MountUnmountFlags.NONE,
@@ -798,7 +964,6 @@ namespace Emperor.Application {
                 } else if (!am_in_archive && pane.mnt != null && pane.mnt.get_root().equal (archive_mount_root)) {
                     var refcnt = archive_ref_counts[archive_uri];
                     refcnt++;
-                    stderr.printf ("entered archive... %d\n", refcnt);
                     am_in_archive = true;
                     mnt = pane.mnt;
                     archive_ref_counts[archive_uri] = refcnt;
@@ -821,12 +986,19 @@ namespace Emperor.Application {
             }
         }
 
+        /**
+         * Called when the current directory is unmounted (and should therefore no
+         * longer be displayed because one cannot interact with it)
+         */
         private void on_unmounted ()
         {
             chdir.begin (File.new_for_path (Environment.get_home_dir()), null);
             display_error (_("Location unmounted."));
         }
 
+        /**
+         * Extract data from a FileInfo object into a row in the file list
+         */
         private void update_row (TreeIter iter, FileInfo file,
                                  ListStore store, File? pwd=null)
         {
@@ -850,8 +1022,12 @@ namespace Emperor.Application {
 
         private HashSet<string> m_uris_being_updated = null;
 
+        /**
+         * Get file info and display.
+         */
         private async void query_and_update (TreeIter unsorted_iter, File file)
         {
+            // Make sure that files are only queried once at a time.
             if (m_uris_being_updated == null) {
                 m_uris_being_updated = new HashSet<string>();
             }
@@ -861,6 +1037,7 @@ namespace Emperor.Application {
             }
             m_uris_being_updated.add (uri);
 
+            // Query & Update
             try {
                 var fileinfo = yield file.query_info_async (
                         m_file_attributes_str,
@@ -871,6 +1048,7 @@ namespace Emperor.Application {
                 display_error (_("Error fetching file information. (%s)").printf(e.message));
             }
 
+            // Done.
             m_uris_being_updated.remove (uri);
         }
 
@@ -889,6 +1067,9 @@ namespace Emperor.Application {
             return (FileInfo) finfo_val.get_object ();
         }
 
+        /**
+         * Update the information at a specific path from a GIO File
+         */
         public void update_line (TreePath path, File file)
         {
             TreeIter iter;
@@ -898,9 +1079,13 @@ namespace Emperor.Application {
             query_and_update.begin (data_iter, file);
         }
 
+        /**
+         * Refreshes the information about a file
+         */
         public void update_file (File file)
             requires (m_pwd != null)
         {
+            // Is the file in the current directory?
             var parent = file.get_parent ();
             if (m_pwd.equal (parent)) {
                 // okay, it should be in the list.
@@ -915,9 +1100,11 @@ namespace Emperor.Application {
                             if (finfo.get_name() == file.get_basename()) {
                                 // same file.
                                 if (exists) {
+                                    // file exists; update info
                                     file_found = true;
                                     query_and_update.begin (iter, file);
                                 } else {
+                                    // file no longer exists; delete/hide record
                                     finfo_val.set_object ((Object)null);
                                     ((ListStore)model).set_value (iter, COL_FILEINFO, finfo_val);
                                 }
@@ -938,6 +1125,9 @@ namespace Emperor.Application {
             }
         }
 
+        /**
+         * Refresh the entire directory
+         */
         public async void refresh ()
             requires (m_pwd != null)
         {
@@ -1006,6 +1196,9 @@ namespace Emperor.Application {
             m_list_filter.convert_iter_to_child_iter (out data_iter, filter_iter);
         }
 
+        /**
+         * Change how the list is sorted when the user requests it.
+         */
         private void sort_column_changed ()
         {
             int sort_column;
@@ -1018,6 +1211,9 @@ namespace Emperor.Application {
                                     sort_type == SortType.ASCENDING ? "asc" : "desc");
         }
 
+        /**
+         * Set sort column from preferences file
+         */
         private void get_sort_from_prefs (TreeSortable model)
         {
             int sort_column = (int) m_app.prefs.get_int32 (m_designation + "-sort-column", -1);
@@ -1033,6 +1229,10 @@ namespace Emperor.Application {
 
         public signal void cursor_changed ();
 
+        /**
+         * Routine housekeeping tasks when the cursor moves. Emits {@link cursor_changed} signal
+         * when done.
+         */
         private void handle_cursor_change ()
         {
             TreePath new_cursor_path = null;
@@ -1055,15 +1255,21 @@ namespace Emperor.Application {
 
         private Ref<bool> _right_button_pressed_marker = null;
 
+        /**
+         * Button press or release within the TreeView area
+         */
         private bool on_mouse_event (EventButton e)
         {
+            // Was the click in the header?
             if (e.window != m_list.get_bin_window()) {
                 if (e.type == EventType.BUTTON_RELEASE) {
+                    // The columns may have been resized. Save this.
                     check_column_sizes ();
                 }
                 return false;
             }
 
+            // The click was in the actual list area. Find out on which item.
             TreePath path = null;
             if (! m_list.get_path_at_pos((int)e.x, (int)e.y, out path, null, null, null)) {
                 path = null;
@@ -1085,6 +1291,9 @@ namespace Emperor.Application {
                         toggle_selected (path);
                         m_select_cache = path;
 
+                        // This reference is changed when the button is newly pressed,
+                        // set to false when it is released, and unset when one second
+                        // has elapsed and the popup menu has been displayed.
                         var press_marker = new Ref<bool>(true);
                         _right_button_pressed_marker = press_marker;
                         Timeout.add(1000, () => {
@@ -1102,6 +1311,7 @@ namespace Emperor.Application {
                     return true;
                 }
             } else if (e.type == EventType.2BUTTON_PRESS) {
+                // double click.
                 activate_row(path);
                 return true;
             } else if (e.type == EventType.BUTTON_RELEASE) {
@@ -1136,6 +1346,7 @@ namespace Emperor.Application {
 
         public void edit_title ()
         {
+            // ignore clicks on title when it is already being edited.
             if (m_editing_title) return;
                     
             m_editing_title = true;
@@ -1155,8 +1366,9 @@ namespace Emperor.Application {
                 });
                 
             dir_text.key_press_event.connect ((e) => {
-                    if (e.keyval == 0xff1b) { // Escape
-                        //end_edit ();
+                    if (e.keyval == KeySym.Escape) { // Escape
+                        // This moves the focus to the list, and focus_out_event 
+                        // is called (see above)
                         this.active = true;
                         return true;
                     }
@@ -1171,6 +1383,7 @@ namespace Emperor.Application {
                     this.active = true;
                 });
             
+            // display Entry
             m_pane_title_bg.remove (m_pane_title);
             m_pane_title_bg.add (dir_text);
             dir_text.show ();
@@ -1188,11 +1401,16 @@ namespace Emperor.Application {
             set {
                 if (m_active != value) {
                     m_active = value;
-                    //hide_error ();
+
+                    // Restyle the list items where the style depends on the focus.
                     if (m_app.ui_manager.style_info.other_styles_use_focus) {
+                        // Every item's style is focus-dependent.
+                        // NB: This kind of styling is possible, but it should be avoided
+                        //     since switching panels takes much longer this way.
                         restyle_complete_list ();
                     } else {
                         if (m_app.ui_manager.style_info.selected_style_uses_focus) {
+                            // restyle selected items
                             m_data_store.@foreach ((model, path, iter) => {
                                     Value selected;
                                     model.get_value (iter, COL_SELECTED, out selected);
@@ -1204,13 +1422,19 @@ namespace Emperor.Application {
                         }
                         if (m_app.ui_manager.style_info.cursor_style_uses_focus
                                 && m_cursor_path != null) {
+                            // restyle cursor item
                             restyle_path(m_cursor_path, true);
                         }
+
+                        // The header style always depends on focus
                         restyle_header ();
                     }
+                    
+                    // Ensure everything makes sense.
                     other_pane.active = !m_active;
                 }
                 if (m_active && !m_list.has_focus) {
+                    // Active pane has focus.
                     m_list.grab_focus ();
                 }
             }
@@ -1230,6 +1454,9 @@ namespace Emperor.Application {
             }
         }
 
+        /**
+         * Mouse is being moved. Enabled right-button-drag selecting.
+         */
         private bool on_motion_notify (EventMotion e)
         {
             if ((e.state & ModifierType.BUTTON3_MASK) != 0) {
@@ -1274,12 +1501,17 @@ namespace Emperor.Application {
             return false;
         }
 
+        /**
+         * Open popup menu (not yet implemented)
+         */
         private void popup_menu_for (TreePath path)
         {
             // TODO: popup menu!
-            stdout.printf("popup!\n");
         }
 
+        /**
+         * Activate row - double-click or return key; open file.
+         */
         public void activate_row (TreePath path)
         {
             // get the FileInfo:
@@ -1300,6 +1532,7 @@ namespace Emperor.Application {
             Mount mnt;
 
             switch (file_info.get_file_type()) {
+            // Enter directory
             case FileType.DIRECTORY:
                 File dir;
                 if (real_file == null) {
@@ -1313,6 +1546,8 @@ namespace Emperor.Application {
                 yield chdir(dir, old_name);
 
                 break;
+
+            // Dereference symbolic link, and activate target.
             case FileType.SYMBOLIC_LINK:
                 var target_s = file_info.get_symlink_target ();
                 var target = m_pwd.resolve_relative_path (target_s);
@@ -1328,6 +1563,8 @@ namespace Emperor.Application {
                 }
                 yield activate_file (info, target);
                 break;
+
+            // Shortcuts are handled like symbolic links.
             case FileType.SHORTCUT:
                 var sc_target_s = file_info.get_attribute_string (
                                         FileAttribute.STANDARD_TARGET_URI);
@@ -1344,6 +1581,7 @@ namespace Emperor.Application {
                 }
                 yield activate_file (info, sc_target);
                 break;
+
             default:
                 File file;
                 if (real_file == null) {
@@ -1351,6 +1589,7 @@ namespace Emperor.Application {
                 } else {
                     file = real_file;
                 }
+
                 if (file_info.get_content_type() in ARCHIVE_TYPES) {
                     // attempt to mount as archive.
                     var archive_host = Uri.escape_string (file.get_uri(), "", false);
@@ -1364,6 +1603,9 @@ namespace Emperor.Application {
                         hide_error ();
                     }
                 }
+
+                // If it's not an archive, or mounting failed, tell the operating
+                // system to open the file in a sensible way.
                 m_app.open_file (file);
                 break;
             }
@@ -1393,10 +1635,14 @@ namespace Emperor.Application {
             }
         }
 
+        /**
+         * Returns a list of currently selected files.
+         */
         public GLib.List<File> get_selected_files ()
         {
             var file_list = new GLib.List<File> ();
 
+            // go through entire list to find selected items.
             m_sorted_list.@foreach ((model, path, iter) => {
                     Value selected;
                     model.get_value (iter, COL_SELECTED, out selected);
@@ -1439,15 +1685,18 @@ namespace Emperor.Application {
         private void restyle_complete_list ()
         {
 
+            // If there is nothing there, give up.
             TreeIter iter = TreeIter();
             if (m_data_store == null || !m_data_store.get_iter_first(out iter)) {
                 return;
             }
 
+            // Go through entire list.
             do {
                 restyle (iter, false);
             } while (m_data_store.iter_next(ref iter));
 
+            // Handle cursor specially: restyle() doesn't recognize the cursor.
             if (m_cursor_path != null) {
                 restyle_path (m_cursor_path, true);
             }
@@ -1485,6 +1734,7 @@ namespace Emperor.Application {
 
         private void restyle (TreeIter unsorted_iter, bool cursor=false)
         {
+            // Dummy GLib.Value objects
             var falsevalue = Value(typeof(bool));
             falsevalue.set_boolean(false);
             var truevalue = Value(typeof(bool));
@@ -1496,12 +1746,15 @@ namespace Emperor.Application {
             var normalstyle = Value(typeof(Pango.Style));
             normalstyle.set_enum(Pango.Style.NORMAL);
 
+            // Get file info
             Value finfo_val;
             m_data_store.get_value (unsorted_iter, COL_FILEINFO, out finfo_val);
             var finfo = (FileInfo) finfo_val.get_object();
             if (finfo == null) {
                 return;
             }
+
+            // Reset the style
 
             m_data_store.set_value (unsorted_iter, COL_FG_COLOR, nullcolor);
             m_data_store.set_value (unsorted_iter, COL_FG_SET, falsevalue);
@@ -1515,7 +1768,12 @@ namespace Emperor.Application {
             m_data_store.set_value(unsorted_iter, COL_STYLE, normalstyle);
             m_data_store.set_value(unsorted_iter, COL_STYLE_SET, falsevalue);
 
+            // Apply the style rules one by one.
+
             foreach (var style in m_app.ui_manager.style_directives) {
+
+                // Does this rule apply? If not, continue;
+
                 if (style.pane == FilePaneState.ACTIVE && !m_active) {
                     continue;
                 } else if (style.pane == FilePaneState.PASSIVE && m_active) {
@@ -1574,6 +1832,10 @@ namespace Emperor.Application {
         }
 
 
+        /**
+         * Wraps an Emperor CompareFunc (for a column to produce a
+         * TreeIterCompareFunc that also sorts based on the global sort functions.
+         */
         private class TreeIterCompareFuncWrapper : Object
         {
             int m_col;
@@ -1602,6 +1864,9 @@ namespace Emperor.Application {
             }
         }
 
+        /**
+         * Dumb wrapper of FileFilterFunc for use in generics
+         */
         private class FileFilterFuncWrapper : Object
         {
             public FileFilterFuncWrapper (FileFilterFunc f) {
@@ -1610,6 +1875,9 @@ namespace Emperor.Application {
             public FileFilterFunc func { get; private set; }
         }
 
+        /**
+         * Dumb wrapper of FileInfoCompareFunc for use in generics
+         */
         private class FileInfoCompareFuncWrapper : Object
         {
             public FileInfoCompareFuncWrapper (FileInfoCompareFunc f) {

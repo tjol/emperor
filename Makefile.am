@@ -34,3 +34,15 @@ dist-hook:
 		echo A git clone is required to generate a ChangeLog. >&2; \
 	    fi
 
+valadoc:
+	valadoc $(VALA_PACKAGES) $(GMODULE_VALAFLAGS) $(LIBXML_VALAFLAGS) $(LIBNOTIFY_VALAFLAGS) \
+		    --private --internal --force -o valadoc --package-name=emperor \
+		    src/application/*.vala
+
+valadoc-public:
+	valadoc $(VALA_PACKAGES) $(GMODULE_VALAFLAGS) $(LIBXML_VALAFLAGS) $(LIBNOTIFY_VALAFLAGS) \
+		    --force -o valadoc-public --package-name=emperor \
+		    src/application/*.vala
+
+.PHONY: valadoc valadoc-public
+

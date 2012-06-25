@@ -32,6 +32,11 @@ To bootstrap, e.g. if you got the source with git, you will also need:
 
 To generate the `./configure' script from a git clone, run `./bootstrap.sh'
 
+Hacking
+-------
+
+`make valadoc' will generate API docs for the application core.
+
 Copyright
 ---------
 

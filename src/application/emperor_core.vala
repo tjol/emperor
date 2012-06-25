@@ -40,6 +40,8 @@ namespace Emperor.Application {
         {
             Object ( application_id : "de.jollybox.Emperor", flags : ApplicationFlags.FLAGS_NONE);
 
+            // Initialize the essentials
+
             Xml.Parser.init ();
             m_config_dir = config_dir;
 
@@ -52,6 +54,7 @@ namespace Emperor.Application {
             external_apps = new AppManager (this);
 
             // read the XML configuration.
+
             var config_fname = get_config_file_path ("config.xml");
             
             Xml.Doc* document = Xml.Parser.read_file (config_fname);
@@ -66,10 +69,14 @@ namespace Emperor.Application {
                 delete document;
             }
 
+            // Set up about dialog
+
             var about_action = modules.new_action ("show-about-dialog");
             about_action.set_stock_id (Gtk.Stock.ABOUT);
             about_action.activate.connect (show_about_dialog);
             ui_manager.add_action_to_menu (_("_Help"), about_action, 999);
+
+            // Create main window 
 
             main_window = new MainWindow (this);
 
@@ -82,6 +89,11 @@ namespace Emperor.Application {
             Xml.Parser.cleanup ();
         }
 
+        /**
+         * Find configuration file name. Looks in the directory supplied
+         * on the command line, and in the default user and system config
+         * locations.
+         */
         public string get_config_file_path (string basename)
             throws ConfigurationError
         {
@@ -127,6 +139,9 @@ namespace Emperor.Application {
                 _("Configuration file not found: %s").printf (basename) );
         }
 
+        /**
+         * Find location of a data file.
+         */
         public string get_resource_file_path (string path)
         {
             var env_res_path = Environment.get_variable ("EMPEROR_RES_LOCATION");
@@ -162,6 +177,11 @@ namespace Emperor.Application {
             }
         }
 
+        /**
+         * Refer a file to the operating system.
+         *
+         * @see FilePane.activate_file
+         */
         public void open_file (File file)
         {
             var file_list = new GLib.List<File> ();
@@ -169,6 +189,11 @@ namespace Emperor.Application {
             open_files (file_list);
         }
 
+        /**
+         * Open multiple files. Assumes these are all of the same of of a
+         * similar type and opens all of them with the default application
+         * for the first in the list.
+         */
         public void open_files (List<File> file_list)
             requires (file_list.length() > 0)
         {
@@ -230,9 +255,13 @@ namespace Emperor.Application {
 
         public static int main (string[] argv)
         {
+            // Set up gettext
+
             Intl.bindtextdomain (Config.GETTEXT_PACKAGE, Config.PROGRAMNAME_LOCALEDIR);
             Intl.bind_textdomain_codeset (Config.GETTEXT_PACKAGE, "UTF-8");
             Intl.textdomain (Config.GETTEXT_PACKAGE);
+
+            // Configure command-line options
 
             string? module_location = null;
             string? config_file = null;
@@ -258,6 +287,8 @@ namespace Emperor.Application {
                      arg_description = _(".../config/directory/") }
             };
 
+            // Let Gtk+ do the rest
+
             try {
                 Gtk.init_with_args(ref argv, _("Orthodox File Manager for GNOME"),
                                    options, null);
@@ -266,11 +297,15 @@ namespace Emperor.Application {
                 return 1;
             }
 
+            // Initialize LibNotify
+
         #if HAVE_LIBNOTIFY
             if (!Notify.init("Emperor")) {
                 stderr.printf (_("Error initializing notification system.\n"));
             }
         #endif
+
+            // Set up Emperor itself
 
             EmperorCore app;
             try {
@@ -291,6 +326,9 @@ namespace Emperor.Application {
 
     }
 
+    /**
+     * Turn a number of bytes into a human-readable file size
+     */
     public static string bytesize_to_string (uint64 size_in_bytes)
     {
         if (size_in_bytes < 900) { // 0 -- 900b
@@ -308,6 +346,9 @@ namespace Emperor.Application {
         }
     }
 
+    /**
+     * Fancy reference class for when a pointer just won't do.
+     */
     public class Ref<T>
     {
         public Ref (T initial_value) { val = initial_value; }

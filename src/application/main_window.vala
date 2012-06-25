@@ -21,6 +21,9 @@ using Gee;
 
 namespace Emperor.Application {
     
+    /**
+     * Main application window
+     */
     public class MainWindow : Window
     {
         EmperorCore m_app;
@@ -33,6 +36,11 @@ namespace Emperor.Application {
         public FilePane left_pane { get; private set; }
         public FilePane right_pane { get; private set; }
 
+        /**
+         * Returns the active pane. This property does NOT notify. Setting this property
+         * makes a pane active and has the same effect as setting {@link FilePane.active}
+         * to true.
+         */
         public FilePane active_pane {
             get { 
                 if (left_pane.active) {
@@ -46,6 +54,9 @@ namespace Emperor.Application {
             }
         }
 
+        /**
+         * Returns the passive pane. This property does NOT notify.
+         */
         public FilePane passive_pane {
             get {
                 return active_pane.other_pane;
@@ -73,6 +84,7 @@ namespace Emperor.Application {
 
             m_main_box.pack_start (m_panes, true, true, 0);
 
+            // Get command buttons from UI configuration.
             m_command_buttons = new HBox (false, 3);
             foreach (var act in m_app.ui_manager.command_buttons) {
                 AccelKey key;
@@ -92,6 +104,7 @@ namespace Emperor.Application {
 
             add (m_main_box);
 
+            // Window size, from prefs.
             set_default_size (m_app.prefs.get_int32("window-x", 900),
                               m_app.prefs.get_int32("window-y", 500));
             this.title = _("Emperor");
@@ -107,6 +120,7 @@ namespace Emperor.Application {
             bool icon_has_been_set = false;
             // attempt to set the icon.
             if (! IconTheme.get_default().has_icon("emperor-fm")) {
+                // The icon theme does not have an Emperor icon; use our own file.
                 string icon_file_path = app.get_resource_file_path("emperor-fm.png");
                 var icon_file = File.new_for_path (icon_file_path);
                 if (icon_file.query_exists ()) {
@@ -118,12 +132,17 @@ namespace Emperor.Application {
                     }
                 }
             }
+            // Use theme's icon.
             if (!icon_has_been_set) {
                 set_default_icon_name ("emperor-fm");
             }
 
         }
 
+        /**
+         * Connected to the HPaned widget's map event. Ensures that the panes are of equal size
+         * initially, and load default directories.
+         */
         bool on_paned_map (Gdk.EventAny e)
         {
             if (!m_initialized) {
@@ -132,6 +151,7 @@ namespace Emperor.Application {
                 m_panes.position = w / 2;
                 active_pane = left_pane;
 
+                // Load directories now that all the rough initialization code has run.
                 set_directories.begin ();
 
                 m_app.ui_manager.main_window_ready (this);
