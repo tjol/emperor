@@ -52,6 +52,7 @@ namespace Emperor.Application {
         Map<string,FileInfoCompareFuncWrapper> m_permanent_sort;
 
         internal static HashMap<string,int> archive_ref_counts = null;
+        HashSet<string> archive_ref_monitors;
 
         public int COL_FILEINFO { get; private set; }
         public int COL_SELECTED { get; private set; }
@@ -69,6 +70,7 @@ namespace Emperor.Application {
             if (archive_ref_counts == null) {
                 archive_ref_counts = new HashMap<string,int> ();
             }
+            archive_ref_monitors = new HashSet<string> ();
 
             m_app = app;
             m_designation = pane_designation;
@@ -485,7 +487,9 @@ namespace Emperor.Application {
                 // re-use other pane's list store.
                 m_data_store = other_pane.m_data_store;
                 m_cursor_path = other_pane.m_cursor_path;
-                mnt = other_pane.mnt;
+                if (! yield procure_mount (pwd, out mnt, mnt_op, cancellable)) {
+                    mnt = other_pane.mnt;
+                }
                 parent = other_pane.parent_dir;
 
             } else {
@@ -730,9 +734,12 @@ namespace Emperor.Application {
                             new Gtk.MountOperation (m_app.main_window));
                         return false;
                     }
-
-                    var archive_mount_root = mnt.get_root ();
-                    var archive_ref = archive_mount_root.get_uri();
+                }
+            }
+            if (pwd.get_uri_scheme() == "archive") {
+                var archive_mount_root = mnt.get_root ();
+                var archive_ref = archive_mount_root.get_uri();
+                if (!(archive_ref in archive_ref_monitors)) {
                     if (archive_ref in archive_ref_counts) {
                         archive_ref_counts[archive_ref] = archive_ref_counts[archive_ref] + 1;
                     } else {
@@ -740,7 +747,7 @@ namespace Emperor.Application {
                     }
 
                     new ArchiveMountMonitor (this, archive_mount_root,
-                                    archive_ref, mnt, m_app.main_window);
+                                    archive_ref, archive_ref_monitors, mnt, m_app.main_window);
                 }
             }
             return true;
@@ -753,34 +760,48 @@ namespace Emperor.Application {
             FilePane pane;
             Mount mnt;
             Gtk.Window main_window;
+            HashSet<string> archive_ref_monitors;
+            bool am_in_archive;
 
             internal ArchiveMountMonitor (FilePane pane, File archive_mount_root,
-                        string archive_uri, Mount mnt, Gtk.Window main_window)
+                        string archive_uri, HashSet<string> archive_ref_monitor_set,
+                        Mount mnt, Gtk.Window main_window)
             {
+                stderr.printf ("creating an archive mount monitor.\n");
                 this.archive_uri = archive_uri;
                 this.archive_mount_root = archive_mount_root;
                 this.pane = pane;
                 this.mnt = mnt;
                 this.main_window = main_window;
+                this.archive_ref_monitors = archive_ref_monitor_set;
+                this.am_in_archive = true;
 
                 pane.notify["mnt"].connect (this.on_mnt_changed);
+                archive_ref_monitors.add (archive_uri);
                 this.@ref();
             }
 
             internal void on_mnt_changed (ParamSpec p)
             {
-                if (pane.mnt == null ||
-                    ! pane.mnt.get_root().equal (archive_mount_root)) {
+                if (am_in_archive && (pane.mnt == null ||
+                    ! pane.mnt.get_root().equal (archive_mount_root))) {
 
                     var refcnt = archive_ref_counts[archive_uri];
                     refcnt--;
+                    am_in_archive = false;
+                    stderr.printf ("left archive... %d\n", refcnt);
                     archive_ref_counts[archive_uri] = refcnt;
                     if (refcnt == 0) {
                         mnt.unmount_with_operation (MountUnmountFlags.NONE,
                             new Gtk.MountOperation (main_window));
-                        pane.notify["mnt"].disconnect (this.on_mnt_changed);
-                        this.@unref();
                     }
+                } else if (!am_in_archive && pane.mnt != null && pane.mnt.get_root().equal (archive_mount_root)) {
+                    var refcnt = archive_ref_counts[archive_uri];
+                    refcnt++;
+                    stderr.printf ("entered archive... %d\n", refcnt);
+                    am_in_archive = true;
+                    mnt = pane.mnt;
+                    archive_ref_counts[archive_uri] = refcnt;
                 }
             }
         }
