@@ -1,6 +1,6 @@
 pkgdata_DATA = config.xml apps.xml
 
-EXTRA_DIST = $(pkgdata_DATA)
+EXTRA_DIST = $(pkgdata_DATA) _config_xml_strings.h
 
 _config_xml_strings.h: config.xml
 	echo >_config_xml_strings.h "STRINGS =" && \
