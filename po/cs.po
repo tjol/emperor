@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: emperor 0.2dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-06-25 00:23+0200\n"
+"POT-Creation-Date: 2012-06-25 14:34+0200\n"
 "PO-Revision-Date: 2012-06-25 12:40+0100\n"
 "Last-Translator: Jan Drabek <repli2dev@gmail.com>\n"
 "Language-Team: Jan Drábek <me@jandrabek.cz>\n"
@@ -61,91 +61,116 @@ msgstr "Chyba při otevírání %ud souborů."
 
 #: ../src/application/emperor_core.vala:209
 msgid ""
-"Emperor is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. \n"
-"\n"
-"This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. \n"
-"\n"
-"You should have received a copy of the GNU General Public License along with Emperor.  If not, see http://www.gnu.org/licenses/"
+"<a href=\"mailto:Jan Drábek &lt;me@jandrabek.cz&gt;\">Jan Drábek</a> "
+"(Czech)\n"
+"<a href=\"mailto:Thomas Jollans &lt;t@jollybox.de&gt;\">Thomas Jollans</a> "
+"(German)"
 msgstr ""
-"Emperor je svobodný software: můžete jej redistribuovat, modifikovat při splnění podmínek GNU General Public Licence verze 3 a vyšší tak, jak byl publikován Free Software Foundation.\n"
-"\n"
-"Tento program je distribuován v naději, že bude užitečný, ale bez JAKÝCHKOLIV ZÁRUK; ba dokonce bez implicitní záruky prodejnosti či vhodnosti pro určitý účel. Chcete-li vědět více, přečtěte si GNU General Public Licence.\n"
-"\n"
-"Spolu s tímto programem byste měli obdržet kopii GNU General Public Licence. Pokud se tak nestalo, najdete ji na http://www.gnu.org/licenses/."
+"<a href=\"mailto:Jan Drábek &lt;me@jandrabek.cz&gt;\">Jan Drábek</a> "
+"(český)\n"
+"<a href=\"mailto:Thomas Jollans &lt;t@jollybox.de&gt;\">Thomas Jollans</a> "
+"(německý)"
 
-#: ../src/application/emperor_core.vala:219
+#: ../src/application/emperor_core.vala:212
+msgid ""
+"Emperor is free software: you can redistribute it and/or modify it under the "
+"terms of the GNU General Public License as published by the Free Software "
+"Foundation, either version 3 of the License, or (at your option) any later "
+"version. \n"
+"\n"
+"This program is distributed in the hope that it will be useful, but WITHOUT "
+"ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or "
+"FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for "
+"more details. \n"
+"\n"
+"You should have received a copy of the GNU General Public License along with "
+"Emperor.  If not, see http://www.gnu.org/licenses/"
+msgstr ""
+"Emperor je svobodný software: můžete jej redistribuovat, modifikovat při "
+"splnění podmínek GNU General Public Licence verze 3 a vyšší tak, jak byl "
+"publikován Free Software Foundation.\n"
+"\n"
+"Tento program je distribuován v naději, že bude užitečný, ale bez "
+"JAKÝCHKOLIV ZÁRUK; ba dokonce bez implicitní záruky prodejnosti či vhodnosti "
+"pro určitý účel. Chcete-li vědět více, přečtěte si GNU General Public "
+"Licence.\n"
+"\n"
+"Spolu s tímto programem byste měli obdržet kopii GNU General Public Licence. "
+"Pokud se tak nestalo, najdete ji na http://www.gnu.org/licenses/."
+
+#: ../src/application/emperor_core.vala:222
 msgid "About Emperor"
 msgstr "O aplikaci Emperor"
 
-#: ../src/application/emperor_core.vala:223
+#: ../src/application/emperor_core.vala:227
 msgid "Copyright © 2011-2012 Thomas Jollans"
 msgstr "Copyright © 2011-2012 Thomas Jollans"
 
-#: ../src/application/emperor_core.vala:224
-#: ../src/application/emperor_core.vala:258
+#: ../src/application/emperor_core.vala:228
+#: ../src/application/emperor_core.vala:262
 msgid "Orthodox File Manager for GNOME"
 msgstr "Ortodoxní souborový manažer pro prostředí GNOME"
 
-#: ../src/application/emperor_core.vala:245
+#: ../src/application/emperor_core.vala:249
 msgid "Location of Emperor modules"
 msgstr "Umístění modulů Emperor"
 
-#: ../src/application/emperor_core.vala:246
+#: ../src/application/emperor_core.vala:250
 msgid ".../module/directory/"
 msgstr "../module/directory/"
 
-#: ../src/application/emperor_core.vala:253
+#: ../src/application/emperor_core.vala:257
 msgid "Location of configuration files"
 msgstr "Umístění konfiguračních souborů"
 
-#: ../src/application/emperor_core.vala:254
+#: ../src/application/emperor_core.vala:258
 msgid ".../config/directory/"
 msgstr "../config/directory/"
 
-#: ../src/application/emperor_core.vala:261
+#: ../src/application/emperor_core.vala:265
 #, c-format
 msgid "Error starting application: %s\n"
 msgstr "Chyba při spouštění aplikace: %s\n"
 
-#: ../src/application/emperor_core.vala:267
+#: ../src/application/emperor_core.vala:271
 #, c-format
 msgid "Error initializing notification system.\n"
 msgstr "Chyba při inicializaci notifikací.\n"
 
-#: ../src/application/emperor_core.vala:276
+#: ../src/application/emperor_core.vala:280
 #, c-format
 msgid "ERROR: Cannot parse file \"%s\"\n"
 msgstr "Chyba: Nelze parsovat soubor \"%s\"\n"
 
-#: ../src/application/emperor_core.vala:278
+#: ../src/application/emperor_core.vala:282
 #, c-format
 msgid "ERROR: %s\n"
 msgstr "Chyba: %s\n"
 
 #. 0 -- 900b
-#: ../src/application/emperor_core.vala:293
+#: ../src/application/emperor_core.vala:297
 #, c-format
 msgid "%qu b"
 msgstr "%qu b"
 
 #. 0.9K -- 10K
 #. 10K -- 900K
-#: ../src/application/emperor_core.vala:295
-#: ../src/application/emperor_core.vala:297
+#: ../src/application/emperor_core.vala:299
+#: ../src/application/emperor_core.vala:301
 #, c-format
 msgid "%s KiB"
 msgstr "%s KiB"
 
 #. 0.9M -- 10M
 #. 10M -- 900M
-#: ../src/application/emperor_core.vala:299
-#: ../src/application/emperor_core.vala:301
+#: ../src/application/emperor_core.vala:303
+#: ../src/application/emperor_core.vala:305
 #, c-format
 msgid "%s MiB"
 msgstr "%s MiB"
 
 #. 0.9G +
-#: ../src/application/emperor_core.vala:303
+#: ../src/application/emperor_core.vala:307
 #, c-format
 msgid "%.1f GiB"
 msgstr "%.1f GiB"
@@ -314,24 +339,17 @@ msgid "Unknown action: %s"
 msgstr "Neznámá akce: %s"
 
 #. Ensure menu exists.
-#: ../src/modules/basic_actions.vala:34
-#: ../src/modules/basic_actions.vala:44
-#: ../src/modules/basic_actions.vala:54
-#: ../src/modules/basic_actions.vala:64
-#: ../src/modules/basic_actions.vala:75
-#: ../src/modules/basic_actions.vala:85
-#: ../src/modules/basic_actions.vala:97
-#: ../src/modules/externalist.vala:35
-#: ../src/modules/externalist.vala:46
-#: ../src/modules/file_transfer.vala:42
+#: ../src/modules/basic_actions.vala:34 ../src/modules/basic_actions.vala:44
+#: ../src/modules/basic_actions.vala:54 ../src/modules/basic_actions.vala:64
+#: ../src/modules/basic_actions.vala:75 ../src/modules/basic_actions.vala:85
+#: ../src/modules/basic_actions.vala:97 ../src/modules/externalist.vala:35
+#: ../src/modules/externalist.vala:46 ../src/modules/file_transfer.vala:42
 #: ../src/modules/file_transfer.vala:52
 msgid "_File"
 msgstr "_Soubor"
 
-#: ../src/modules/basic_actions.vala:38
-#: ../src/modules/basic_actions.vala:159
-#: ../src/modules/file_transfer.vala:465
-#: ../src/modules/file_transfer.vala:513
+#: ../src/modules/basic_actions.vala:38 ../src/modules/basic_actions.vala:159
+#: ../src/modules/file_transfer.vala:465 ../src/modules/file_transfer.vala:513
 msgid "Rename"
 msgstr "Přejmenovat"
 
@@ -343,8 +361,7 @@ msgstr "Náhled"
 msgid "Edit"
 msgstr "Upravit"
 
-#: ../src/modules/basic_actions.vala:68
-#: ../src/modules/basic_actions.vala:189
+#: ../src/modules/basic_actions.vala:68 ../src/modules/basic_actions.vala:189
 msgid "New directory"
 msgstr "Nová složka"
 
@@ -360,16 +377,11 @@ msgstr "Změnit složku"
 msgid "Reload directories"
 msgstr "Znovu načíst složky"
 
-#: ../src/modules/basic_actions.vala:121
-#: ../src/modules/externalist.vala:36
-#: ../src/modules/externalist.vala:54
-#: ../src/modules/externalist.vala:60
-#: ../src/modules/filters.vala:63
-#: ../src/modules/filters.vala:79
-#: ../src/modules/filters.vala:92
-#: ../src/modules/sort.vala:147
-#: ../src/modules/volume_toolbar.vala:95
-#: ../src/modules/preview.vala:44
+#: ../src/modules/basic_actions.vala:121 ../src/modules/externalist.vala:36
+#: ../src/modules/externalist.vala:54 ../src/modules/externalist.vala:60
+#: ../src/modules/filters.vala:63 ../src/modules/filters.vala:79
+#: ../src/modules/filters.vala:92 ../src/modules/sort.vala:147
+#: ../src/modules/volume_toolbar.vala:95 ../src/modules/preview.vala:44
 msgid "_View"
 msgstr "Ná_hled"
 
@@ -381,8 +393,7 @@ msgstr "Chyba při zjišťování informací o souboru."
 msgid "Rename file"
 msgstr "Přejmenovat soubor"
 
-#: ../src/modules/basic_actions.vala:160
-#: ../src/modules/file_transfer.vala:337
+#: ../src/modules/basic_actions.vala:160 ../src/modules/file_transfer.vala:337
 #, c-format
 msgid "Rename “%s” to:"
 msgstr "Přejmenovat %s na:"
@@ -400,8 +411,7 @@ msgstr "Vytvořit novou složku v %s pojmenovanou"
 msgid "Error creating directory."
 msgstr "Chyba při vytváření složky."
 
-#: ../src/modules/basic_actions.vala:225
-#: ../src/modules/basic_actions.vala:386
+#: ../src/modules/basic_actions.vala:225 ../src/modules/basic_actions.vala:386
 #: ../src/modules/file_transfer.vala:73
 msgid "No files selected."
 msgstr "Nebyly vybrány žádné soubory"
@@ -416,8 +426,7 @@ msgstr "Opravdu chcete smazat \"%s\"?"
 msgid "Really delete %u files?"
 msgstr "Opravdu chcete smazat %u souborů?"
 
-#: ../src/modules/basic_actions.vala:235
-#: ../src/modules/basic_actions.vala:335
+#: ../src/modules/basic_actions.vala:235 ../src/modules/basic_actions.vala:335
 msgid "This cannot be undone."
 msgstr "Tato operace nemůže být vrácena."
 
@@ -426,22 +435,21 @@ msgstr "Tato operace nemůže být vrácena."
 msgid "Error deleting file “%s”."
 msgstr "Chyba při mazání \"%s\"."
 
-#: ../src/modules/basic_actions.vala:285
-#: ../src/modules/file_transfer.vala:377
-#: ../src/modules/file_transfer.vala:466
-#: ../src/modules/file_transfer.vala:514
+#: ../src/modules/basic_actions.vala:285 ../src/modules/file_transfer.vala:377
+#: ../src/modules/file_transfer.vala:466 ../src/modules/file_transfer.vala:514
 msgid "Skip"
 msgstr "Přeskočit"
 
-#: ../src/modules/basic_actions.vala:286
-#: ../src/modules/file_transfer.vala:378
+#: ../src/modules/basic_actions.vala:286 ../src/modules/file_transfer.vala:378
 msgid "Retry"
 msgstr "Opakovat"
 
 #: ../src/modules/basic_actions.vala:333
 #, c-format
 msgid "Directory “%s” is not empty! Delete it and all its contents?"
-msgstr "Složka \"%s\" není prázdná! Opravdu ji chcete smazat i s veškerým jejím obsahem?"
+msgstr ""
+"Složka \"%s\" není prázdná! Opravdu ji chcete smazat i s veškerým jejím "
+"obsahem?"
 
 #: ../src/modules/basic_actions.vala:336
 msgid "Always"
@@ -471,18 +479,15 @@ msgstr "Porovnat soubory pomocí Meld"
 msgid "Failed to launch xterm! How very odd."
 msgstr "Chyba při spouštění aplikace xtzerm! Velmi podivné."
 
-#: ../src/modules/externalist.vala:117
-#: ../src/modules/externalist.vala:149
+#: ../src/modules/externalist.vala:117 ../src/modules/externalist.vala:149
 msgid "Failed to launch Meld! What a mess."
 msgstr "Chyba při spouštění aplikace Meld! Jaká škoda."
 
-#: ../src/modules/file_transfer.vala:36
-#: ../src/modules/file_transfer.vala:217
+#: ../src/modules/file_transfer.vala:36 ../src/modules/file_transfer.vala:217
 msgid "Copy"
 msgstr "Kopírovat"
 
-#: ../src/modules/file_transfer.vala:46
-#: ../src/modules/file_transfer.vala:206
+#: ../src/modules/file_transfer.vala:46 ../src/modules/file_transfer.vala:206
 msgid "Move"
 msgstr "Přesunout"
 
@@ -587,13 +592,11 @@ msgstr "Chyba při kopírování souboru \"%s\"."
 msgid "Directory “%s” exists. Merge directories?"
 msgstr "Složka \"%s\" již existuje. Chcete tyto složky spojit?"
 
-#: ../src/modules/file_transfer.vala:463
-#: ../src/modules/file_transfer.vala:511
+#: ../src/modules/file_transfer.vala:463 ../src/modules/file_transfer.vala:511
 msgid "Skip All"
 msgstr "Přeskočit vše"
 
-#: ../src/modules/file_transfer.vala:464
-#: ../src/modules/file_transfer.vala:512
+#: ../src/modules/file_transfer.vala:464 ../src/modules/file_transfer.vala:512
 msgid "Overwrite All"
 msgstr "Přepsat vše"
 
@@ -616,8 +619,12 @@ msgstr "Soubor nelze přepsat adresářem"
 
 #: ../src/modules/file_transfer.vala:554
 #, c-format
-msgid "Attempting to copy a directory to “%s”, but there is a file at that location. You may change the directory's name."
-msgstr "Složku nelze zkopírovat do \"%s\", protože v cílovém umístění je stejně pojmenovaný soubor. Můžete změnit jméno složky."
+msgid ""
+"Attempting to copy a directory to “%s”, but there is a file at that "
+"location. You may change the directory's name."
+msgstr ""
+"Složku nelze zkopírovat do \"%s\", protože v cílovém umístění je stejně "
+"pojmenovaný soubor. Můžete změnit jméno složky."
 
 #: ../src/modules/file_transfer.vala:562
 msgid "Cannot overwrite directory with file"
@@ -625,8 +632,12 @@ msgstr "Nelze přepsat složku souborem"
 
 #: ../src/modules/file_transfer.vala:563
 #, c-format
-msgid "Attempting to copy a file to “%s”, but there is a directory at that location. You may change the file's name."
-msgstr "Soubor nelze zkopírovat do \"%s\", protože v cílovém umístění je stejně pojmenovaná složka. Můžete změnit jméno souboru."
+msgid ""
+"Attempting to copy a file to “%s”, but there is a directory at that "
+"location. You may change the file's name."
+msgstr ""
+"Soubor nelze zkopírovat do \"%s\", protože v cílovém umístění je stejně "
+"pojmenovaná složka. Můžete změnit jméno souboru."
 
 #: ../src/modules/filters.vala:67
 msgid "Show Hidden Files"
@@ -636,10 +647,8 @@ msgstr "Zobrazit skryté soubory"
 msgid "Show Backup Files"
 msgstr "Zobrazit záložní soubory"
 
-#: ../src/modules/netmenu.vala:35
-#: ../src/modules/netmenu.vala:42
-#: ../src/modules/netmenu.vala:52
-#: ../src/modules/netmenu.vala:57
+#: ../src/modules/netmenu.vala:35 ../src/modules/netmenu.vala:42
+#: ../src/modules/netmenu.vala:52 ../src/modules/netmenu.vala:57
 msgid "_Net"
 msgstr "_Síť"
 
@@ -647,13 +656,11 @@ msgstr "_Síť"
 msgid "Browse Network"
 msgstr "Procházet síť"
 
-#: ../src/modules/netmenu.vala:45
-#: ../src/modules/netmenu.vala:840
+#: ../src/modules/netmenu.vala:45 ../src/modules/netmenu.vala:842
 msgid "Connect to Server"
 msgstr "Připojit k serveru"
 
-#: ../src/modules/netmenu.vala:55
-#: ../src/modules/netmenu.vala:546
+#: ../src/modules/netmenu.vala:55 ../src/modules/netmenu.vala:548
 msgid "Network Servers"
 msgstr "Síťová připojení"
 
@@ -718,19 +725,19 @@ msgstr "WebDAV (HTTP)"
 msgid "Secure WebDAV (HTTPS)"
 msgstr "Zabezpečené WebDAV (HTTPS)"
 
-#: ../src/modules/netmenu.vala:584
+#: ../src/modules/netmenu.vala:586
 msgid "_New Connection"
 msgstr "_Nové připojení"
 
-#: ../src/modules/netmenu.vala:664
+#: ../src/modules/netmenu.vala:666
 msgid "New Connection"
 msgstr "Nové připojení"
 
-#: ../src/modules/netmenu.vala:701
+#: ../src/modules/netmenu.vala:703
 msgid "Edit Server"
 msgstr "Upravit server"
 
-#: ../src/modules/netmenu.vala:787
+#: ../src/modules/netmenu.vala:789
 msgid "Please enter a connection title."
 msgstr "Zadejte, prosím, jméno připojení."
 
@@ -738,10 +745,8 @@ msgstr "Zadejte, prosím, jméno připojení."
 msgid "Sort directories first"
 msgstr "Složky řadit jako první"
 
-#: ../src/modules/volume_toolbar.vala:55
-#: ../src/modules/volume_toolbar.vala:65
-#: ../src/modules/volume_toolbar.vala:75
-#: ../src/modules/volume_toolbar.vala:85
+#: ../src/modules/volume_toolbar.vala:55 ../src/modules/volume_toolbar.vala:65
+#: ../src/modules/volume_toolbar.vala:75 ../src/modules/volume_toolbar.vala:85
 msgid "_Go"
 msgstr "_Jít"
 
@@ -841,4 +846,3 @@ msgstr "Panel náhledu"
 #: ../src/modules/preview.vala:152
 msgid "Preview"
 msgstr "Náhled"
-

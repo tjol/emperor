@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: emperor 0.2dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-06-25 00:23+0200\n"
+"POT-Creation-Date: 2012-06-25 14:33+0200\n"
 "PO-Revision-Date: 2012-06-25 00:23+0200\n"
 "Last-Translator: Thomas Jollans <t@jollybox.de>\n"
 "Language-Team: German <>\n"
@@ -58,6 +58,18 @@ msgstr "Fehler beim Öffnen von %ud Dateien."
 
 #: ../src/application/emperor_core.vala:209
 msgid ""
+"<a href=\"mailto:Jan Drábek &lt;me@jandrabek.cz&gt;\">Jan Drábek</a> "
+"(Czech)\n"
+"<a href=\"mailto:Thomas Jollans &lt;t@jollybox.de&gt;\">Thomas Jollans</a> "
+"(German)"
+msgstr ""
+"<a href=\"mailto:Jan Drábek &lt;me@jandrabek.cz&gt;\">Jan Drábek</a> "
+"(Tschechisch)\n"
+"<a href=\"mailto:Thomas Jollans &lt;t@jollybox.de&gt;\">Thomas Jollans</a> "
+"(Deutsch)"
+
+#: ../src/application/emperor_core.vala:212
+msgid ""
 "Emperor is free software: you can redistribute it and/or modify it under the "
 "terms of the GNU General Public License as published by the Free Software "
 "Foundation, either version 3 of the License, or (at your option) any later "
@@ -84,79 +96,79 @@ msgstr ""
 "Sie sollten ein Exemplar der GNU General Public License zusammen mit diesem "
 "Programm erhalten haben. Falls nicht, siehe http://www.gnu.org/licenses/."
 
-#: ../src/application/emperor_core.vala:219
+#: ../src/application/emperor_core.vala:222
 msgid "About Emperor"
 msgstr "Über Emperor"
 
-#: ../src/application/emperor_core.vala:223
+#: ../src/application/emperor_core.vala:227
 msgid "Copyright © 2011-2012 Thomas Jollans"
 msgstr ""
 
-#: ../src/application/emperor_core.vala:224
-#: ../src/application/emperor_core.vala:258
+#: ../src/application/emperor_core.vala:228
+#: ../src/application/emperor_core.vala:262
 msgid "Orthodox File Manager for GNOME"
 msgstr "Zweispaltiger Dateimanager für GNOME"
 
-#: ../src/application/emperor_core.vala:245
+#: ../src/application/emperor_core.vala:249
 msgid "Location of Emperor modules"
 msgstr "Ordner mit Emperor-Modulen"
 
-#: ../src/application/emperor_core.vala:246
+#: ../src/application/emperor_core.vala:250
 msgid ".../module/directory/"
 msgstr ".../modulordner/"
 
-#: ../src/application/emperor_core.vala:253
+#: ../src/application/emperor_core.vala:257
 msgid "Location of configuration files"
 msgstr "Ordner mit Konfigurationsdateien"
 
-#: ../src/application/emperor_core.vala:254
+#: ../src/application/emperor_core.vala:258
 msgid ".../config/directory/"
 msgstr ".../konfigurationsordner/"
 
-#: ../src/application/emperor_core.vala:261
+#: ../src/application/emperor_core.vala:265
 #, c-format
 msgid "Error starting application: %s\n"
 msgstr "Fehler beim Start: %s\n"
 
-#: ../src/application/emperor_core.vala:267
+#: ../src/application/emperor_core.vala:271
 #, c-format
 msgid "Error initializing notification system.\n"
 msgstr "Fehler beim Start des Benachrichtigungssystems\n"
 
-#: ../src/application/emperor_core.vala:276
+#: ../src/application/emperor_core.vala:280
 #, c-format
 msgid "ERROR: Cannot parse file \"%s\"\n"
 msgstr ""
 
-#: ../src/application/emperor_core.vala:278
+#: ../src/application/emperor_core.vala:282
 #, c-format
 msgid "ERROR: %s\n"
 msgstr ""
 
 #. 0 -- 900b
-#: ../src/application/emperor_core.vala:293
+#: ../src/application/emperor_core.vala:297
 #, c-format
 msgid "%qu b"
 msgstr ""
 
 #. 0.9K -- 10K
 #. 10K -- 900K
-#: ../src/application/emperor_core.vala:295
-#: ../src/application/emperor_core.vala:297
+#: ../src/application/emperor_core.vala:299
+#: ../src/application/emperor_core.vala:301
 #, c-format
 msgid "%s KiB"
 msgstr ""
 
 #. 0.9M -- 10M
 #. 10M -- 900M
-#: ../src/application/emperor_core.vala:299
-#: ../src/application/emperor_core.vala:301
+#: ../src/application/emperor_core.vala:303
+#: ../src/application/emperor_core.vala:305
 #, c-format
 msgid "%s MiB"
 msgstr ""
 
 #. 0.9G +
-#: ../src/application/emperor_core.vala:303
+#: ../src/application/emperor_core.vala:307
 #, c-format
 msgid "%.1f GiB"
 msgstr ""
@@ -642,11 +654,11 @@ msgstr "_Netz"
 msgid "Browse Network"
 msgstr "Netzwerk durchsuchen"
 
-#: ../src/modules/netmenu.vala:45 ../src/modules/netmenu.vala:840
+#: ../src/modules/netmenu.vala:45 ../src/modules/netmenu.vala:842
 msgid "Connect to Server"
 msgstr "Mit Server verbinden"
 
-#: ../src/modules/netmenu.vala:55 ../src/modules/netmenu.vala:546
+#: ../src/modules/netmenu.vala:55 ../src/modules/netmenu.vala:548
 msgid "Network Servers"
 msgstr "Netzwerkserver"
 
@@ -711,19 +723,19 @@ msgstr ""
 msgid "Secure WebDAV (HTTPS)"
 msgstr ""
 
-#: ../src/modules/netmenu.vala:584
+#: ../src/modules/netmenu.vala:586
 msgid "_New Connection"
 msgstr "_Neue Verbindung"
 
-#: ../src/modules/netmenu.vala:664
+#: ../src/modules/netmenu.vala:666
 msgid "New Connection"
 msgstr "Neue Verbindung"
 
-#: ../src/modules/netmenu.vala:701
+#: ../src/modules/netmenu.vala:703
 msgid "Edit Server"
 msgstr "Server bearbeiten"
 
-#: ../src/modules/netmenu.vala:787
+#: ../src/modules/netmenu.vala:789
 msgid "Please enter a connection title."
 msgstr "Bitte geben Sie eine Bezeichnung ein"
 

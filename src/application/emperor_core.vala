@@ -205,6 +205,9 @@ namespace Emperor.Application {
             string[] authors = {
                 "<a href=\"mailto:Thomas Jollans &lt;t@jollybox.de&gt;\">Thomas Jollans</a>"
             };
+            string translators = _(
+                "<a href=\"mailto:Jan Drábek &lt;me@jandrabek.cz&gt;\">Jan Drábek</a> (Czech)\n<a href=\"mailto:Thomas Jollans &lt;t@jollybox.de&gt;\">Thomas Jollans</a> (German)"
+                );
             string license_text =
               _("Emperor is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. \n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. \n\nYou should have received a copy of the GNU General Public License along with Emperor.  If not, see http://www.gnu.org/licenses/");
 
@@ -218,6 +221,7 @@ namespace Emperor.Application {
                 version : Config.PACKAGE_VERSION,
                 title : _("About Emperor"),
                 authors : authors,
+                translator_credits : translators,
                 license : license_text,
                 wrap_license : true,
                 copyright : _("Copyright © 2011-2012 Thomas Jollans"),
