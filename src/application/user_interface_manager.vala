@@ -427,8 +427,8 @@ namespace Emperor.Application {
             m_selected_background = m_style_context.get_background_color(StateFlags.SELECTED);
 
             path = new WidgetPath();
-            path.append_type(typeof(Label));
-            path.iter_add_class(-1, STYLE_CLASS_DEFAULT);
+            path.append_type(typeof(Button));
+            path.iter_add_class(-1, STYLE_CLASS_BUTTON);
             m_style_context.set_path(path);
 
             m_label_foreground = m_style_context.get_color(StateFlags.NORMAL);
