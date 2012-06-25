@@ -282,6 +282,8 @@ namespace Emperor.Modules {
                 anon_login.toggled.connect (update_login_sensitivity);
                 password.changed.connect (update_login_sensitivity);
 
+                protocol.set_active_id ("ftp");
+
                 response.connect (on_response);
             }
 
@@ -459,7 +461,7 @@ namespace Emperor.Modules {
             {
                 layout_grid.show_all ();
 
-                protocol.set_active_id ("ftp");
+                protocol_changed ();
                 anon_login.active = true;
 
                 base.show ();
@@ -645,7 +647,7 @@ namespace Emperor.Modules {
                 var mnt_op = new MountOperationWithDefaults (this.transient_for,
                                     server.anon,
                                     server.domain,
-                                    server.name,
+                                    server.user,
                                     "",
                                     PasswordSave.NEVER);
 
