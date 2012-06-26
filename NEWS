@@ -1,0 +1,17 @@
+Emperor 0.2 "Basil"
+ * Image preview pane
+ * Launch Terminal and Meld from inside Emperor
+ * Translated into Czech and German
+ * Many new keyboard shortcuts for increased efficiency
+ * Bug fixes
+ * New icon
+
+Emperor 0.1.1 "Aurelian" -- 2011-09-27
+ * Allow building without libnotify-0.7
+
+Emperor 0.1 "Aurelian" -- 2011-09-26
+ * First release
+ * Basic file system manipulation
+ * Transparent handling of archive files
+ * Well-integrated support for network locations
+
