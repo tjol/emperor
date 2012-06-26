@@ -1,5 +1,5 @@
 dnl This needs some file it can stat
-AC_INIT([emperor], [0.2dev])
+AC_INIT([emperor], [0.2])
 PACKAGE_VERSION_NAME=Basil
 AC_SUBST([PACKAGE_VERSION_NAME])
 
