@@ -43,6 +43,7 @@ namespace Emperor.Application {
             m_dialog = new InputDialog (_("Mounting"), m_wnd);
             m_dialog.deletable = false;
             m_dialog.resizable = false;
+            m_dialog.modal  = false;
             m_dialog.add_button (Stock.CANCEL, ResponseType.CANCEL);
             m_dialog.add_text ("Please wait while the location is being mounted.");
             m_dialog.decisive_response.connect ((id) => {
