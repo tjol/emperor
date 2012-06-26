@@ -228,7 +228,12 @@ namespace Emperor.Modules {
 
                 if (okay_to_reposition_parent) {
                     var screen = app_window.screen;
-                    var screenrect = screen.get_monitor_workarea (screen.get_monitor_at_point (refx, mwposy));
+                    Gdk.Rectangle screenrect;
+                    if (Gtk.MAJOR_VERSION == 3 && Gtk.MINOR_VERSION >= 4) {
+                        screenrect = screen.get_monitor_workarea (screen.get_monitor_at_point (refx, mwposy));
+                    } else {
+                        screen.get_monitor_geometry (screen.get_monitor_at_point (refx, mwposy), out screenrect);
+                    }
 
                     int dx;
                     if (is_left) {
