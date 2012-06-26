@@ -17,6 +17,7 @@
 
 using GLib;
 using Gtk;
+using Gee;
 using Emperor;
 using Emperor.Application;
 
@@ -95,7 +96,7 @@ namespace Emperor.Modules {
                                 _("Dereference symbolic links")));
 
             uint64 total_size_in_bytes = 0;
-            var file_infos = new FileInfo[n_files];
+            var file_infos = new ArrayList<FileInfo>();
 
             dialog.decisive_response.connect ((id) => {
                     if (id == ResponseType.OK) {
@@ -118,7 +119,6 @@ namespace Emperor.Modules {
 
             dialog.show_all ();
 
-            uint idx = 0;
             foreach (var file in files) {
                 try {
                     var finfo = yield file.query_info_async (
@@ -134,8 +134,7 @@ namespace Emperor.Modules {
                                                     out files_within);
                         n_files += files_within - 1;
                     }
-                    file_infos[idx] = finfo;
-                    idx ++;
+                    file_infos.add (finfo);
                 } catch (Error e) {
                     show_error_message_dialog (application.main_window,
                         _("Error getting size of “%s”.").printf(file.get_basename()),
@@ -219,7 +218,7 @@ namespace Emperor.Modules {
 
         }
 
-        private async void transfer_files (owned GLib.List<File> files, FileInfo[] file_infos,
+        private async void transfer_files (owned GLib.List<File> files, Gee.List<FileInfo> file_infos,
                                            uint total_n_files,
                                            uint64 total_size_in_bytes, File dest,
                                            bool move, bool deref_links)
@@ -313,6 +312,8 @@ namespace Emperor.Modules {
                 if (cancellable.is_cancelled()) {
                     break;
                 }
+
+                idx++;
             }
             
             active = false;
