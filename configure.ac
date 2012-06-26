@@ -65,7 +65,7 @@ GIO_VALAFLAGS="--pkg=gio-2.0"
 AC_SUBST([GIO_VALAFLAGS])
 UNIX_VALAFLAGS="--pkg=gio-unix-2.0 --pkg=posix"
 AC_SUBST([UNIX_VALAFLAGS])
-GTK_VALAFLAGS="--pkg=gtk+-3.0 --pkg=gdkkeysyms"
+GTK_VALAFLAGS="--pkg=gtk+-3.0"
 AC_SUBST([GTK_VALAFLAGS])
 GEE_VALAFLAGS="--pkg=gee-0.8"
 AC_SUBST([GEE_VALAFLAGS])
