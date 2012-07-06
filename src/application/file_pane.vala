@@ -698,9 +698,31 @@ namespace Emperor.Application {
                     } catch (Error err2) {
                         if (cancellable.is_cancelled()) return true;
 
-                        display_error (_("Error querying parent directory: %s (%s)")
-                                        .printf(parent.get_parse_name(),
-                                                err2.message));
+                        if (err2 is IOError.NOT_MOUNTED && parent.get_uri_scheme () == "archive") {
+                            // Special case: the parent is an archive which is not mounted.
+                            // in this case, we don't want to display an error - archives
+                            // are meant to be handled transparently. Improvise and use
+                            // the current directory's info. This isn't ideal, but it'll get
+                            // the job done.
+                            try {
+                                parent_info = yield pwd.query_info_async (m_file_attributes_str,
+                                                            FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
+                                                            Priority.DEFAULT, cancellable);
+                            } catch (Error err3) {
+                                if (err3 is IOError.CANCELLED) return true;
+
+                                // Display error detailing the problem.
+                                display_error (_("Error querying parent directory: %s (%s)")
+                                                .printf(parent.get_parse_name(),
+                                                        err3.message));
+
+                            }
+                        } else {
+                            // Display error detailing the problem.
+                            display_error (_("Error querying parent directory: %s (%s)")
+                                            .printf(parent.get_parse_name(),
+                                                    err2.message));
+                        }
                     }
                 }
                 if (parent_info != null) {
