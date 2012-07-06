@@ -456,6 +456,13 @@ namespace Emperor.Application {
                 int col;
                 SortType st;
                 m_sorted_list.get_sort_column_id (out col, out st);
+
+                // reverse sort first.
+                m_sorted_list.set_sort_column_id (col, st == SortType.ASCENDING ?
+                                                                SortType.DESCENDING
+                                                              : SortType.ASCENDING  );
+                // now sort correctly again. This is the way to refresh sorting,
+                // apparently.
                 m_sorted_list.set_sort_column_id (col, st);
             }
         }
@@ -471,6 +478,13 @@ namespace Emperor.Application {
                 int col;
                 SortType st;
                 m_sorted_list.get_sort_column_id (out col, out st);
+
+                // reverse sort first.
+                m_sorted_list.set_sort_column_id (col, st == SortType.ASCENDING ?
+                                                                SortType.DESCENDING
+                                                              : SortType.ASCENDING  );
+                // now sort correctly again. This is the way to refresh sorting,
+                // apparently.
                 m_sorted_list.set_sort_column_id (col, st);
             }
             return removed;
