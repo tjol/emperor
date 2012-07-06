@@ -671,14 +671,7 @@ namespace Emperor.Application {
                 // Are we in an archive?
                 if (pwd.get_uri_scheme() == "archive") {
                     var archive_uri = pwd.get_uri();
-                    var spl1 = archive_uri.split ("://", 2);
-                    if (spl1.length >= 2) {
-                        var spl2 = spl1[1].split ("/", 2);
-                        var archive_host = spl2[0];
-                        var archive_file_uri_esc1 = Uri.unescape_string (archive_host, null);
-                        var archive_file_uri = Uri.unescape_string (archive_file_uri_esc1, null);
-                        archive_file = File.new_for_uri (archive_file_uri);
-                    }
+                    archive_file = get_archive_file (archive_uri);
                 }
 
                 // If this is the root of the archive, make [..] refer to the directory the
@@ -838,6 +831,23 @@ namespace Emperor.Application {
             m_chdir_cancellable = null;
 
             return true;
+        }
+
+        /**
+         * Helper function to find the archive file given a URI within the archive.
+         */
+        private File? get_archive_file (string archive_uri)
+        {
+            var spl1 = archive_uri.split ("://", 2);
+            if (spl1.length >= 2) {
+                var spl2 = spl1[1].split ("/", 2);
+                var archive_host = spl2[0];
+                var archive_file_uri_esc1 = Uri.unescape_string (archive_host, null);
+                var archive_file_uri = Uri.unescape_string (archive_file_uri_esc1, null);
+                return File.new_for_uri (archive_file_uri);
+            } else {
+                return null;
+            }
         }
 
         /**
@@ -1576,9 +1586,39 @@ namespace Emperor.Application {
                 } else {
                     dir = real_file;
                 }
-                var old_name = file_info.get_name() == ".." 
-                                    ? m_pwd.get_basename ()
-                                    : "..";
+
+                string? old_name = null;
+                if (file_info.get_name () == "..") {
+                    // going up, to the parent.
+                    if (m_pwd.get_uri_scheme () == "archive" && !m_pwd.has_parent (null)) {
+                        // Leaving the archive. Find archive file name.
+                        var archive_file = get_archive_file (m_pwd.get_uri ());
+                        if (archive_file != null) {
+                            old_name = archive_file.get_basename ();
+
+                            // More special treatment: decrease ref count of parent by one.
+                            if (archive_file.get_uri_scheme () == "archive") {
+                                var parent_mount = yield archive_file.find_enclosing_mount_async (Priority.DEFAULT, null);
+                                if (parent_mount != null) {
+                                    var parent_mount_uri = parent_mount.get_root ().get_uri ();
+                                    if (parent_mount_uri in archive_ref_counts) {
+                                        archive_ref_counts[parent_mount_uri] = archive_ref_counts[parent_mount_uri] - 1;
+                                    }
+                                }
+                            }
+                        }
+
+                    } else {
+                        // Normal chdir, find directory name.
+                        old_name = m_pwd.get_basename ();
+                    }
+
+
+                } else {
+                    // going down to a child.
+                    old_name = "..";
+                }
+
                 yield chdir(dir, old_name);
 
                 break;
@@ -1627,16 +1667,45 @@ namespace Emperor.Application {
                 }
 
                 if (file_info.get_content_type() in ARCHIVE_TYPES) {
+                    //
                     // attempt to mount as archive.
+                    //
+
+                    // first, see if we're already in an archive.
+                    string? archive_ref = null;
+                    if (file.get_uri_scheme () == "archive") {
+                        // prevent the parent archive from being unmounted automatically.
+                        if (m_pwd.equal(file.get_parent ())) {
+                            // It's in the current directory. Use the stashed mount object.
+                            archive_ref = m_mnt.get_root ().get_uri ();
+                        } else {
+                            var fmnt = yield file.find_enclosing_mount_async (Priority.DEFAULT, null);
+                            if (fmnt != null) {
+                                archive_ref = fmnt.get_root ().get_uri ();
+                            }
+                        }
+
+                        if (archive_ref != null && archive_ref in archive_ref_counts) {
+                            archive_ref_counts[archive_ref] = archive_ref_counts[archive_ref] + 1;
+                        }
+                    }
+
+                    // now, do the actual mounting.
                     var archive_host = Uri.escape_string (file.get_uri(), "", false);
                     // escaping percent signs need to be escaped :-/
                     var escaped_host = Uri.escape_string (archive_host, "", false);
                     var archive_file = File.new_for_uri ("archive://" + escaped_host);
-                    if (yield chdir (archive_file, null)) {
+                    if (yield chdir (archive_file, "..")) {
                         // success!
                         return;
                     } else {
+                        // failure. Hand it over to the OS.
                         hide_error ();
+                        // Also undo the ref-count thing from above so that the
+                        // parent archive still gets to be unmounted.
+                        if (archive_ref != null && archive_ref in archive_ref_counts) {
+                            archive_ref_counts[archive_ref] = archive_ref_counts[archive_ref] - 1;
+                        }
                     }
                 }
 
