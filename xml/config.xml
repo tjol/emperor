@@ -12,6 +12,7 @@
         <load name="monitor_directory"/>
         <load name="externalist"/>
         <load name="preview"/>
+		<load name="quick_filter"/>
     </modules>
     <user-interface>
         <file-pane>
