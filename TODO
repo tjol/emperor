@@ -10,6 +10,12 @@ TODO
 * Tabs
 * Keyboard shortcuts for every action
 * Drag&Drop
+* Quick filter
+* File selection menu & keyboard shortcuts
+
+* Refactor FilePane to make much of the code agnostic of TreeView
+  (then, maybe, write a thumbnail view of a directory, or something completely
+   different)
 
 * Git integration
 
