@@ -1,5 +1,5 @@
 /* Emperor - an orthodox file manager for the GNOME desktop
- * Copyright (C) 2011    Thomas Jollans
+ * Copyright (C) 2012    Thomas Jollans
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -275,6 +275,12 @@ namespace Emperor.Application {
                 scrwnd.set_placement (CornerType.TOP_RIGHT);
             }
             scrwnd.add(m_list);
+            m_list.set_search_equal_func (search_equal_func);
+            m_list.search_column = COL_STYLE_SET + 1;
+            m_list.enable_search = true;
+            m_list.row_activated.connect ( (path, col) => {
+	           activate_row (path); 
+            });
             pack_start (scrwnd, true, true);
 
             // Add widget for displaying error messages.
@@ -420,6 +426,25 @@ namespace Emperor.Application {
             }
             
             return visible;
+        }
+        
+        /**
+         * TreeViewSearchEqualFunc for the built-int quick search feature.
+         *
+         * This ignores the column number, and simply checks if the file name starts
+         * with the query string
+         */
+        private bool search_equal_func (TreeModel model, int column, string query, TreeIter iter)
+        {
+	        Value finfo_val;
+	        
+	        model.get_value (iter, COL_FILEINFO, out finfo_val);
+	        
+	        FileInfo finfo = (FileInfo) finfo_val.get_object ();
+	        
+	        // Returns FALSE on match, because it's a bit weird like that.
+	        return ! (finfo != null
+	        		 && finfo.get_display_name ().down ().has_prefix (query.down ()));
         }
 
         /**
