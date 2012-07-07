@@ -1479,7 +1479,7 @@ namespace Emperor.Application {
                     // Ensure everything makes sense.
                     other_pane.active = !m_active;
                 }
-                if (m_active && !m_list.has_focus) {
+                if (m_active) {
                     // Active pane has focus.
                     m_list.grab_focus ();
                 }
