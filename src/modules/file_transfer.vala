@@ -300,13 +300,16 @@ namespace Emperor.Modules {
 
             int idx = 0;
             foreach (var file in files) {
-                var finfo = file_infos[idx];
-
                 yield get_on_with_it (file, dest.get_child(file.get_basename()),
                                       move, done_bytes_p, copy_flags_p, inverse_flags_p,
                                       cancellable, progress_cb);
-
-                *done_bytes_p += finfo.get_size ();
+                try {
+					var finfo = file_infos[idx];
+	                *done_bytes_p += finfo.get_size ();
+	            } catch {
+		            // It doesn't really matter if this fails.
+	            }
+	            
                 progress_cb (0, 0); // update progress bar
 
                 if (cancellable.is_cancelled()) {
