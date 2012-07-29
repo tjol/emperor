@@ -33,6 +33,32 @@ namespace Emperor.Application {
          */
         public signal void main_window_ready (MainWindow main_window);
         
+        public void add_filepane_toolbar (string id,
+                                          FilePane.ToolbarFactory factory,
+                                          PositionType where)
+        {
+	        var tbcfg = new FilePaneToolbarConfig ();
+	        tbcfg.id = id;
+	        tbcfg.factory = factory;
+	        tbcfg.where = where;
+	     
+		 	filepane_toolbars.append (tbcfg);   
+	    } 
+        
+	    internal class FilePaneToolbarConfig
+		{
+	        public string id;
+	        public FilePane.ToolbarFactory factory;
+	        public PositionType where;
+	        
+	        public void add_to_pane (FilePane pane)
+	        {
+		        pane.install_toolbar (id, factory, where);
+	        }
+        }
+        
+        internal GLib.List<FilePaneToolbarConfig> filepane_toolbars;
+        
         /**
          * File pane column configuration
          */
@@ -122,7 +148,8 @@ namespace Emperor.Application {
             menu_bar = new Gtk.MenuBar ();
 
             m_menu_items = new HashMap<string,TreeMap<int,Gtk.MenuItem> > ();
-
+            
+            filepane_toolbars = new GLib.List<FilePaneToolbarConfig> ();
         }
 
         /**

@@ -22,82 +22,16 @@ using Emperor;
 using Emperor.Application;
 
 namespace Emperor.Modules {
-
-    delegate VolumeToolbar ReturnsToolbar ();
-
-    public void install_volume_toolbar (MainWindow main_window)
+    
+    private Widget create_volume_toolbar (EmperorCore app, FilePane file_pane)
     {
-        var app = (EmperorCore) main_window.application;
-        var left_toolbar = new VolumeToolbar (main_window, main_window.left_pane);
-        var right_toolbar = new VolumeToolbar (main_window, main_window.right_pane);
-        
-        main_window.left_pane.pack_start (left_toolbar, false, false, 0);
-        main_window.left_pane.reorder_child (left_toolbar, 0);
-
-        main_window.right_pane.pack_start (right_toolbar, false, false, 0);
-        main_window.right_pane.reorder_child (right_toolbar, 0);
-
-        left_toolbar.show_all ();
-        right_toolbar.show_all ();
-
-        // function
-        ReturnsToolbar get_active_toolbar = () => {
-            if (main_window.left_pane.active == true) {
-                return left_toolbar;
-            } else {
-                return right_toolbar;
-            }
-        };
-
-        // set up keyboard shortcuts
-        Gtk.Action action;
-
-        app.ui_manager.get_menu (_("_Go"), 3);
-
-        // Alt-Home = go home. As in Krusader.
-        action = app.modules.new_action ("volumes/go-home");
-        action.label = _("Home");
-        action.set_accel_path ("<Emperor-Main>/Volumes/GoHome");
-        Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/GoHome",
-                                Gdk.Key.Home, Gdk.ModifierType.MOD1_MASK);
-        action.activate.connect (() => { get_active_toolbar().go_home(); });
-        action.connect_accelerator ();
-        app.ui_manager.add_action_to_menu (_("_Go"), action);
-
-        // Ctrl+PgUp = go up. As in Krusader, Total Cmd, Gnome Cmd.
-        action = app.modules.new_action ("volumes/go-up");
-        action.label = _("Go to parent");
-        action.set_accel_path ("<Emperor-Main>/Volumes/GoUp");
-        Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/GoUp",
-                                Gdk.Key.Page_Up, Gdk.ModifierType.CONTROL_MASK);
-        action.activate.connect (() => { get_active_toolbar().go_up(); });
-        action.connect_accelerator ();
-        app.ui_manager.add_action_to_menu (_("_Go"), action);
-
-        // Ctrl+Backsp = go to root. As in Krusader. 
-        action = app.modules.new_action ("volumes/goto-root");
-        action.label = _("Go to root");
-        action.set_accel_path ("<Emperor-Main>/Volumes/GotoRoot");
-        Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/GotoRoot",
-                                Gdk.Key.BackSpace, Gdk.ModifierType.CONTROL_MASK);
-        action.activate.connect (() => { get_active_toolbar().goto_root(); });
-        action.connect_accelerator ();
-        app.ui_manager.add_action_to_menu (_("_Go"), action);
-
-        // Ctrl+M = open volume list. As in Krusader (vulgo media list)
-        action = app.modules.new_action ("volumes/open-list");
-        action.label = _("Open volume list");
-        action.set_accel_path ("<Emperor-Main>/Volumes/OpenList");
-        Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/OpenList",
-                                Gdk.Key.M, Gdk.ModifierType.CONTROL_MASK);
-        action.activate.connect (() => { get_active_toolbar().open_volume_list(); });
-        action.connect_accelerator ();
-        app.ui_manager.add_action_to_menu (_("_View"), action);
+	    var tb = new VolumeToolbar (app, file_pane); 
+	    return (Widget) tb;
     }
 
     public class VolumeToolbar : HBox
     {
-        private Window m_wnd;
+        private EmperorCore m_app;
         private FilePane m_pane;
         private Label m_mount_desc;
         private Button m_home_button;
@@ -108,11 +42,10 @@ namespace Emperor.Modules {
 
         private Gtk.Menu m_volmenu;
 
-        public VolumeToolbar (Window wnd, FilePane pane)
+        public VolumeToolbar (EmperorCore app, FilePane pane)
         {
-            m_wnd = wnd;
             m_pane = pane;
-            var app = (EmperorCore) m_wnd.application;
+            m_app = app;
 
             // set up toolbar (with buttons)
             m_mount_desc = new Label ("");
@@ -160,13 +93,13 @@ namespace Emperor.Modules {
                 }
             } else {
                 // Look for the UNIX mount.
-                FileInfo fi = dir.query_info (FILE_ATTRIBUTE_ID_FILESYSTEM, 0);
-                string filesystem_id = fi.get_attribute_string (FILE_ATTRIBUTE_ID_FILESYSTEM);
+                FileInfo fi = dir.query_info (FileAttribute.ID_FILESYSTEM, 0);
+                string filesystem_id = fi.get_attribute_string (FileAttribute.ID_FILESYSTEM);
 
                 foreach (unowned UnixMountEntry xmnt in UnixMountEntry.@get()) {
                     var mnt_point = File.new_for_path(xmnt.get_mount_path ());
-                    fi = mnt_point.query_info (FILE_ATTRIBUTE_ID_FILESYSTEM, 0);
-                    var mnt_fs_id = fi.get_attribute_string (FILE_ATTRIBUTE_ID_FILESYSTEM);
+                    fi = mnt_point.query_info (FileAttribute.ID_FILESYSTEM, 0);
+                    var mnt_fs_id = fi.get_attribute_string (FileAttribute.ID_FILESYSTEM);
                     if (filesystem_id == mnt_fs_id) {
                         mnt_name = xmnt.get_mount_path ();
                         mnt_type = xmnt.get_fs_type ();
@@ -186,19 +119,19 @@ namespace Emperor.Modules {
 
             try {
                 FileInfo fs_info = dir.query_filesystem_info (
-                                        FILE_ATTRIBUTE_FILESYSTEM_SIZE + "," +
-                                        FILE_ATTRIBUTE_FILESYSTEM_FREE + "," +
-                                        FILE_ATTRIBUTE_FILESYSTEM_TYPE + "," +
-                                        FILE_ATTRIBUTE_FILESYSTEM_READONLY,
+                                        FileAttribute.FILESYSTEM_SIZE + "," +
+                                        FileAttribute.FILESYSTEM_FREE + "," +
+                                        FileAttribute.FILESYSTEM_TYPE + "," +
+                                        FileAttribute.FILESYSTEM_READONLY,
                                         null);
 
                 if (mnt_type == null) {
-                    mnt_type = fs_info.get_attribute_string (FILE_ATTRIBUTE_FILESYSTEM_TYPE);
+                    mnt_type = fs_info.get_attribute_string (FileAttribute.FILESYSTEM_TYPE);
                 }
 
-                var size = fs_info.get_attribute_uint64 (FILE_ATTRIBUTE_FILESYSTEM_SIZE);
-                var free = fs_info.get_attribute_uint64 (FILE_ATTRIBUTE_FILESYSTEM_FREE);
-                var ronly = fs_info.get_attribute_boolean (FILE_ATTRIBUTE_FILESYSTEM_READONLY);
+                var size = fs_info.get_attribute_uint64 (FileAttribute.FILESYSTEM_SIZE);
+                var free = fs_info.get_attribute_uint64 (FileAttribute.FILESYSTEM_FREE);
+                var ronly = fs_info.get_attribute_boolean (FileAttribute.FILESYSTEM_READONLY);
                 var size_str = bytesize_to_string (size);
                 var free_str = bytesize_to_string (free);
 
@@ -268,10 +201,10 @@ namespace Emperor.Modules {
 
             if (mnt.can_eject ()) {
                 yield mnt.eject_with_operation (MountUnmountFlags.NONE,
-                        new Gtk.MountOperation (m_wnd), null);
+                        new Gtk.MountOperation (m_app.main_window), null);
             } else if (mnt.can_unmount ()) {
                 yield mnt.unmount_with_operation (MountUnmountFlags.NONE,
-                        new Gtk.MountOperation (m_wnd), null);
+                        new Gtk.MountOperation (m_app.main_window), null);
             } else {
                 m_pane.display_error (_("Cannot unmount “%s”.").printf (mnt.get_name));
             }
@@ -283,6 +216,7 @@ namespace Emperor.Modules {
             var vm = VolumeMonitor.get ();
             var volmenu = new Gtk.Menu ();
             ImageMenuItem menuitem;
+            VolumeMenuClickHandler click_handler;
             var pwd = m_pane.pwd;
 
             var listed_mounts = new HashSet<string>();
@@ -295,9 +229,11 @@ namespace Emperor.Modules {
             menuitem.set_image (new Image.from_icon_name (
                 "user-home", IconSize.MENU));
             menuitem.set_always_show_image (true);
-            menuitem.activate.connect (
-                new VolumeMenuClickHandler (this,
-                        home, null).on_click );
+            
+            click_handler = new VolumeMenuClickHandler (this,
+                        				home, null);
+			menuitem.activate.connect (click_handler.on_click);
+			menuitem.destroy.connect (click_handler.unref);
 
             volmenu.append (menuitem);
 
@@ -314,9 +250,9 @@ namespace Emperor.Modules {
                     pwd_is_bookmark = true;
                 }
                 try {
-                    var bm_finfo = bmark.query_info (FILE_ATTRIBUTE_STANDARD_TYPE + "," +
-                                                     FILE_ATTRIBUTE_STANDARD_ICON + "," +
-                                                     FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME,
+                    var bm_finfo = bmark.query_info (FileAttribute.STANDARD_TYPE + "," +
+                                                     FileAttribute.STANDARD_ICON + "," +
+                                                     FileAttribute.STANDARD_DISPLAY_NAME,
                                                      FileQueryInfoFlags.NONE, null);
                     if (bm_finfo.get_file_type() == FileType.DIRECTORY) {
                         bm_name = bm_finfo.get_display_name ();
@@ -357,11 +293,13 @@ namespace Emperor.Modules {
                 menuitem.set_label (bm_name);
                 menuitem.set_image (new Image.from_gicon (bm_icon, IconSize.MENU));
                 menuitem.set_always_show_image (true);
-                var click_handler = new VolumeMenuClickHandler (this,
+                
+                click_handler = new VolumeMenuClickHandler (this,
                                             bmark, null);
                 menuitem.activate.connect ( click_handler.on_click );
                 menuitem.button_press_event.connect ( click_handler.bm_right_click );
-
+                menuitem.destroy.connect (click_handler.unref);
+                
                 volmenu.append (menuitem);
 
             }
@@ -398,9 +336,10 @@ namespace Emperor.Modules {
                     mnt.get_icon (), IconSize.MENU));
                 menuitem.set_always_show_image (true);
 
-                menuitem.activate.connect (
-                    new VolumeMenuClickHandler (this,
-                        mnt.get_root(), null).on_click );
+				click_handler = new VolumeMenuClickHandler (this,
+                        						mnt.get_root(), null);
+                menuitem.activate.connect (click_handler.on_click);
+                menuitem.destroy.connect (click_handler.unref);
 
                 volmenu.append (menuitem);
 
@@ -430,10 +369,11 @@ namespace Emperor.Modules {
                         menuitem.sensitive = false;
                     }
 
-                    menuitem.activate.connect (
-                        new VolumeMenuClickHandler (this,
-                            (vol_mnt == null) ? null : vol_mnt.get_root(),
-                            vol).on_click );
+                    click_handler = new VolumeMenuClickHandler (this,
+                            	(vol_mnt == null) ? null : vol_mnt.get_root(),
+                            	vol);
+                    menuitem.activate.connect (click_handler.on_click);
+                    menuitem.destroy.connect (click_handler.unref);
 
                     volmenu.append (menuitem);
                 }
@@ -460,9 +400,10 @@ namespace Emperor.Modules {
                 menuitem.set_image (new Image.from_icon_name ("folder", IconSize.MENU));
                 menuitem.set_always_show_image (true);
 
-                menuitem.activate.connect (
-                    new VolumeMenuClickHandler (this,
-                        File.new_for_path(path), null).on_click );
+                click_handler = new VolumeMenuClickHandler (this,
+                        					File.new_for_path(path), null);
+                menuitem.activate.connect (click_handler.on_click);
+                menuitem.destroy.connect (click_handler.unref);
                 
                 volmenu.append (menuitem);
 
@@ -471,7 +412,7 @@ namespace Emperor.Modules {
 
             volmenu.show_all();
             volmenu.popup (null, null, position_volume_menu, 0, get_current_event_time());
-            // Need to keep a reference to the menu around of it won't
+            // Need to keep a reference to the menu around or it won't
             // be shown.
             m_volmenu = volmenu;
         }
@@ -486,12 +427,8 @@ namespace Emperor.Modules {
                 string line;
                 size_t len;
                 while ((line = stream.read_line (out len, null)) != null) {
-                    try {
-                        var bmark = File.new_for_uri (line.strip ());
-                        list.add (bmark);
-                    } catch (Error e) {
-                        continue;
-                    }
+                    var bmark = File.new_for_uri (line.strip ());
+                    list.add (bmark);
                 }
             } catch (Error e) {
                 // ignore. be forgiving.
@@ -548,10 +485,12 @@ namespace Emperor.Modules {
             public VolumeMenuClickHandler (VolumeToolbar parent, File? path, Volume? volume)
             {
                 m_parent = parent;
-                m_wnd = parent.m_wnd;
+                m_wnd = parent.m_app.main_window;
                 m_pane = parent.m_pane;
                 m_path = path;
                 m_volume = volume;
+                /* All uses of this class should arrange for unref to be called at
+                  an appropriate time. */
                 this.@ref();
             }
 
@@ -590,6 +529,7 @@ namespace Emperor.Modules {
 
                 menuitem = new Gtk.MenuItem.with_label (_("Open"));
                 menuitem.activate.connect (on_click);
+                menuitem.destroy.connect (unref);
                 m_context_menu.append (menuitem);
                 menuitem = new Gtk.MenuItem.with_label (_("Delete bookmark"));
                 menuitem.activate.connect (remove_from_bookmarks);
@@ -618,6 +558,8 @@ namespace Emperor.Modules {
 
             x = origin_x + alloc.x;
             y = origin_y + alloc.y + alloc.height;
+            
+            push_in = false;
         }
 
 
@@ -632,8 +574,65 @@ namespace Emperor.Modules {
 
 }
 
+delegate Emperor.Modules.VolumeToolbar ReturnsToolbar ();
+
+
 public void load_module (ModuleRegistry reg)
 {
-    reg.application.ui_manager.main_window_ready.connect (Emperor.Modules.install_volume_toolbar);
+	var app = reg.application;
+    app.ui_manager.add_filepane_toolbar ("volumes",
+    									 Emperor.Modules.create_volume_toolbar,
+    									 PositionType.TOP);
+    
+    // function
+    ReturnsToolbar get_active_toolbar = () => {
+        return (Emperor.Modules.VolumeToolbar)
+        	reg.application.main_window.active_pane.get_addon_toolbar ("volumes");
+    };
+
+    // set up keyboard shortcuts
+    Gtk.Action action;
+
+    app.ui_manager.get_menu (_("_Go"), 3);
+
+    // Alt-Home = go home. As in Krusader.
+    action = app.modules.new_action ("volumes/go-home");
+    action.label = _("Home");
+    action.set_accel_path ("<Emperor-Main>/Volumes/GoHome");
+    Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/GoHome",
+                            Gdk.Key.Home, Gdk.ModifierType.MOD1_MASK);
+    action.activate.connect (() => { get_active_toolbar().go_home(); });
+    action.connect_accelerator ();
+    app.ui_manager.add_action_to_menu (_("_Go"), action);
+
+    // Ctrl+PgUp = go up. As in Krusader, Total Cmd, Gnome Cmd.
+    action = app.modules.new_action ("volumes/go-up");
+    action.label = _("Go to parent");
+    action.set_accel_path ("<Emperor-Main>/Volumes/GoUp");
+    Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/GoUp",
+                            Gdk.Key.Page_Up, Gdk.ModifierType.CONTROL_MASK);
+    action.activate.connect (() => { get_active_toolbar().go_up(); });
+    action.connect_accelerator ();
+    app.ui_manager.add_action_to_menu (_("_Go"), action);
+
+    // Ctrl+Backsp = go to root. As in Krusader. 
+    action = app.modules.new_action ("volumes/goto-root");
+    action.label = _("Go to root");
+    action.set_accel_path ("<Emperor-Main>/Volumes/GotoRoot");
+    Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/GotoRoot",
+                            Gdk.Key.BackSpace, Gdk.ModifierType.CONTROL_MASK);
+    action.activate.connect (() => { get_active_toolbar().goto_root(); });
+    action.connect_accelerator ();
+    app.ui_manager.add_action_to_menu (_("_Go"), action);
+
+    // Ctrl+M = open volume list. As in Krusader (vulgo media list)
+    action = app.modules.new_action ("volumes/open-list");
+    action.label = _("Open volume list");
+    action.set_accel_path ("<Emperor-Main>/Volumes/OpenList");
+    Gtk.AccelMap.add_entry ("<Emperor-Main>/Volumes/OpenList",
+                            Gdk.Key.M, Gdk.ModifierType.CONTROL_MASK);
+    action.activate.connect (() => { get_active_toolbar().open_volume_list(); });
+    action.connect_accelerator ();
+    app.ui_manager.add_action_to_menu (_("_View"), action);
 }
 

@@ -23,52 +23,21 @@ using Emperor.Application;
 
 namespace Emperor.Modules {
 	
-	delegate QuickFilterBar ReturnsQuickFilterBar ();
-
-    public void install_quick_filter (MainWindow main_window)
-    {
-	    var app = (EmperorCore) main_window.application;
-        var left_toolbar = new QuickFilterBar (main_window, main_window.left_pane);
-        var right_toolbar = new QuickFilterBar (main_window, main_window.right_pane);
-        
-        main_window.left_pane.pack_end (left_toolbar, false, false, 0);
-        main_window.right_pane.pack_end (right_toolbar, false, false, 0);
-        
-        // function
-        ReturnsQuickFilterBar get_active_toolbar = () => {
-            if (main_window.left_pane.active == true) {
-                return left_toolbar;
-            } else {
-                return right_toolbar;
-            }
-        };
-        
-        // set up keyboard shortcut
-        Gtk.Action action;
-
-        // Alt+/ = start quick filter
-        action = app.modules.new_action ("quick-filter/start-filter");
-        action.label = _("Quick Filter");
-        action.set_accel_path ("<Emperor-Main>/QuickFilter/StartFilter");
-        Gtk.AccelMap.add_entry ("<Emperor-Main>/QuickFilter/StartFilter",
-                                Gdk.Key.slash, Gdk.ModifierType.MOD1_MASK);
-        action.activate.connect (() => { get_active_toolbar().start_filter(); });
-        action.connect_accelerator ();
-        app.ui_manager.add_action_to_menu (_("_View"), action);
+	public Widget create_quick_filter_bar (EmperorCore app, FilePane file_pane)
+	{
+		return new QuickFilterBar (app, file_pane);
 	}
 	
 	public class QuickFilterBar : HBox
 	{
-		Window m_wnd;
 		FilePane m_pane;
 		EmperorCore m_app;
 		Entry m_entry;
 		
-		public QuickFilterBar (Window wnd, FilePane pane)
+		public QuickFilterBar (EmperorCore app, FilePane pane)
 		{
-			m_wnd = wnd;
 			m_pane = pane;
-			m_app = (EmperorCore) wnd.application;
+			m_app = app;
 			
 			// Build quick filter bar
 			m_entry = new Entry ();
@@ -132,8 +101,31 @@ namespace Emperor.Modules {
 	}
 }
 
+delegate Emperor.Modules.QuickFilterBar ReturnsQuickFilterBar ();
+
 public void load_module (ModuleRegistry reg)
 {
-    reg.application.ui_manager.main_window_ready.connect (Emperor.Modules.install_quick_filter);
+	var app = reg.application;
+	
+	app.ui_manager.add_filepane_toolbar ("quick-filter",
+    									 Emperor.Modules.create_quick_filter_bar,
+    									 PositionType.BOTTOM);
+	// function
+    ReturnsQuickFilterBar get_active_toolbar = () => {
+        return (Emperor.Modules.QuickFilterBar) app.main_window.active_pane.get_addon_toolbar ("quick-filter");
+    };
+    
+    // set up keyboard shortcut
+    Gtk.Action action;
+
+    // Alt+/ = start quick filter
+    action = app.modules.new_action ("quick-filter/start-filter");
+    action.label = _("Quick Filter");
+    action.set_accel_path ("<Emperor-Main>/QuickFilter/StartFilter");
+    Gtk.AccelMap.add_entry ("<Emperor-Main>/QuickFilter/StartFilter",
+                            Gdk.Key.slash, Gdk.ModifierType.MOD1_MASK);
+    action.activate.connect (() => { get_active_toolbar().start_filter(); });
+    action.connect_accelerator ();
+    app.ui_manager.add_action_to_menu (_("_View"), action);
 }
 

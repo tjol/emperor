@@ -43,6 +43,14 @@ namespace Emperor.Application {
          *              as default value.
          */
         public delegate bool FileFilterFunc (File f, FileInfo fi, bool currently_visible);
+        
+        /**
+         * Method that creates a toolbar for the file pane.
+         *
+         * @param mwnd	Main application window.
+         * @param fpane	The file pane the toolbar is associated with
+         */
+        public delegate Widget ToolbarFactory (EmperorCore app, FilePane fpane);
 
         EmperorCore m_app;
         string m_designation;
@@ -62,6 +70,7 @@ namespace Emperor.Application {
         string m_file_attributes_str;
         Map<string,FileFilterFuncWrapper> m_filters;
         Map<string,FileInfoCompareFuncWrapper> m_permanent_sort;
+        Map<string,Widget> m_addon_toolbars;
 
         /**
          * Housekeeping to allow automatic unmounting of mounted archives.
@@ -296,6 +305,12 @@ namespace Emperor.Application {
             m_error_message_bg.override_background_color (0, red);
             m_error_message_bg.add(m_error_message);
             pack_start (m_error_message_bg, false, false);
+            
+            // Now, install add-on toolbars previously registered.
+            m_addon_toolbars = new Gee.HashMap<string,Widget> ();
+            foreach (var tbcfg in m_app.ui_manager.filepane_toolbars) {
+	            tbcfg.add_to_pane (this);
+            }
         }
 
         private void on_destroy ()
@@ -547,6 +562,41 @@ namespace Emperor.Application {
             }
             
             return d;
+        }
+        
+        /**
+         * Add a toolbar to this FilePane.
+         *
+         * @param id	identifier that can be used to retrieve the toolbar
+         *              using {@link get_addon_toolbar}
+         * @param factory ToolbarFactory that creates the toolbar.
+         * @param where   desired position of the toolbar.
+         */
+        internal void install_toolbar (string id, ToolbarFactory factory, PositionType where)
+        {
+	        var toolbar = factory (m_app, this);
+	        
+	        switch (where) {
+		        case PositionType.TOP:
+		        case PositionType.LEFT: // left not supported yet. This is silly.
+		        	pack_start (toolbar, false, false, 0);
+		        	reorder_child (toolbar, 0);
+		        	break;
+		        case PositionType.BOTTOM:
+		        case PositionType.RIGHT:
+		        	pack_end (toolbar, false, false, 0);
+		        	break;
+	        }
+	        
+	        m_addon_toolbars[id] = toolbar;
+        }
+        
+        /**
+         * Get a reference to your add-on toolbar, or null if it's not installed
+         */
+        public Widget? get_addon_toolbar (string id)
+        {
+	        return m_addon_toolbars[id];
         }
 
 
