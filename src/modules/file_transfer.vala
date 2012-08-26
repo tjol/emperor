@@ -1,5 +1,5 @@
 /* Emperor - an orthodox file manager for the GNOME desktop
- * Copyright (C) 2011    Thomas Jollans
+ * Copyright (C) 2012    Thomas Jollans
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -95,7 +95,7 @@ namespace Emperor.Modules {
             dialog.add_input ("deref", new CheckButton.with_label (
                                 _("Dereference symbolic links")));
 
-            uint64 total_size_in_bytes = 0;
+            var total_size_in_bytes = new Ref<uint64?>(0);
             var file_infos = new ArrayList<FileInfo>();
 
             dialog.decisive_response.connect ((id) => {
@@ -104,10 +104,16 @@ namespace Emperor.Modules {
                         var dest_file = File.parse_name (dest_path);
                         bool deref_symlinks = ((CheckButton)dialog["deref"]).active;
                         dialog.destroy ();
-                        transfer_files.begin ((owned) files,
+
+                        // get mount references, just in case.
+                        var source_mnt_ref = application.mount_manager.get_reference_to_mount (pane.mnt);
+
+                        transfer_files.begin (pane,
+                                              (owned) files,
                                               file_infos,
                                               n_files,
                                               total_size_in_bytes,
+                                              source_mnt_ref,
                                               dest_file,
                                               move,
                                               deref_symlinks);
@@ -126,10 +132,10 @@ namespace Emperor.Modules {
                                                 + FILE_ATTRIBUTE_STANDARD_TYPE + ","
                                                 + FILE_ATTRIBUTE_STANDARD_SIZE,
                                              FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
-                    total_size_in_bytes += finfo.get_size ();
+                    total_size_in_bytes.val += finfo.get_size ();
                     if (finfo.get_file_type() == FileType.DIRECTORY) {
                         int files_within;
-                        total_size_in_bytes += yield get_directory_size (file,
+                        total_size_in_bytes.val += yield get_directory_size (file,
                                                     FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
                                                     out files_within);
                         n_files += files_within - 1;
@@ -145,7 +151,7 @@ namespace Emperor.Modules {
             get_transfer_dialog_texts (move, n_files, fname,
                                        out dialog_title, out dialog_text, 
                                        out go_ahead_txt,
-                                       bytesize_to_string(total_size_in_bytes));
+                                       bytesize_to_string(total_size_in_bytes.val));
             text_label.set_text (dialog_text);
             
         }
@@ -218,12 +224,30 @@ namespace Emperor.Modules {
 
         }
 
-        private async void transfer_files (owned GLib.List<File> files, Gee.List<FileInfo> file_infos,
+        private async void transfer_files (IFilePane file_pane,
+                                           owned GLib.List<File> files, Gee.List<FileInfo> file_infos,
                                            uint total_n_files,
-                                           uint64 total_size_in_bytes, File dest,
+                                           Ref<uint64?> total_size_in_bytes,
+                                           MountManager.MountRef source_mnt_ref,
+                                           File dest,
                                            bool move, bool deref_links)
         {
+            // Make sure references to everything we need are held.
+            // 1. don't quit the application just yet.
             application.hold ();
+            // 2. the source mount reference is passed in.
+            source_mnt_ref.enforce ();
+            // 3. Find the destination mount reference:
+            MountManager.MountRef dest_mnt_ref;
+            if (!yield application.mount_manager.procure_mount (dest, out dest_mnt_ref,
+                                                               file_pane, null)) {
+                // There is no mount? How can there be no mount?
+                show_error_message_dialog (application.main_window,
+                           move ? _("Error moving files") : _("Error copying files"),
+                           _("Destination could not be found."));
+                return;
+            }
+            dest_mnt_ref.enforce ();
 
             var dialog = new InputDialog ( move ? _("Moving files") : _("Copying files"),
                                            application.main_window,
@@ -293,7 +317,7 @@ namespace Emperor.Modules {
 
 
             FileProgressCallback progress_cb = (cur, tot) => {
-                double fraction = (*done_bytes_p + cur) / ((double) total_size_in_bytes) ;
+                double fraction = (*done_bytes_p + cur) / ((double) total_size_in_bytes.val) ;
                 progress_bar.fraction = fraction;
             };
 
@@ -331,6 +355,9 @@ namespace Emperor.Modules {
             // update listings.
             yield main_window.left_pane.refresh ();
             yield main_window.right_pane.refresh ();
+
+            source_mnt_ref.unenforce ();
+            dest_mnt_ref.unenforce ();
         }
 
         private string? ask_for_new_name (string old_name)

@@ -135,8 +135,9 @@ namespace Emperor.Application {
             if (mount_refs == null) {
                 mount_refs = new HashMap<string, weak MountRef> ();
             }
-            if (mnt_uri != null && mount_refs.has_key (mnt_uri)) {
+            if (mount_refs.has_key (mnt_uri)) {
                 mnt_ref = mount_refs[mnt_uri];
+                mnt_ref.mount = mnt;
             } else {
                 mnt_ref = new MountRef (this, mnt, feedback, real_mnt_op);
                 if (parent_mountref != null) {
@@ -145,19 +146,37 @@ namespace Emperor.Application {
                     yield mnt_ref.find_parent_mountref ();
                 }
 
-                if (mnt_uri != null) {
-                    mount_refs[mnt_uri] = mnt_ref;
-                }
+                mount_refs[mnt_uri] = mnt_ref;
             }
 
             return true;
         }
 
-        private static HashMap<string, weak MountRef> mount_refs = null;
+        /**
+         * Get the MountRef for a given GIO Mount. This will only work if there
+         * is a mount reference previously created by {@link procure_mount}. 
+         * Use this only if you are certain that the location is currently open
+         * in a file pane. Otherwise, call {@link procure_mount} instead.
+         */
+        public MountRef? get_reference_to_mount (Mount? mnt)
+        {
+            string? mnt_uri = null;
+            if (mnt != null) {
+                mnt_uri = mnt.get_root ().get_uri ();
+            }
+
+            if (mount_refs.has_key (mnt_uri)) {
+                return mount_refs[mnt_uri];
+            } else {
+                return null;
+            }
+        }
+
+        private static HashMap<string?, weak MountRef> mount_refs = null;
 
         public class MountRef : Object
         {
-            public Mount? mount { get; construct; }
+            public Mount? mount { get; internal construct set; }
             private File? m_mnt_root;
             private MountManager m_mount_manager;
             private IUIFeedbackComponent m_feedback;
@@ -191,6 +210,46 @@ namespace Emperor.Application {
                     }
                 }
             }
+
+            int m_lock_count = 0;
+
+            /**
+             * Request that the mount be kept open. This is a simple counter internal to
+             * Emperor. Emperor modules shouldn't unmount volumes that are considered
+             * enforced, but there is no guarantee that an "enforced" mount will not be
+             * removed.
+             */
+            public int enforce ()
+            {
+                m_lock_count ++;
+                if (m_lock_count == 1) {
+                    // now enforced, previously not.
+                    notify_property ("enforced");
+                }
+                return m_lock_count;
+            }
+
+            /**
+             * Decrease the enforce count.
+             *
+             * @see enforce
+             */
+            public int unenforce ()
+            {
+                m_lock_count --;
+                if (m_lock_count == 0) {
+                    // no longer enforced.
+                    notify_property ("enforced");
+                }
+                return m_lock_count;
+            }
+
+            /**
+             * Is this mount requested to be kept alive?
+             *
+             * @see enforce
+             */
+            public bool enforced { get { return m_lock_count != 0; } }
 
             ~MountRef ()
             {

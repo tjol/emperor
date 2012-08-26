@@ -165,8 +165,16 @@ namespace Emperor.Application {
          *
          * @see chdir_then_focus
          * @see chdir
+         * @see mnt
          */
         public abstract File pwd { get; set; }
+
+        /**
+         * The GIO Mount object the current working directory is on.
+         *
+         * @see pwd
+         */
+        public abstract Mount mnt { get; }
         
         /**
          * Change directory and focus the file list when done.

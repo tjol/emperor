@@ -33,6 +33,7 @@ namespace Emperor.Modules {
     {
         public IFilePane file_pane { get; construct; }
         public FileMonitor current_monitor { get; private set; default = null; }
+        private Cancellable m_cancellable;
 
         public DirectoryMonitorManager (IFilePane fp)
         {
@@ -40,6 +41,7 @@ namespace Emperor.Modules {
         }
 
         construct {
+            m_cancellable = new Cancellable ();
             file_pane.notify["pwd"].connect (on_chdir);
         }
 
@@ -47,11 +49,13 @@ namespace Emperor.Modules {
         {
             if (current_monitor != null) {
                 // old monitor, no longer needed.
-                current_monitor.cancel ();
+                current_monitor.changed.disconnect (on_file_changed);
+                m_cancellable.cancel ();
                 current_monitor = null;
             }
             try {
-                var monitor = file_pane.pwd.monitor_directory (0, null);
+                m_cancellable = new Cancellable ();
+                var monitor = file_pane.pwd.monitor_directory (FileMonitorFlags.NONE, m_cancellable);
                 monitor.changed.connect (on_file_changed);
                 current_monitor = monitor;
             } catch {
@@ -59,9 +63,16 @@ namespace Emperor.Modules {
             }
         }
 
-        public void on_file_changed (File file, File? other_file, FileMonitorEvent ev_type)
+        public void on_file_changed (File? file, File? other_file, FileMonitorEvent ev_type)
         {
-            file_pane.update_file (file);
+            if (file == null) {
+                // While the API docs state that this can't happen, it does, for some reason.
+                // If the file is NULL, there's nothing for me to do here.
+                stderr.printf("WARNING: File monitor passed NULL GLib.File. This shouldn't happen!\n");
+                return;
+            }
+
+            file_pane.update_file (File.new_for_uri(file.get_uri()));
         }
    }
 
