@@ -21,6 +21,17 @@ ACLOCAL_AMFLAGS = -I m4
 run: all-recursive
 	EMPEROR_RES_LOCATION=data src/application/emperor --module-path=src/modules/.libs -c xml
 
+debug-nemiver: all-recursive
+	nemiver --env="EMPEROR_RES_LOCATION=data" src/application/emperor --module-path=src/modules/.libs -c xml
+
+debug-gdb: all-recursive
+	EMPEROR_RES_LOCATION=data gdb --args src/application/emperor --module-path=src/modules/.libs -c xml
+
+debug:
+	( which nemiver >/dev/null 2>&1 && $(MAKE) debug-nemiver ) \
+	    || ( which gdb >/dev/null 2>&1 && $(MAKE) debug-gdb ) \
+	    || ( echo >&2 "ERROR: Don't know how to debug: neither nemiver nor gdb found."; false )
+
 dist-hook:
 	@if test -d "$(srcdir)/.git"; \
 	    then \
@@ -44,5 +55,5 @@ valadoc-public:
 		    --force -o valadoc-public --package-name=emperor \
 		    src/application/*.vala
 
-.PHONY: valadoc valadoc-public
+.PHONY: valadoc valadoc-public run debug-gdb debug-nemiver debug
 
