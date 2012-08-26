@@ -33,15 +33,15 @@ namespace Emperor.Application {
         HPaned m_panes;
         HBox m_command_buttons;
 
-        public FilePane left_pane { get; private set; }
-        public FilePane right_pane { get; private set; }
+        public IFilePane left_pane { get; private set; }
+        public IFilePane right_pane { get; private set; }
 
         /**
          * Returns the active pane. This property does NOT notify. Setting this property
          * makes a pane active and has the same effect as setting {@link FilePane.active}
          * to true.
          */
-        public FilePane active_pane {
+        public IFilePane active_pane {
             get { 
                 if (left_pane.active) {
                     return left_pane;
@@ -57,7 +57,7 @@ namespace Emperor.Application {
         /**
          * Returns the passive pane. This property does NOT notify.
          */
-        public FilePane passive_pane {
+        public IFilePane passive_pane {
             get {
                 return active_pane.other_pane;
             }

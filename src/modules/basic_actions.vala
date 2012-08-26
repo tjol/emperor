@@ -96,6 +96,7 @@ namespace Emperor.Modules {
             action.connect_accelerator ();
             app.ui_manager.add_action_to_menu (_("_File"), action, 99);
 
+            /*
             // Ctrl+L: Change directory
             action = reg.new_action ("chdir");
             action.label = _("Change Directory");
@@ -106,6 +107,7 @@ namespace Emperor.Modules {
                     app.main_window.active_pane.edit_title ();
                 } );
             action.connect_accelerator ();
+            */
 
             // Ctrl+R: Refresh
             action = reg.new_action ("refresh");
@@ -137,7 +139,6 @@ namespace Emperor.Modules {
             if (file == null || file.equal(pane.parent_dir)) {
                 return;
             }
-            var path = pane.cursor_path;
 
             FileInfo fileinfo;
             try {
@@ -165,7 +166,7 @@ namespace Emperor.Modules {
                         var new_filename = dialog.get_text("name");
                         try {
                             file.set_display_name (new_filename);
-                            pane.update_line (path, pane.pwd.get_child(new_filename));
+                            pane.update_file (file, pane.pwd.get_child(new_filename));
                             return false;
                         } catch (Error err2) {
                             show_error_message_dialog (dialog,

@@ -686,6 +686,7 @@ namespace Emperor.Application {
             }
             mnt = mnt_ref.mount;
 
+            /*
             if (other_pane.pwd != null && pwd.equal(other_pane.pwd)) {
                 // If the other pane is in the same directory, simply re-use its ListStore.
                 m_data_store = other_pane.m_data_store;
@@ -694,6 +695,7 @@ namespace Emperor.Application {
                 parent = other_pane.parent_dir;
 
             } else {
+                */
                 // Otherwise, read out the directory!
 
                 set_busy_state (true);
@@ -824,7 +826,8 @@ namespace Emperor.Application {
                 m_data_store = store;
                 m_cursor_path = null;
 
-            }
+            //}
+
             if (cancellable.is_cancelled ()) return true;
 
             // Update class properties and emit signals so the rest of the program
@@ -991,28 +994,23 @@ namespace Emperor.Application {
         }
 
         /**
-         * Update the information at a specific path from a GIO File
-         */
-        public void update_line (TreePath path, File file)
-        {
-            TreeIter iter;
-            TreeIter data_iter;
-            m_sorted_list.get_iter (out iter, path);
-            toplevel_iter_to_data_iter (out data_iter, iter);
-            query_and_update.begin (data_iter, file);
-        }
-
-        /**
          * Refreshes the information about a file
+         *
+         * @param file      The file to be updated
+         * @param new_file  If the file has been renamed, the new location of the file.
          */
-        public void update_file (File file)
+        public void update_file (File file, File? new_file=null)
             requires (m_pwd != null)
         {
+            if (new_file == null) {
+                new_file = file;
+            }
+
             // Is the file in the current directory?
             var parent = file.get_parent ();
             if (m_pwd.equal (parent)) {
                 // okay, it should be in the list.
-                bool exists = file.query_exists ();
+                bool exists = new_file.query_exists ();
                 bool file_found = false;
 
                 m_data_store.@foreach ((model, path, iter) => {
@@ -1025,7 +1023,7 @@ namespace Emperor.Application {
                                 if (exists) {
                                     // file exists; update info
                                     file_found = true;
-                                    query_and_update.begin (iter, file);
+                                    query_and_update.begin (iter, new_file);
                                 } else {
                                     // file no longer exists; delete/hide record
                                     finfo_val.set_object ((Object)null);
@@ -1043,7 +1041,7 @@ namespace Emperor.Application {
                     // add file.
                     TreeIter iter;
                     m_data_store.append (out iter);
-                    query_and_update.begin (iter, file);
+                    query_and_update.begin (iter, new_file);
                 }
             }
         }
@@ -1150,7 +1148,8 @@ namespace Emperor.Application {
 
         }
 
-        public signal void cursor_changed ();
+        // defined in the interface.
+        //public signal void cursor_changed ();
 
         /**
          * Routine housekeeping tasks when the cursor moves. Emits {@link cursor_changed} signal
@@ -1363,20 +1362,6 @@ namespace Emperor.Application {
             }
         }
 
-        private FilePane m_other_pane = null;
-        public FilePane other_pane {
-            get {
-                if (m_other_pane == null) {
-                    if (this == m_app.main_window.left_pane) {
-                        m_other_pane = m_app.main_window.right_pane;
-                    } else {
-                        m_other_pane = m_app.main_window.left_pane;
-                    }
-                }
-                return m_other_pane;
-            }
-        }
-
         /**
          * Mouse is being moved. Enabled right-button-drag selecting.
          */
@@ -1554,15 +1539,6 @@ namespace Emperor.Application {
                 // system to open the file in a sensible way.
                 m_app.open_file (file);
                 break;
-            }
-        }
-
-        public File get_child_by_name (string name)
-        {
-            if (name == "..") {
-                return m_parent;
-            } else {
-                return m_pwd.get_child (name);
             }
         }
 

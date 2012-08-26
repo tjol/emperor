@@ -44,7 +44,7 @@ namespace Emperor.Application {
      * Interface providing basic user-feedback functionality: displaying and hiding
      * an error message, setting the cursor to "busy", etc.
      */
-    public interface IUIFeedbackComponent : Object {
+    public interface IUIFeedbackComponent : Widget {
         /**
          * The Gtk.Window that owns that this component is associated with.
          */
@@ -78,12 +78,25 @@ namespace Emperor.Application {
     }
  
     public interface IFilePane : IUIFeedbackComponent {
-      
+
+        public IFilePane other_pane {
+            get {
+                if (this == application.main_window.left_pane) {
+                    return application.main_window.right_pane;
+                } else {
+                    return application.main_window.left_pane;
+                }
+            }
+        }
        
         public abstract EmperorCore application { get; }
         public abstract string designation { get; }
         
-        
+        /**
+         * Whether or not this pane is active. Setting this property
+         * will change the other pane's state accordingly.
+         */
+        public abstract bool active { get; set; }
         
         /**
          * Install file filter.
@@ -190,6 +203,50 @@ namespace Emperor.Application {
             return yield chdir (old_pwd);
         }
 
+        /**
+         * Refreshes the information about a file
+         *
+         * @param file      The file to be updated
+         * @param new_file  If the file has been renamed, the new location of the file.
+         */
+        public abstract void update_file (File file, File? new_file=null);
+
+        /**
+         * Refresh the entire directory
+         */
+        public abstract async void refresh ();
+
+        /**
+         * The cursor has moved.
+         */
+        public signal void cursor_changed ();
+
+        /**
+         * Parent of the current working directory.
+         */
+        public abstract File parent_dir { get; }
+
+        /**
+         * Get a child file of the current directory by name.
+         */
+        public File get_child_by_name (string name)
+        {
+            if (name == "..") {
+                return parent_dir;
+            } else {
+                return pwd.get_child (name);
+            }
+        }
+
+        /**
+         * Returns a list of currently selected files.
+         */
+        public abstract GLib.List<File> get_selected_files ();
+
+        /**
+         * Get the file at the cursor, if defined. (otherwise null)
+         */
+        public abstract File? get_file_at_cursor ();
 
     }
     

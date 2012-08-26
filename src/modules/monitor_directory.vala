@@ -31,10 +31,10 @@ namespace Emperor.Modules {
 
     public class DirectoryMonitorManager : Object
     {
-        public FilePane file_pane { get; construct; }
+        public IFilePane file_pane { get; construct; }
         public FileMonitor current_monitor { get; private set; default = null; }
 
-        public DirectoryMonitorManager (FilePane fp)
+        public DirectoryMonitorManager (IFilePane fp)
         {
             Object ( file_pane : fp );
         }

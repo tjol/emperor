@@ -163,7 +163,7 @@ namespace Emperor.Modules {
 
         public class ConnectionDialog : Dialog
         {
-            public FilePane pane { get; construct; }
+            public IFilePane pane { get; construct; }
             public Entry connection_name { get; construct; }
             public Entry host_name { get; construct; }
             public SpinButton port_number { get; construct; }
@@ -186,7 +186,7 @@ namespace Emperor.Modules {
 
             public Grid layout_grid { get; construct; }
 
-            public ConnectionDialog (string title, Window? parent, FilePane pane)
+            public ConnectionDialog (string title, Window? parent, IFilePane pane)
             {
                 Object ( title : title,
                          transient_for : parent,
@@ -532,7 +532,7 @@ namespace Emperor.Modules {
 
         public class ServerListWindow : Window
         {
-            public FilePane file_pane { get; construct; }
+            public IFilePane file_pane { get; construct; }
             public ArrayList<SavedServer?> saved_servers { get; construct; }
 
             public TreeView server_tree { get; private set; }
@@ -540,7 +540,7 @@ namespace Emperor.Modules {
 
             public signal void save_servers ();
 
-            public ServerListWindow (Window? parent, FilePane pane,
+            public ServerListWindow (Window? parent, IFilePane pane,
                                      ArrayList<SavedServer?> saved_servers)
             {
                 Object ( transient_for : parent,
