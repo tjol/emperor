@@ -118,7 +118,7 @@ namespace Emperor.Application {
                 // unmount immediately. It's not being used, so we don't want the refernece hanging around.
                 if (pwd.get_uri_scheme() == "archive") {
                     if (cancellable.is_cancelled()) {
-                        mnt.unmount_with_operation (MountUnmountFlags.NONE,
+                        yield mnt.unmount_with_operation (MountUnmountFlags.NONE,
                             real_mnt_op);
                         return false;
                     }
@@ -132,11 +132,8 @@ namespace Emperor.Application {
                 mnt_uri = mnt.get_root ().get_uri ();
             }
 
-            if (mount_refs == null) {
-                mount_refs = new HashMap<string, weak MountRef> ();
-            }
-            if (mount_refs.has_key (mnt_uri)) {
-                mnt_ref = mount_refs[mnt_uri];
+            if (s_mount_refs.has_key (mnt_uri)) {
+                mnt_ref = s_mount_refs[mnt_uri];
                 mnt_ref.mount = mnt;
             } else {
                 mnt_ref = new MountRef (this, mnt, feedback, real_mnt_op);
@@ -146,7 +143,7 @@ namespace Emperor.Application {
                     yield mnt_ref.find_parent_mountref ();
                 }
 
-                mount_refs[mnt_uri] = mnt_ref;
+                s_mount_refs[mnt_uri] = mnt_ref;
             }
 
             return true;
@@ -165,14 +162,18 @@ namespace Emperor.Application {
                 mnt_uri = mnt.get_root ().get_uri ();
             }
 
-            if (mount_refs.has_key (mnt_uri)) {
-                return mount_refs[mnt_uri];
+            if (s_mount_refs.has_key (mnt_uri)) {
+                return s_mount_refs[mnt_uri];
             } else {
                 return null;
             }
         }
 
-        private static HashMap<string?, weak MountRef> mount_refs = null;
+        private static HashMap<string?, weak MountRef> s_mount_refs = null;
+
+        class construct {
+            s_mount_refs = new HashMap<string?, weak MountRef> ();
+        }
 
         public class MountRef : Object
         {
@@ -257,10 +258,10 @@ namespace Emperor.Application {
                 
                 // Is this an archive?
                 if (m_mnt_root.get_uri_scheme () == "archive") {
-                    mount.unmount_with_operation (MountUnmountFlags.NONE, m_mount_operation);
+                    mount.unmount_with_operation.begin (MountUnmountFlags.NONE, m_mount_operation);
                     var mnt_uri = m_mnt_root.get_uri ();
-                    if (MountManager.mount_refs.has_key (mnt_uri)) {
-                        MountManager.mount_refs.unset (mnt_uri);
+                    if (MountManager.s_mount_refs.has_key (mnt_uri)) {
+                        MountManager.s_mount_refs.unset (mnt_uri);
                     }
                 }
             }

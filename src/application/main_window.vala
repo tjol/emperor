@@ -77,8 +77,8 @@ namespace Emperor.Application {
 
             left_pane = new FilePane(m_app, "left");
             right_pane = new FilePane(m_app, "right");
-            m_panes.pack1 (left_pane, true, true);
-            m_panes.pack2 (right_pane, true, true);
+            m_panes.pack1 ((FilePane) left_pane, true, true);
+            m_panes.pack2 ((FilePane) right_pane, true, true);
 
             this.map_event.connect (on_paned_map);
 

@@ -32,14 +32,16 @@ namespace Emperor.Application {
          * initialized {@link FilePane} objects.
          */
         public signal void main_window_ready (MainWindow main_window);
+
+        public delegate Widget FilePaneToolbarFactoryProper (EmperorCore app, IFilePane fpane);
         
         public void add_filepane_toolbar (string id,
-                                          FilePaneToolbarFactory factory,
+                                          FilePaneToolbarFactoryProper factory,
                                           PositionType where)
         {
 	        var tbcfg = new FilePaneToolbarConfig ();
 	        tbcfg.id = id;
-	        tbcfg.factory = factory;
+	        tbcfg.factory = (FilePaneToolbarFactory) factory;
 	        tbcfg.where = where;
 	     
 		 	filepane_toolbars.append (tbcfg);   
@@ -51,7 +53,7 @@ namespace Emperor.Application {
 	        public FilePaneToolbarFactory factory;
 	        public PositionType where;
 	        
-	        public void add_to_pane (FilePane pane)
+	        public void add_to_pane (IFilePane pane)
 	        {
 		        pane.install_toolbar (id, factory, where);
 	        }

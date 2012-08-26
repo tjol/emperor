@@ -34,11 +34,16 @@ namespace Emperor.Application {
     
     /**
      * Method that creates a toolbar for the file pane.
+     * NOTE: The type of the second argument should be IFilePane, not Object.
+     * This causes some dependency issues in the generated C code, however,
+     * so this delegate uses Object, and, as a workaround, another delagate
+     * is defined in `user_interface_manager.vala` for public use.
      *
      * @param mwnd	Main application window.
      * @param fpane	The file pane the toolbar is associated with
+     * @see UserInterfaceManager.FilePaneToolbarFactoryProper
      */
-    public delegate Widget FilePaneToolbarFactory (EmperorCore app, FilePane fpane);
+    public delegate Widget FilePaneToolbarFactory (EmperorCore app, Object fpane);
     
     /**
      * Interface providing basic user-feedback functionality: displaying and hiding
@@ -148,12 +153,14 @@ namespace Emperor.Application {
         /**
          * Add a toolbar to this FilePane.
          *
-         * @param id	identifier that can be used to retrieve the toolbar
+         * @param id \
+         *              identifier that can be used to retrieve the toolbar
          *              using {@link get_addon_toolbar}
          * @param factory FilePaneToolbarFactory that creates the toolbar.
          * @param where   desired position of the toolbar.
          */
         public abstract void install_toolbar (string id, FilePaneToolbarFactory factory, PositionType where);
+
         /**
          * Get a reference to your add-on toolbar, or null if it's not installed
          */
@@ -232,7 +239,7 @@ namespace Emperor.Application {
         /**
          * Parent of the current working directory.
          */
-        public abstract File parent_dir { get; }
+        public abstract File? parent_dir { get; }
 
         /**
          * Get a child file of the current directory by name.

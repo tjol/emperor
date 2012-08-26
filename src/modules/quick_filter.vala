@@ -23,18 +23,18 @@ using Emperor.Application;
 
 namespace Emperor.Modules {
 	
-	public Widget create_quick_filter_bar (EmperorCore app, FilePane file_pane)
+	public Widget create_quick_filter_bar (EmperorCore app, IFilePane file_pane)
 	{
 		return new QuickFilterBar (app, file_pane);
 	}
 	
 	public class QuickFilterBar : HBox
 	{
-		FilePane m_pane;
+		IFilePane m_pane;
 		EmperorCore m_app;
 		Entry m_entry;
 		
-		public QuickFilterBar (EmperorCore app, FilePane pane)
+		public QuickFilterBar (EmperorCore app, IFilePane pane)
 		{
 			m_pane = pane;
 			m_app = app;

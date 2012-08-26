@@ -31,28 +31,27 @@ namespace Emperor.Application {
     /**
      * The heart of the file manager
      */
-    public class FilePane : VBox, IUIFeedbackComponent, IFilePane
+    public class FilePane : FilePaneWithToolbars
     {
         
         EmperorCore m_app;
         string m_designation;
+        public override EmperorCore application { get { return m_app; } }
+        public override string designation { get { return m_designation; } }
+        
+
         TreeView m_list;
         Label m_pane_title;
         EventBox m_pane_title_bg;
-        Label m_error_message;
-        EventBox m_error_message_bg;
         ListStore m_data_store = null;
         TreeModelSort m_sorted_list = null;
         TreeModelFilter m_list_filter = null;
         TreePath m_cursor_path;
+
         FileInfoColumn[] m_store_cells;
         Type[] m_store_types;
         Map<int,TreeIterCompareFuncWrapper> m_cmp_funcs;
-        Set<string> m_file_attributes;
-        string m_file_attributes_str;
-        Map<string,FileFilterFuncWrapper> m_filters;
-        Map<string,FileInfoCompareFuncWrapper> m_permanent_sort;
-        Map<string,Widget> m_addon_toolbars;
+        
 
         // Indices of well-known data columns in the TreeModel
         public int COL_FILEINFO { get; private set; }
@@ -66,10 +65,6 @@ namespace Emperor.Application {
         public int COL_STYLE { get; private set; }
         public int COL_STYLE_SET { get; private set; }
         
-        public EmperorCore application { get { return m_app; } }
-        public string designation { get { return m_designation; } }
-        public Gtk.Window owning_window { get { return m_app.main_window; } }
-
         /**
          * Constructor - initialize FilePane
          *
@@ -80,10 +75,10 @@ namespace Emperor.Application {
         {
             m_app = app;
             m_designation = pane_designation;
-            m_filters = new HashMap<string,FileFilterFuncWrapper> ();
-            m_permanent_sort = new HashMap<string,FileInfoCompareFuncWrapper> ();
 
             this.destroy.connect (on_destroy);
+
+            init_file_pane_mixin ();
 
             /*
              * Create and add the title Label
@@ -123,12 +118,7 @@ namespace Emperor.Application {
             var store_cells = new LinkedList<FileInfoColumn?>();
             var store_types = new LinkedList<Type>();
             m_cmp_funcs = new HashMap<int,TreeIterCompareFuncWrapper>();
-            m_file_attributes = new HashSet<string>();
-            m_file_attributes.add(FileAttribute.STANDARD_NAME);
-            m_file_attributes.add(FileAttribute.STANDARD_TYPE);
-            m_file_attributes.add(FileAttribute.STANDARD_CONTENT_TYPE);
-            m_file_attributes.add(FileAttribute.STANDARD_SYMLINK_TARGET);
-            m_file_attributes.add(FileAttribute.STANDARD_TARGET_URI);
+            
 
             //// standard columns:
             int idx = 0;
@@ -243,15 +233,7 @@ namespace Emperor.Application {
             m_store_cells = store_cells.to_array();
             m_store_types = store_types.to_array();
             // Attributes: join up string that we can pass to query_info
-            var sb = new StringBuilder();
-            bool first = true;
-            foreach (string attr in m_file_attributes) {
-                if (!first) sb.append_c(',');
-                else first = false;
-
-                sb.append(attr);
-            }
-            m_file_attributes_str = sb.str;
+            recreate_file_attributes_string ();
 
             // Add TreeView widget, within a ScrolledWindow to make it behave.
             var scrwnd = new ScrolledWindow (null, null);
@@ -266,26 +248,9 @@ namespace Emperor.Application {
 	           activate_row (path); 
             });
             pack_start (scrwnd, true, true);
-
-            // Add widget for displaying error messages.
-            m_error_message = new Label ("");
-            m_error_message_bg = new EventBox ();
-            m_error_message.margin = 10;
-            m_error_message.wrap = true;
-            var black = RGBA();
-            black.parse("#000000");
-            m_error_message.override_color (0, black);
-            var red = RGBA();
-            red.parse("#ff8888");
-            m_error_message_bg.override_background_color (0, red);
-            m_error_message_bg.add(m_error_message);
-            pack_start (m_error_message_bg, false, false);
             
-            // Now, install add-on toolbars previously registered.
-            m_addon_toolbars = new Gee.HashMap<string,Widget> ();
-            foreach (var tbcfg in m_app.ui_manager.filepane_toolbars) {
-	            tbcfg.add_to_pane (this);
-            }
+            // Add toolbars
+            init_file_pane_toolbar_mixin ();
         }
 
         private void on_destroy ()
@@ -299,6 +264,7 @@ namespace Emperor.Application {
             // Doing the same thing for pwd and parent_dir might not be safe:
             // they're usually never null.
         }
+
 
         /**
          * Saves column widths to preferences.
@@ -331,60 +297,14 @@ namespace Emperor.Application {
         }
 
         /**
-         * Show error underneath list.
-         *
-         * @param message Error message, should be translatable.
+         * Reapply list filters
          */
-        public void display_error (string message)
+        protected override void
+        refilter_list ()
         {
-            m_error_message.set_text(message);
-            m_error_message_bg.visible = true;
-        }
-
-        /**
-         * Hide the error message, if any.
-         */
-        public void hide_error ()
-        {
-            m_error_message_bg.visible = false;
-        }
-
-        /**
-         * Install file filter.
-         *
-         * @param id Unique identifier, can be used to remove filter later with {@link remove_filter}
-         */
-        public void add_filter (string id, FileFilterFunc filter)
-        {
-            m_filters[id] = new FileFilterFuncWrapper (filter);
             if (m_list_filter != null) {
                 m_list_filter.refilter ();
             }
-        }
-
-        /**
-         * Remove filter added with {@link add_filter}
-         *
-         * @param id Identifier as passed to {@link add_filter}
-         */
-        public bool remove_filter (string id)
-        {
-            bool removed = m_filters.unset (id);
-            if (removed && m_list_filter != null) {
-                m_list_filter.refilter ();
-            }
-            return removed;
-        }
-
-        /**
-         * Check if given filter is installed at the moment.
-         *
-         * @see add_filter
-         * @see remove_filter
-         */
-        public bool using_filter (string id)
-        {
-            return m_filters.has_key (id);
         }
 
         /**
@@ -440,34 +360,11 @@ namespace Emperor.Application {
         }
 
         /**
-         * Register a file attribute to be automatically queried and available in FileInfo objects
-         * created in this file pane.
+         * Refresh list sorting
          */
-        public void add_query_attribute (string att)
+        protected override void
+        refresh_sorting ()
         {
-            m_file_attributes.add (att);
-
-            var sb = new StringBuilder();
-            bool first = true;
-            foreach (string attr in m_file_attributes) {
-                if (!first) sb.append_c(',');
-                else first = false;
-
-                sb.append(attr);
-            }
-            m_file_attributes_str = sb.str;
-        }
-
-        /**
-         * Add a sort function that is applied to the files in the list, in addition to,
-         * and with priority over, the sort column selected by the user.
-         * Example: directories being sorted first
-         *
-         * @see remove_sort
-         */
-        public void add_sort (string id, FileInfoCompareFunc cmp)
-        {
-            m_permanent_sort[id] = new FileInfoCompareFuncWrapper (cmp);
             if (m_sorted_list != null) {
                 // refresh.
                 int col;
@@ -482,40 +379,6 @@ namespace Emperor.Application {
                 // apparently.
                 m_sorted_list.set_sort_column_id (col, st);
             }
-        }
-
-        /**
-         * Remove a sort function installed with {@link add_sort}
-         */
-        public bool remove_sort (string id)
-        {
-            bool removed = m_permanent_sort.unset (id);
-            if (removed && m_sorted_list != null) {
-                // refresh.
-                int col;
-                SortType st;
-                m_sorted_list.get_sort_column_id (out col, out st);
-
-                // reverse sort first.
-                m_sorted_list.set_sort_column_id (col, st == SortType.ASCENDING ?
-                                                                SortType.DESCENDING
-                                                              : SortType.ASCENDING  );
-                // now sort correctly again. This is the way to refresh sorting,
-                // apparently.
-                m_sorted_list.set_sort_column_id (col, st);
-            }
-            return removed;
-        }
-
-        /**
-         * Check if given sort function is in use.
-         *
-         * @see add_sort
-         * @see remove_sort
-         */
-        public bool using_sort (string id)
-        {
-            return m_permanent_sort.has_key (id);
         }
 
         /**
@@ -540,388 +403,127 @@ namespace Emperor.Application {
             
             return d;
         }
-        
+
+
         /**
-         * Add a toolbar to this FilePane.
-         *
-         * @param id	identifier that can be used to retrieve the toolbar
-         *              using {@link get_addon_toolbar}
-         * @param factory FilePaneToolbarFactory that creates the toolbar.
-         * @param where   desired position of the toolbar.
+         * Grab focus
          */
-        public void install_toolbar (string id, FilePaneToolbarFactory factory, PositionType where)
+        protected override void
+        give_focus_to_list ()
         {
-	        var toolbar = factory (m_app, this);
-	        
-	        switch (where) {
-		        case PositionType.TOP:
-		        case PositionType.LEFT: // left not supported yet. This is silly.
-		        	pack_start (toolbar, false, false, 0);
-		        	reorder_child (toolbar, 0);
-		        	break;
-		        case PositionType.BOTTOM:
-		        case PositionType.RIGHT:
-		        	pack_end (toolbar, false, false, 0);
-		        	break;
-	        }
-	        
-	        m_addon_toolbars[id] = toolbar;
+            m_list.grab_focus ();
         }
-        
+
         /**
-         * Get a reference to your add-on toolbar, or null if it's not installed
+         * Provide implementation specific parts of the chdir
+         * method.
          */
-        public Widget? get_addon_toolbar (string id)
+        protected override IDirectoryLoadHelper
+        get_directory_load_helper (File dir, string? prev_name)
         {
-	        return m_addon_toolbars[id];
+            return new DirectoryLoadHelper (this, dir, prev_name);
         }
 
 
-        File m_pwd = null;
-        File m_parent = null;
-        Mount m_mnt = null;
-        MountManager.MountRef m_mnt_ref = null;
-
-        /**
-         * The directory currently being listed. Setting the property changes
-         * directory asynchronously
-         *
-         * @see chdir_then_focus
-         * @see chdir
-         */
-        [CCode(notify = false)]
-        public File pwd {
-            get { return m_pwd; }
-            set {
-                chdir.begin(value, null);
-            }
-        }
-
-        /**
-         * Change directory and focus the file list when done.
-         *
-         * @see chdir
-         */
-        public async bool chdir_then_focus (File pwd, string? prev_name=null, GLib.MountOperation? mnt_op=null)
+        private class DirectoryLoadHelper : Object,
+                                            IDirectoryLoadHelper
         {
-            var prev_name_ = prev_name;
-            if (prev_name_ == null) {
-                // we care about correct focus here. Check if we're going to the parent, perchance.
-                if (m_pwd.has_parent(pwd)) {
-                    prev_name_ = m_pwd.get_basename ();
-                }
-            }
+            public FilePane fp { get; construct; }
+            public File directory { get; construct; }
+            public string? prev_name { get; construct; }
 
-            bool success =  yield chdir (pwd, prev_name_, mnt_op);
-            if (success) {
-                this.active = true;
-                m_list.grab_focus();
-            }
-            return success;
-        }
-
-        /**
-         * The GIO Mount object the current working directory is on.
-         */
-        public Mount mnt {
-            get { return m_mnt; }
-        }
-
-        /**
-         * Parent of the current working directory.
-         */
-        public File parent_dir {
-            get { return m_parent; }
-        }
-
-        private Cancellable m_chdir_cancellable = null;
-
-        /**
-         * Change directory.
-         *
-         * @param pwd Directory to change to
-         * @param prev_name \
-         *          Name of the file to place the cursor on when done.
-         * @param mnt_op \ 
-         *          GIO MountOperation used in case the location has to be mounted first. \
-         * @return false on error, true if successful or cancelled.
-         */
-        public async bool chdir (File pwd, string? prev_name=null, GLib.MountOperation? mnt_op=null)
-        {
-            // If another directory is currently being changed to, cancel that operation.
-            // Also, make this chdir operation cancellable in the same way.
-            var cancellable = new Cancellable ();
-            if (m_chdir_cancellable != null) {
-                m_chdir_cancellable.cancel ();
-            }
-            m_chdir_cancellable = cancellable;
-
-            TreeIter? prev_iter = null;
-
-            // Save the sorting of the list.
-            // Will create a new TreeModelSort later that needs this info.
             int sort_column = -1;
             SortType sort_type = 0;
-            bool is_sorted = (m_sorted_list != null
-                             && m_sorted_list.get_sort_column_id (out sort_column, out sort_type));
+            bool is_sorted;
 
-            File parent = null;
-            File archive_file = null;
-            MountManager.MountRef mnt_ref = null;
-            Mount mnt = null;
+            TreeIter? prev_iter = null;
+            ListStore store;
 
-            // No longer care if volume is unmounted. Will reconnect signal if still on same mount.
-            if (m_mnt != null) {
-                m_mnt.unmounted.disconnect (on_unmounted);
+            public DirectoryLoadHelper (FilePane pane, File dir, string? prev_name)
+            {
+                Object ( fp : pane,
+                         directory : dir,
+                         prev_name : prev_name );
             }
 
-
-            // Make sure the volume is mounted.
-            if (! yield m_app.mount_manager.procure_mount (pwd, out mnt_ref, this, mnt_op, cancellable)) {
-                if (cancellable.is_cancelled()) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-            mnt = mnt_ref.mount;
-
-            /*
-            if (other_pane.pwd != null && pwd.equal(other_pane.pwd)) {
-                // If the other pane is in the same directory, simply re-use its ListStore.
-                m_data_store = other_pane.m_data_store;
-                m_cursor_path = other_pane.m_cursor_path;
-               
-                parent = other_pane.parent_dir;
-
-            } else {
-                */
-                // Otherwise, read out the directory!
-
-                set_busy_state (true);
+            construct {
+                // save sorting state.
+                is_sorted = fp.m_sorted_list != null && 
+                            fp.m_sorted_list.get_sort_column_id (out sort_column, out sort_type);
+                
 
                 // Create a new list and fill it with file information.
-                var store = new ListStore.newv(m_store_types);
+                store = new ListStore.newv(fp.m_store_types);
+            }
 
-                // Enumerate files
-                FileEnumerator enumerator;
-                try {
-                    enumerator = yield pwd.enumerate_children_async (
-                                                m_file_attributes_str,
-                                                FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
-                                                Priority.DEFAULT, cancellable);
-                } catch (Error err1) {
-                    if (cancellable.is_cancelled()) return true;
-
-                    display_error (_("Error reading directory: %s (%s)")
-                                   .printf(pwd.get_parse_name(),
-                                           err1.message));
-                    return false;
-                }
-
+            public void
+            add_row (FileInfo finfo)
+            {
                 TreeIter iter;
+                store.append (out iter);
+                fp.update_row (iter, finfo, store, directory);
 
-                // Add [..]
-                parent = pwd.get_parent();
-
-                // Are we in an archive?
-                if (pwd.get_uri_scheme() == "archive") {
-                    var archive_uri = pwd.get_uri();
-                    archive_file = MountManager.get_archive_file (archive_uri);
+                if (prev_name == finfo.get_name ()) {
+                    prev_iter = iter;
                 }
+            }
 
-                // If this is the root of the archive, make [..] refer to the directory the
-                // archive is in. Archives should behave just like directories where possible.
-                if (parent == null && archive_file != null) {
-                    parent = archive_file.get_parent();
-                }
-
-                // The parent needs to be treated specially. Get all the file information
-                // for it.
-                FileInfo parent_info = null;
-                if (parent != null) {
-                    try {
-                        parent_info = yield parent.query_info_async(m_file_attributes_str,
-                                                    FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
-                                                    Priority.DEFAULT, cancellable);
-                    } catch (Error err2) {
-                        if (cancellable.is_cancelled()) return true;
-
-                        if (err2 is IOError.NOT_MOUNTED && parent.get_uri_scheme () == "archive") {
-                            // Special case: the parent is an archive which is not mounted.
-                            // in this case, we don't want to display an error - archives
-                            // are meant to be handled transparently. Improvise and use
-                            // the current directory's info. This isn't ideal, but it'll get
-                            // the job done.
-
-                            // TODO: replace this part with something sensible.
-                            stderr.printf ("WARNING: ARCHIVE CRAZY FOO\n");
-
-
-                            try {
-                                parent_info = yield pwd.query_info_async (m_file_attributes_str,
-                                                            FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
-                                                            Priority.DEFAULT, cancellable);
-                            } catch (Error err3) {
-                                if (err3 is IOError.CANCELLED) return true;
-
-                                // Display error detailing the problem.
-                                display_error (_("Error querying parent directory: %s (%s)")
-                                                .printf(parent.get_parse_name(),
-                                                        err3.message));
-
-                            }
-                        } else {
-                            // Display error detailing the problem.
-                            display_error (_("Error querying parent directory: %s (%s)")
-                                            .printf(parent.get_parse_name(),
-                                                    err2.message));
-                        }
-                    }
-                }
-                if (parent_info != null) {
-                    // Don't use the actual file name, just call it ".."
-                    parent_info.set_display_name("..");
-                    parent_info.set_name("..");
-                    // Even if we're in a hidden directory, we definitely want to see [..]
-                    parent_info.set_is_hidden(false);
-                    parent_info.set_attribute_boolean(FileAttribute.STANDARD_IS_BACKUP, false);
-
-                    store.append (out iter);
-                    update_row (iter, parent_info, store, pwd);
-
-                    if (prev_name == "..") {
-                        prev_iter = iter;
-                    }
-                }
-
-                // Add the other non special case files one by one.
-                while (true) {
-                    // get a batch of FileInfo objects
-                    GLib.List<FileInfo> fileinfos;
-                    try {
-                        fileinfos = yield enumerator.next_files_async (20, Priority.DEFAULT,
-                                                                       cancellable);
-                    } catch (Error err3) {
-                        if (cancellable.is_cancelled()) return true;
-
-                        display_error (_("Error querying some files. (%s)")
-                                        .printf(err3.message));
-                        continue;
-                    }
-                    if (fileinfos == null) break;
-
-                    // add the batch of FileInfo objects to the list
-                    foreach (var file in fileinfos) {
-                        store.append (out iter);
-                        update_row (iter, file, store, pwd);
-
-                        if (prev_name == file.get_name()) {
-                            prev_iter = iter;
-                        }
-                    }
-                }
-
+            public void
+            commit ()
+            {
                 // We're done. Install.
-                m_data_store = store;
-                m_cursor_path = null;
+                fp.m_data_store = store;
+                fp.m_cursor_path = null;
 
-            //}
+                // Filter and sort the list, and display it in the TreeView.
+                fp.m_list_filter = new TreeModelFilter (fp.m_data_store, null);
+                fp.m_list_filter.set_visible_func (fp.filter_list_row);
+                fp.m_sorted_list = new TreeModelSort.with_model (fp.m_list_filter);
+                fp.m_sorted_list.sort_column_changed.connect (fp.sort_column_changed);
 
-            if (cancellable.is_cancelled ()) return true;
+                fp.fix_column_sizes ();
+                fp.m_list.set_model(fp.m_sorted_list);
 
-            // Update class properties and emit signals so the rest of the program
-            // can react to the directory change.
-            m_pwd = pwd;
-            m_mnt_ref = mnt_ref;
-            m_mnt = mnt;
-            m_parent = parent;
-            notify_property ("pwd");
-            notify_property ("mnt");
-            notify_property ("parent_dir");
-            // Make sure we know when our volume disappears.
-            if (m_mnt != null) {
-                m_mnt.unmounted.connect (on_unmounted);
+                // Configure the TreeModelSort for our columns
+                foreach (var e in fp.m_cmp_funcs.entries) {
+                    fp.m_sorted_list.set_sort_func(e.key, e.value.compare_treeiter);
+                }
+                // Re-enable the sorting, as saved above.
+                if (is_sorted) {
+                    fp.m_sorted_list.set_sort_column_id (sort_column, sort_type);
+                } else {
+                    fp.get_sort_from_prefs (fp.m_sorted_list);
+                }
+
+                // Move the cursor to the right spot.
+                if (prev_iter != null) {
+                    TreeIter sort_prev_iter;
+                    TreeIter filter_prev_iter;
+                    fp.m_list_filter.convert_child_iter_to_iter (out filter_prev_iter, prev_iter);
+                    fp.m_sorted_list.convert_child_iter_to_iter (out sort_prev_iter, filter_prev_iter);
+                    var curs = fp.m_sorted_list.get_path (sort_prev_iter);
+                    fp.m_list.set_cursor (curs, null, false);
+                }
+
+                // set title.
+                string title;
+                // Are we in an archive?
+                if (directory.get_uri_scheme() == "archive") {
+                    var archive_uri = directory.get_uri();
+                    var archive_file = MountManager.get_archive_file (archive_uri);
+                    var rel_path = fp.mnt.get_root().get_relative_path (directory);
+                    title = "[ %s ] /%s".printf (archive_file.get_basename(), rel_path);
+                } else {
+                    title = directory.get_parse_name ();
+                }
+                fp.m_pane_title.set_text (title);
+
+                fp.restyle_complete_list ();
             }
 
-            // Filter and sort the list, and display it in the TreeView.
-            m_list_filter = new TreeModelFilter (m_data_store, null);
-            m_list_filter.set_visible_func (this.filter_list_row);
-            m_sorted_list = new TreeModelSort.with_model (m_list_filter);
-            m_sorted_list.sort_column_changed.connect (sort_column_changed);
-
-            fix_column_sizes ();
-            m_list.set_model(m_sorted_list);
-
-            // Configure the TreeModelSort for our columns
-            foreach (var e in m_cmp_funcs.entries) {
-                m_sorted_list.set_sort_func(e.key, e.value.compare_treeiter);
-            }
-            // Re-enable the sorting, as saved above.
-            if (is_sorted) {
-                m_sorted_list.set_sort_column_id (sort_column, sort_type);
-            } else {
-                get_sort_from_prefs (m_sorted_list);
-            }
-
-            // Move the cursor to the right spot.
-            if (prev_iter != null) {
-                TreeIter sort_prev_iter;
-                TreeIter filter_prev_iter;
-                m_list_filter.convert_child_iter_to_iter (out filter_prev_iter, prev_iter);
-                m_sorted_list.convert_child_iter_to_iter (out sort_prev_iter, filter_prev_iter);
-                var curs = m_sorted_list.get_path (sort_prev_iter);
-                m_list.set_cursor (curs, null, false);
-            }
-
-            // set title.
-            string title;
-            if (archive_file != null) {
-                var rel_path = mnt.get_root().get_relative_path (pwd);
-                title = "[ %s ] /%s".printf (archive_file.get_basename(), rel_path);
-            } else {
-                title = pwd.get_parse_name ();
-            }
-            m_pane_title.set_text (title);
-
-            // save pwd to prefs
-            m_app.prefs.set_string (m_designation + "-pwd", m_pwd.get_parse_name());
-
-            restyle_complete_list ();
-
-            set_busy_state (false);
-
-            m_chdir_cancellable = null;
-
-            return true;
         }
 
-        
-        private void set_busy_state (bool busy)
-        {
-            var gdk_wnd = get_window ();
-            if (gdk_wnd == null) {
-                return;
-            }
-
-            if (busy) {
-                var cursor = new Cursor (CursorType.WATCH);
-                gdk_wnd.set_cursor (cursor);
-            } else {
-                gdk_wnd.set_cursor (null);
-            }
-        }
-
-        /**
-         * Called when the current directory is unmounted (and should therefore no
-         * longer be displayed because one cannot interact with it)
-         */
-        private void on_unmounted ()
-        {
-            chdir.begin (File.new_for_path (Environment.get_home_dir()), null);
-            display_error (_("Location unmounted."));
-        }
-
+         
         /**
          * Extract data from a FileInfo object into a row in the file list
          */
@@ -999,7 +601,8 @@ namespace Emperor.Application {
          * @param file      The file to be updated
          * @param new_file  If the file has been renamed, the new location of the file.
          */
-        public void update_file (File file, File? new_file=null)
+        public override void
+        update_file (File file, File? new_file=null)
             requires (m_pwd != null)
         {
             if (new_file == null) {
@@ -1049,7 +652,8 @@ namespace Emperor.Application {
         /**
          * Refresh the entire directory
          */
-        public async void refresh ()
+        public override async void
+        refresh ()
             requires (m_pwd != null)
         {
             set_busy_state (true);
@@ -1147,9 +751,6 @@ namespace Emperor.Application {
                                                                             : SortType.DESCENDING);
 
         }
-
-        // defined in the interface.
-        //public signal void cursor_changed ();
 
         /**
          * Routine housekeeping tasks when the cursor moves. Emits {@link cursor_changed} signal
@@ -1318,7 +919,7 @@ namespace Emperor.Application {
          * Whether or not this pane is active. Setting this property
          * will change the other pane's state accordingly.
          */
-        public bool active {
+        public override bool active {
             get { return m_active; }
             set {
                 if (m_active != value) {
@@ -1434,113 +1035,6 @@ namespace Emperor.Application {
             }
         }
 
-        private async void activate_file (FileInfo file_info, File? real_file)
-        {
-            FileInfo info;
-            MountManager.MountRef mnt_ref;
-
-            switch (file_info.get_file_type()) {
-            // Enter directory
-            case FileType.DIRECTORY:
-                File dir;
-                if (real_file == null) {
-                    dir = get_child_by_name (file_info.get_name());
-                } else {
-                    dir = real_file;
-                }
-
-                string? old_name = null;
-                if (file_info.get_name () == "..") {
-                    // going up, to the parent.
-                    if (m_pwd.get_uri_scheme () == "archive" && !m_pwd.has_parent (null)) {
-                        // Leaving the archive. Find archive file name.
-                        var archive_file = MountManager.get_archive_file (m_pwd.get_uri ());
-                        if (archive_file != null) {
-                            old_name = archive_file.get_basename ();
-                        }
-
-                    } else {
-                        // Normal chdir, find directory name.
-                        old_name = m_pwd.get_basename ();
-                    }
-
-
-                } else {
-                    // going down to a child.
-                    old_name = "..";
-                }
-
-                yield chdir(dir, old_name);
-
-                break;
-
-            // Dereference symbolic link, and activate target.
-            case FileType.SYMBOLIC_LINK:
-                var target_s = file_info.get_symlink_target ();
-                var target = m_pwd.resolve_relative_path (target_s);
-                if (!yield m_app.mount_manager.procure_mount (target, out mnt_ref, this, null)) {
-                    return;
-                }
-                try {
-                    info = yield target.query_info_async (m_file_attributes_str, 0);
-                } catch (Error sl_err) {
-                    display_error (_("Could not resolve symbolic link: %s (%s)")
-                                    .printf(target_s, sl_err.message));
-                    return;
-                }
-                yield activate_file (info, target);
-                break;
-
-            // Shortcuts are handled like symbolic links.
-            case FileType.SHORTCUT:
-                var sc_target_s = file_info.get_attribute_string (
-                                        FileAttribute.STANDARD_TARGET_URI);
-                var sc_target = File.new_for_uri (sc_target_s);
-                if (!yield m_app.mount_manager.procure_mount (sc_target, out mnt_ref, this, null)) {
-                    return;
-                }
-                try {
-                    info = yield sc_target.query_info_async (m_file_attributes_str, 0);
-                } catch (Error sc_err) {
-                    display_error (_("Error following shortcut: %s (%s)")
-                                    .printf(sc_target_s, sc_err.message));
-                    return;
-                }
-                yield activate_file (info, sc_target);
-                break;
-
-            default:
-                File file;
-                if (real_file == null) {
-                    file = m_pwd.get_child (file_info.get_name());
-                } else {
-                    file = real_file;
-                }
-
-                if (file_info.get_content_type() in ARCHIVE_TYPES) {
-                    //
-                    // attempt to mount as archive.
-                    //
-
-                    var archive_host = Uri.escape_string (file.get_uri(), "", false);
-                    // escaping percent signs need to be escaped :-/
-                    var escaped_host = Uri.escape_string (archive_host, "", false);
-                    var archive_file = File.new_for_uri ("archive://" + escaped_host);
-                    if (yield chdir (archive_file, "..")) {
-                        // success!
-                        return;
-                    } else {
-                        // failure. Hand it over to the OS.
-                        hide_error ();
-                    }
-                }
-
-                // If it's not an archive, or mounting failed, tell the operating
-                // system to open the file in a sensible way.
-                m_app.open_file (file);
-                break;
-            }
-        }
 
         private void toggle_selected (TreePath path)
         {
@@ -1560,7 +1054,8 @@ namespace Emperor.Application {
         /**
          * Returns a list of currently selected files.
          */
-        public GLib.List<File> get_selected_files ()
+        public override GLib.List<File>
+        get_selected_files ()
         {
             var file_list = new GLib.List<File> ();
 
@@ -1593,7 +1088,8 @@ namespace Emperor.Application {
             return (owned) file_list;
         }
 
-        public File? get_file_at_cursor ()
+        public override File?
+        get_file_at_cursor ()
         {
             if (m_cursor_path != null) {
                 var finfo = get_fileinfo (m_cursor_path);
@@ -1747,7 +1243,8 @@ namespace Emperor.Application {
             }
         }
 
-        public override void show_all ()
+        public override void
+        show_all ()
         {
             base.show_all ();
             hide_error ();
