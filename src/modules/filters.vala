@@ -32,7 +32,7 @@ namespace Emperor.Modules {
     }
 
     public void toggle_filter (MainWindow main_window, string filter,
-                               FilePane.FileFilterFunc func,
+                               FileFilterFunc func,
                                bool? use_filter=null)
     {
         bool flag;

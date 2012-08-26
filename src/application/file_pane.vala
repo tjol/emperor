@@ -31,27 +31,9 @@ namespace Emperor.Application {
     /**
      * The heart of the file manager
      */
-    public class FilePane : VBox
+    public class FilePane : VBox, IUIFeedbackComponent, IFilePane
     {
-        /**
-         * Method that determines whether a file is shown in the list or not.
-         * 
-         * @param f     The file in question
-         * @param fi    A FileInfo object describing the file, with default attributes
-         * @param currently_visible \
-         *              If this filter didn't exist, would the file be displayed? Return this \
-         *              as default value.
-         */
-        public delegate bool FileFilterFunc (File f, FileInfo fi, bool currently_visible);
         
-        /**
-         * Method that creates a toolbar for the file pane.
-         *
-         * @param mwnd	Main application window.
-         * @param fpane	The file pane the toolbar is associated with
-         */
-        public delegate Widget ToolbarFactory (EmperorCore app, FilePane fpane);
-
         EmperorCore m_app;
         string m_designation;
         TreeView m_list;
@@ -72,12 +54,6 @@ namespace Emperor.Application {
         Map<string,FileInfoCompareFuncWrapper> m_permanent_sort;
         Map<string,Widget> m_addon_toolbars;
 
-        /**
-         * Housekeeping to allow automatic unmounting of mounted archives.
-         */
-        internal static HashMap<string,int> archive_ref_counts = null;
-        HashSet<string> archive_ref_monitors;
-
         // Indices of well-known data columns in the TreeModel
         public int COL_FILEINFO { get; private set; }
         public int COL_SELECTED { get; private set; }
@@ -89,6 +65,10 @@ namespace Emperor.Application {
         public int COL_WEIGHT_SET { get; private set; }
         public int COL_STYLE { get; private set; }
         public int COL_STYLE_SET { get; private set; }
+        
+        public EmperorCore application { get { return m_app; } }
+        public string designation { get { return m_designation; } }
+        public Gtk.Window owning_window { get { return m_app.main_window; } }
 
         /**
          * Constructor - initialize FilePane
@@ -98,11 +78,6 @@ namespace Emperor.Application {
          */
         public FilePane (EmperorCore app, string pane_designation)
         {
-            if (archive_ref_counts == null) {
-                archive_ref_counts = new HashMap<string,int> ();
-            }
-            archive_ref_monitors = new HashSet<string> ();
-
             m_app = app;
             m_designation = pane_designation;
             m_filters = new HashMap<string,FileFilterFuncWrapper> ();
@@ -315,7 +290,9 @@ namespace Emperor.Application {
 
         private void on_destroy ()
         {
-            // unmount archives. Perhaps other things in modules.
+            // Give modules the chance to do some clean-up work and ensure archive
+            // mounts are correctly cleaned up.
+            m_mnt_ref = null;
             m_mnt = null;
             notify_property ("mnt");
 
@@ -569,10 +546,10 @@ namespace Emperor.Application {
          *
          * @param id	identifier that can be used to retrieve the toolbar
          *              using {@link get_addon_toolbar}
-         * @param factory ToolbarFactory that creates the toolbar.
+         * @param factory FilePaneToolbarFactory that creates the toolbar.
          * @param where   desired position of the toolbar.
          */
-        internal void install_toolbar (string id, ToolbarFactory factory, PositionType where)
+        public void install_toolbar (string id, FilePaneToolbarFactory factory, PositionType where)
         {
 	        var toolbar = factory (m_app, this);
 	        
@@ -603,6 +580,7 @@ namespace Emperor.Application {
         File m_pwd = null;
         File m_parent = null;
         Mount m_mnt = null;
+        MountManager.MountRef m_mnt_ref = null;
 
         /**
          * The directory currently being listed. Setting the property changes
@@ -689,6 +667,7 @@ namespace Emperor.Application {
 
             File parent = null;
             File archive_file = null;
+            MountManager.MountRef mnt_ref = null;
             Mount mnt = null;
 
             // No longer care if volume is unmounted. Will reconnect signal if still on same mount.
@@ -696,28 +675,28 @@ namespace Emperor.Application {
                 m_mnt.unmounted.disconnect (on_unmounted);
             }
 
+
+            // Make sure the volume is mounted.
+            if (! yield m_app.mount_manager.procure_mount (pwd, out mnt_ref, this, mnt_op, cancellable)) {
+                if (cancellable.is_cancelled()) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            mnt = mnt_ref.mount;
+
             if (other_pane.pwd != null && pwd.equal(other_pane.pwd)) {
                 // If the other pane is in the same directory, simply re-use its ListStore.
                 m_data_store = other_pane.m_data_store;
                 m_cursor_path = other_pane.m_cursor_path;
-                if (! yield procure_mount (pwd, out mnt, mnt_op, cancellable)) {
-                    mnt = other_pane.mnt;
-                }
+               
                 parent = other_pane.parent_dir;
 
             } else {
                 // Otherwise, read out the directory!
 
-                // Make sure the volume is mounted.
-                if (! yield procure_mount (pwd, out mnt, mnt_op, cancellable)) {
-                    if (cancellable.is_cancelled()) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
-
-                set_cursor_busy (true);
+                set_busy_state (true);
 
                 // Create a new list and fill it with file information.
                 var store = new ListStore.newv(m_store_types);
@@ -746,7 +725,7 @@ namespace Emperor.Application {
                 // Are we in an archive?
                 if (pwd.get_uri_scheme() == "archive") {
                     var archive_uri = pwd.get_uri();
-                    archive_file = get_archive_file (archive_uri);
+                    archive_file = MountManager.get_archive_file (archive_uri);
                 }
 
                 // If this is the root of the archive, make [..] refer to the directory the
@@ -772,6 +751,11 @@ namespace Emperor.Application {
                             // are meant to be handled transparently. Improvise and use
                             // the current directory's info. This isn't ideal, but it'll get
                             // the job done.
+
+                            // TODO: replace this part with something sensible.
+                            stderr.printf ("WARNING: ARCHIVE CRAZY FOO\n");
+
+
                             try {
                                 parent_info = yield pwd.query_info_async (m_file_attributes_str,
                                                             FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
@@ -846,6 +830,7 @@ namespace Emperor.Application {
             // Update class properties and emit signals so the rest of the program
             // can react to the directory change.
             m_pwd = pwd;
+            m_mnt_ref = mnt_ref;
             m_mnt = mnt;
             m_parent = parent;
             notify_property ("pwd");
@@ -901,198 +886,15 @@ namespace Emperor.Application {
 
             restyle_complete_list ();
 
-            set_cursor_busy (false);
+            set_busy_state (false);
 
             m_chdir_cancellable = null;
 
             return true;
         }
 
-        /**
-         * Helper function to find the archive file given a URI within the archive.
-         */
-        private File? get_archive_file (string archive_uri)
-        {
-            var spl1 = archive_uri.split ("://", 2);
-            if (spl1.length >= 2) {
-                var spl2 = spl1[1].split ("/", 2);
-                var archive_host = spl2[0];
-                var archive_file_uri_esc1 = Uri.unescape_string (archive_host, null);
-                var archive_file_uri = Uri.unescape_string (archive_file_uri_esc1, null);
-                return File.new_for_uri (archive_file_uri);
-            } else {
-                return null;
-            }
-        }
-
-        /**
-         * Change directory to the location saved in the preferences file
-         */
-        public async bool chdir_from_pref ()
-        {
-            var old_pwd_str = m_app.prefs.get_string (m_designation + "-pwd", null);
-            File old_pwd;
-            if (old_pwd_str != null) {
-                old_pwd = File.parse_name (old_pwd_str);
-            } else {
-                old_pwd = File.new_for_path (".");
-            }
-            return yield chdir (old_pwd);
-        }
-
-        /**
-         * Get the GIO mount object for a location. If the location is not mounted,
-         * attempt to mount.
-         *
-         * @param pwd Location to be examined
-         * @param mnt Variable to save mount to
-         * @param mnt_op MountOperation to use when mounting
-         * @return True if mounted without error and Mount object writter to "mnt"
-         */
-        public async bool procure_mount (File pwd, out Mount mnt,
-                                         GLib.MountOperation? mnt_op,
-                                         Cancellable? cancellable=null)
-        {
-            bool mount_error = false;
-            try {
-                mnt = yield pwd.find_enclosing_mount_async (Priority.DEFAULT, cancellable);
-            } catch (Error mnterr1) {
-                mount_error = true;
-                mnt = null;
-            }
-            if (mount_error && ! pwd.is_native()) {
-                // not mounted. Can I mount this?
-                bool mounted = false;
-
-                // create notification in case this takes a while.
-                var waiter = new_waiting_for_mount (m_app.main_window, cancellable);
-                set_cursor_busy (true);
-                try {
-                    // queue notification
-                    waiter.go();
-
-                    GLib.MountOperation real_mnt_op;
-                    if (mnt_op == null) {
-                        real_mnt_op = new Gtk.MountOperation (m_app.main_window);
-                    } else {
-                        real_mnt_op = mnt_op;
-                    }
-
-                    // Mount.
-                    yield pwd.mount_enclosing_volume (
-                            MountMountFlags.NONE, real_mnt_op,
-                            cancellable);
-
-                    mounted = true;
-                } catch (Error mnterr2) {
-                    if (! cancellable.is_cancelled ()) {
-                        display_error (_("Error mounting volume. (%s)").printf(mnterr2.message));
-                    }
-                    mounted = false;
-                }
-                // Finished - for better or for worse
-                set_cursor_busy (false);
-                waiter.done ();
-
-                if (mounted) {
-                    try {
-                        // This should always succeed since we just created the very mount
-                        // being retrieved here.
-                        mnt = yield pwd.find_enclosing_mount_async ();
-                    } catch (Error mnterr3) {
-                        if (! cancellable.is_cancelled ()) {
-                            display_error (_("Error accessing mount. (%s)").printf(
-                                                mnterr3.message));
-                        }
-                        return false;
-                    }
-                } else {
-                    // not mounted
-                    return false;
-                }
-
-                // Special case for archives: We don't want any dangling archive mounts hanging around.
-                if (pwd.get_uri_scheme() == "archive") {
-                    if (cancellable.is_cancelled()) {
-                        mnt.unmount_with_operation (MountUnmountFlags.NONE,
-                            new Gtk.MountOperation (m_app.main_window));
-                        return false;
-                    }
-                }
-            }
-            // If this is an archive and we don't have a mount monitor for this pane and archive,
-            // create one.
-            if (pwd.get_uri_scheme() == "archive") {
-                var archive_mount_root = mnt.get_root ();
-                var archive_ref = archive_mount_root.get_uri();
-                if (!(archive_ref in archive_ref_monitors)) {
-                    if (archive_ref in archive_ref_counts) {
-                        archive_ref_counts[archive_ref] = archive_ref_counts[archive_ref] + 1;
-                    } else {
-                        archive_ref_counts[archive_ref] = 1;
-                    }
-
-                    new ArchiveMountMonitor (this, archive_mount_root,
-                                    archive_ref, archive_ref_monitors, mnt, m_app.main_window);
-                }
-            }
-            return true;
-        }
-
-        /**
-         * Keeps an eye on which Mount is being accessed. When navigating away from an archive, unmount.
-         */
-        private class ArchiveMountMonitor : Object
-        {
-            string archive_uri;
-            File archive_mount_root;
-            FilePane pane;
-            Mount mnt;
-            Gtk.Window main_window;
-            HashSet<string> archive_ref_monitors;
-            bool am_in_archive;
-
-            internal ArchiveMountMonitor (FilePane pane, File archive_mount_root,
-                        string archive_uri, HashSet<string> archive_ref_monitor_set,
-                        Mount mnt, Gtk.Window main_window)
-            {
-                this.archive_uri = archive_uri;
-                this.archive_mount_root = archive_mount_root;
-                this.pane = pane;
-                this.mnt = mnt;
-                this.main_window = main_window;
-                this.archive_ref_monitors = archive_ref_monitor_set;
-                this.am_in_archive = true;
-
-                pane.notify["mnt"].connect (this.on_mnt_changed);
-                archive_ref_monitors.add (archive_uri);
-                this.@ref();
-            }
-
-            internal void on_mnt_changed (ParamSpec p)
-            {
-                if (am_in_archive && (pane.mnt == null ||
-                    ! pane.mnt.get_root().equal (archive_mount_root))) {
-
-                    var refcnt = archive_ref_counts[archive_uri];
-                    refcnt--;
-                    am_in_archive = false;
-                    archive_ref_counts[archive_uri] = refcnt;
-                    if (refcnt == 0) {
-                        mnt.unmount_with_operation (MountUnmountFlags.NONE,
-                            new Gtk.MountOperation (main_window));
-                    }
-                } else if (!am_in_archive && pane.mnt != null && pane.mnt.get_root().equal (archive_mount_root)) {
-                    var refcnt = archive_ref_counts[archive_uri];
-                    refcnt++;
-                    am_in_archive = true;
-                    mnt = pane.mnt;
-                    archive_ref_counts[archive_uri] = refcnt;
-                }
-            }
-        }
-
-        private void set_cursor_busy (bool busy)
+        
+        private void set_busy_state (bool busy)
         {
             var gdk_wnd = get_window ();
             if (gdk_wnd == null) {
@@ -1252,7 +1054,7 @@ namespace Emperor.Application {
         public async void refresh ()
             requires (m_pwd != null)
         {
-            set_cursor_busy (true);
+            set_busy_state (true);
             try {
                 var file_infos = new HashMap<string,FileInfo>();
                 var pwd = m_pwd;
@@ -1305,7 +1107,7 @@ namespace Emperor.Application {
                 display_error (_("Error reading directory. (%s)")
                                .printf(err.message));
             }
-            set_cursor_busy (false);
+            set_busy_state (false);
 
         }
 
@@ -1650,7 +1452,7 @@ namespace Emperor.Application {
         private async void activate_file (FileInfo file_info, File? real_file)
         {
             FileInfo info;
-            Mount mnt;
+            MountManager.MountRef mnt_ref;
 
             switch (file_info.get_file_type()) {
             // Enter directory
@@ -1667,20 +1469,9 @@ namespace Emperor.Application {
                     // going up, to the parent.
                     if (m_pwd.get_uri_scheme () == "archive" && !m_pwd.has_parent (null)) {
                         // Leaving the archive. Find archive file name.
-                        var archive_file = get_archive_file (m_pwd.get_uri ());
+                        var archive_file = MountManager.get_archive_file (m_pwd.get_uri ());
                         if (archive_file != null) {
                             old_name = archive_file.get_basename ();
-
-                            // More special treatment: decrease ref count of parent by one.
-                            if (archive_file.get_uri_scheme () == "archive") {
-                                var parent_mount = yield archive_file.find_enclosing_mount_async (Priority.DEFAULT, null);
-                                if (parent_mount != null) {
-                                    var parent_mount_uri = parent_mount.get_root ().get_uri ();
-                                    if (parent_mount_uri in archive_ref_counts) {
-                                        archive_ref_counts[parent_mount_uri] = archive_ref_counts[parent_mount_uri] - 1;
-                                    }
-                                }
-                            }
                         }
 
                     } else {
@@ -1702,7 +1493,7 @@ namespace Emperor.Application {
             case FileType.SYMBOLIC_LINK:
                 var target_s = file_info.get_symlink_target ();
                 var target = m_pwd.resolve_relative_path (target_s);
-                if (!yield procure_mount (target, out mnt, null)) {
+                if (!yield m_app.mount_manager.procure_mount (target, out mnt_ref, this, null)) {
                     return;
                 }
                 try {
@@ -1720,7 +1511,7 @@ namespace Emperor.Application {
                 var sc_target_s = file_info.get_attribute_string (
                                         FileAttribute.STANDARD_TARGET_URI);
                 var sc_target = File.new_for_uri (sc_target_s);
-                if (!yield procure_mount (sc_target, out mnt, null)) {
+                if (!yield m_app.mount_manager.procure_mount (sc_target, out mnt_ref, this, null)) {
                     return;
                 }
                 try {
@@ -1746,26 +1537,6 @@ namespace Emperor.Application {
                     // attempt to mount as archive.
                     //
 
-                    // first, see if we're already in an archive.
-                    string? archive_ref = null;
-                    if (file.get_uri_scheme () == "archive") {
-                        // prevent the parent archive from being unmounted automatically.
-                        if (m_pwd.equal(file.get_parent ())) {
-                            // It's in the current directory. Use the stashed mount object.
-                            archive_ref = m_mnt.get_root ().get_uri ();
-                        } else {
-                            var fmnt = yield file.find_enclosing_mount_async (Priority.DEFAULT, null);
-                            if (fmnt != null) {
-                                archive_ref = fmnt.get_root ().get_uri ();
-                            }
-                        }
-
-                        if (archive_ref != null && archive_ref in archive_ref_counts) {
-                            archive_ref_counts[archive_ref] = archive_ref_counts[archive_ref] + 1;
-                        }
-                    }
-
-                    // now, do the actual mounting.
                     var archive_host = Uri.escape_string (file.get_uri(), "", false);
                     // escaping percent signs need to be escaped :-/
                     var escaped_host = Uri.escape_string (archive_host, "", false);
@@ -1776,11 +1547,6 @@ namespace Emperor.Application {
                     } else {
                         // failure. Hand it over to the OS.
                         hide_error ();
-                        // Also undo the ref-count thing from above so that the
-                        // parent archive still gets to be unmounted.
-                        if (archive_ref != null && archive_ref in archive_ref_counts) {
-                            archive_ref_counts[archive_ref] = archive_ref_counts[archive_ref] - 1;
-                        }
                     }
                 }
 
@@ -2044,29 +1810,7 @@ namespace Emperor.Application {
             }
         }
 
-        /**
-         * Dumb wrapper of FileFilterFunc for use in generics
-         */
-        private class FileFilterFuncWrapper : Object
-        {
-            public FileFilterFuncWrapper (FileFilterFunc f) {
-                this.func = f;
-            }
-            public FileFilterFunc func { get; private set; }
-        }
-
-        /**
-         * Dumb wrapper of FileInfoCompareFunc for use in generics
-         */
-        private class FileInfoCompareFuncWrapper : Object
-        {
-            public FileInfoCompareFuncWrapper (FileInfoCompareFunc f) {
-                this.func = f;
-            }
-            public FileInfoCompareFunc func { get; private set; }
-        }
-
-
+        
     }
 
 }

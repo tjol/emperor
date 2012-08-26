@@ -17,13 +17,13 @@
 
 namespace Emperor.Application {
 
-    internal interface WaitingForMountIface : Object {
-        internal abstract Cancellable go ();
-        internal abstract void done ();
+    public interface WaitingForMountIface : Object {
+        public abstract Cancellable go ();
+        public abstract void done ();
     }
 
 #if HAVE_LIBNOTIFY
-    internal WaitingForMountIface
+    public WaitingForMountIface
     new_waiting_for_mount (Gtk.Window wnd, Cancellable? cancellable=null)
     {
         // Do we want to use libnotify for this?
@@ -47,7 +47,7 @@ namespace Emperor.Application {
         return new WaitingForMountDialog (wnd, cancellable);
     }
 #else
-    internal WaitingForMountIface
+    public WaitingForMountIface
     new_waiting_for_mount (Gtk.Window wnd, Cancellable? cancellable=null)
     {
         return new WaitingForMountDialog (wnd, cancellable);

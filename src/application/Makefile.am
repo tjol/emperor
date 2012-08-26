@@ -8,11 +8,13 @@ endif
 
 
 emperor_SOURCES=emperor_core.vala file_pane.vala \
+        file_pane_interface.vala \
 		module_delegates.vala file_info_column.vala \
 		main_window.vala module_registry.vala \
 		user_interface_manager.vala input_dialog.vala \
 		external_applications.vala prefs_machine.vala \
 		mountwait.vala mountwait-dialog.vala \
+		mount_manager.vala \
 		$(NOTIFY_COMPONENTS_VALA) \
 		archive_types.vala
 

@@ -34,7 +34,7 @@ namespace Emperor.Application {
         public signal void main_window_ready (MainWindow main_window);
         
         public void add_filepane_toolbar (string id,
-                                          FilePane.ToolbarFactory factory,
+                                          FilePaneToolbarFactory factory,
                                           PositionType where)
         {
 	        var tbcfg = new FilePaneToolbarConfig ();
@@ -48,7 +48,7 @@ namespace Emperor.Application {
 	    internal class FilePaneToolbarConfig
 		{
 	        public string id;
-	        public FilePane.ToolbarFactory factory;
+	        public FilePaneToolbarFactory factory;
 	        public PositionType where;
 	        
 	        public void add_to_pane (FilePane pane)

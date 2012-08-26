@@ -29,6 +29,7 @@ namespace Emperor.Application {
 
         public ModuleRegistry modules { get; private set; }
         public UserInterfaceManager ui_manager { get; private set; }
+        public MountManager mount_manager { get; private set; }
         public MainWindow main_window { get; private set; }
         public AppManager external_apps { get; private set; }
         public PrefsMachine prefs { get; private set; }
@@ -52,6 +53,7 @@ namespace Emperor.Application {
             modules = new ModuleRegistry (this, module_location);
             ui_manager = new UserInterfaceManager (this);
             external_apps = new AppManager (this);
+            mount_manager = new MountManager (this);
 
             // read the XML configuration.
 
