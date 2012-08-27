@@ -25,7 +25,7 @@ To run Emperor from the source tree without installing, use `make run'.
 
 To bootstrap, e.g. if you got the source with git, you will also need:
 
- * Vala from git or in a version NEWER THAN 0.17.2
+ * Vala, version 0.17.3 or newer
  * GNU Autoconf, Automake, and Libtool
  * Intltool
 
