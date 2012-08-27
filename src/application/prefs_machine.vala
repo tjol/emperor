@@ -59,7 +59,8 @@ namespace Emperor.Application {
                                 prefs[key] = value_v;
                             }
                         } catch (Error e) {
-                            // doesn't matter.
+                            // not a huge problem.
+                            warning (_("Could not parse preferences. (%s)"), e.message);
                         }
                     } else {
                         // be forgiving.

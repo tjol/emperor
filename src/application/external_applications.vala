@@ -61,20 +61,30 @@ namespace Emperor.Application {
         private class AppCfgEntry
         {
             internal ArrayList<string> content_types { get; private set; }
-            internal FileHandler? handler { get; set; }
+            private FileHandler? m_handler;
+            internal unowned FileHandler? handler {
+                get {
+                    return m_handler;
+                }
+            }
+            internal void
+            set_handler (owned FileHandler? new_handler)
+            {
+                m_handler = (owned) new_handler;
+            }
             internal FileAction action { get; private set; }
 
             internal AppCfgEntry (FileAction action)
             {
                 this.action = action;
                 content_types = new ArrayList<string> ();
-                handler = null;
+                m_handler = null;
             }
 
             internal void use_appinfo (AppInfo appinfo)
             {
                 var handlerfactory = new AppInfoHandlerFactory (appinfo);
-                this.handler = handlerfactory.handle;
+                m_handler = handlerfactory.handle;
                 /* Vala/GObject reference counting breaks down when it comes
                  * to delegates due to API compatability with C - the delegate
                  * argument (here: handlerfactory) is passed as an opaque
@@ -152,7 +162,7 @@ namespace Emperor.Application {
                                         _("default-application requires content-type"));
                             }
                             try {
-                                _current_entry.handler = get_default_for_type (for_ctype);
+                                _current_entry.set_handler(get_default_for_type (for_ctype));
                             } catch (Error e) {
                                 stderr.printf(_("Warning: no default application found for type: %s\n"),
                                               for_ctype);
@@ -204,9 +214,10 @@ namespace Emperor.Application {
             return (files) => { default_appinfo.launch (files, null); } ;
         }
 
-        public FileHandler get_specific_for_type (string content_type, FileAction action,
-                                                  bool fallback_to_generic,
-                                                  bool fallback_to_default)
+        public FileHandler
+        get_specific_for_type (string content_type, FileAction action,
+                               bool fallback_to_generic,
+                               bool fallback_to_default)
             throws Error
         {
             
@@ -223,13 +234,13 @@ namespace Emperor.Application {
                         _("Major mess. This should never happen."));
             }
 
-            FileHandler? last_glob_result = null;
+            unowned FileHandler? last_glob_result = null;
 
             foreach (var appentry in relevant_apps) {
                 foreach (string app_ctype in appentry.content_types) {
                     if (content_type == app_ctype) {
                         // exact match. Use this.
-                        return appentry.handler;
+                        return (files) => { appentry.handler (files); };
                     } else if (PatternSpec.match_simple(app_ctype, content_type)) {
                         // glob match. save for later use.
                         last_glob_result = appentry.handler;
@@ -240,7 +251,7 @@ namespace Emperor.Application {
             // If this point is reached, no exact match has been found.
 
             if (fallback_to_generic && last_glob_result != null) {
-                return last_glob_result;
+                return (files) => { last_glob_result (files); };
             }
 
             // Nothing found? Try the desktop default:
@@ -256,7 +267,7 @@ namespace Emperor.Application {
                                                   bool fallback_to_default)
             throws Error
         {
-            var file_info = file.query_info (FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, 0);
+            var file_info = file.query_info (FileAttribute.STANDARD_CONTENT_TYPE, 0);
             string content_type = file_info.get_content_type ();
             try {
                 return get_specific_for_type (content_type, action, fallback_to_generic, false);

@@ -17,13 +17,13 @@
 
 namespace Emperor.Application {
 
-    public interface WaitingForMountIface : Object {
+    public interface IWaitingForMount : Object {
         public abstract Cancellable go ();
         public abstract void done ();
     }
 
 #if HAVE_LIBNOTIFY
-    public WaitingForMountIface
+    public IWaitingForMount
     new_waiting_for_mount (Gtk.Window wnd, Cancellable? cancellable=null)
     {
         // Do we want to use libnotify for this?

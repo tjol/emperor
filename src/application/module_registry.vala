@@ -74,15 +74,15 @@ namespace Emperor.Application {
          * Register a sorting function. It can then be used in the UI
          * configuration.
          */
-        public void register_sort_function (string name, CompareFunc func)
+        public void register_sort_function (string name, owned CompareFunc func)
         {
-            m_cmp_funcs[name] = new CompareFuncWrapper(func);
+            m_cmp_funcs[name] = new CompareFuncWrapper((owned) func);
         }
 
         /**
          * Get a sorting function registered with {@link register_sort_function}
          */
-        public CompareFunc? get_sort_function (string name)
+        public unowned CompareFunc? get_sort_function (string name)
         {
             if (m_cmp_funcs.has_key(name)) {
                 return m_cmp_funcs[name].func;
@@ -94,15 +94,15 @@ namespace Emperor.Application {
         /**
          * Register a Command. This is currently useless.
          */
-        public void register_command (string name, Command command)
+        public void register_command (string name, owned Command command)
         {
-            m_commands[name] = new CommandWrapper (command);
+            m_commands[name] = new CommandWrapper ((owned) command);
         }
 
         /**
          * Get a command registered with {@link register_command}.
          */
-        public Command? get_command (string name)
+        public unowned Command? get_command (string name)
         {
             if (m_commands.has_key(name)) {
                 return m_commands[name].func;
@@ -179,7 +179,7 @@ namespace Emperor.Application {
 
             void* loadp;
             if (module.symbol("load_module", out loadp)) {
-                var load = (LoadFunction) loadp;
+                unowned LoadFunction load = (LoadFunction) loadp;
                 load (this);
                 // I could store the Module object, but this is so much easier.
                 module.make_resident ();
@@ -192,22 +192,34 @@ namespace Emperor.Application {
          * Utility class needed because Vala does not yet fully support using
          * delegates as generic type parametres.
          */
-        internal class CompareFuncWrapper : Object {
-            public CompareFuncWrapper (CompareFunc f) {
-                this.func = f;
+        internal class CompareFuncWrapper : Object
+        {
+            public CompareFuncWrapper (owned CompareFunc f) {
+                m_func = (owned) f;
             }
-            public CompareFunc func { get; private set; }
+            CompareFunc m_func;
+            public unowned CompareFunc func {
+                get {
+                    return m_func;
+                }
+            }
         }
 
         /**
          * Utility class needed because Vala does not yet fully support using
          * delegates as generic type parametres.
          */
-        internal class CommandWrapper : Object {
-            public CommandWrapper (Command f) {
-                this.func = f;
+        internal class CommandWrapper : Object
+        {
+            public CommandWrapper (owned Command f) {
+                m_func = (owned) f;
             }
-            public Command func { get; private set; }
+            Command m_func;
+            public unowned Command func {
+                get {
+                    return m_func;
+                }
+            }
         }
 
 

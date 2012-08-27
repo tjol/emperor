@@ -20,7 +20,7 @@ using Gtk;
 
 namespace Emperor.Application {
 
-    internal class WaitingForMountDialog : Object, WaitingForMountIface
+    internal class WaitingForMountDialog : Object, IWaitingForMount
     {
         Gtk.Window m_wnd;
         Cancellable m_cancellable;

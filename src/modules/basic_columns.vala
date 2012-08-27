@@ -30,7 +30,7 @@ namespace Emperor.Modules {
         public FilenameColumn ()
         {
             m_attrs = new LinkedList<string>();
-            m_attrs.add(FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME);
+            m_attrs.add(FileAttribute.STANDARD_DISPLAY_NAME);
         }
 
         public override Value get_value (File dir, FileInfo fi)
@@ -51,9 +51,9 @@ namespace Emperor.Modules {
         public FilenameWithTypeHintColumn ()
         {
             m_attrs = new LinkedList<string>();
-            m_attrs.add(FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME);
-            m_attrs.add(FILE_ATTRIBUTE_STANDARD_TYPE);
-            m_attrs.add(FILE_ATTRIBUTE_UNIX_MODE);
+            m_attrs.add(FileAttribute.STANDARD_DISPLAY_NAME);
+            m_attrs.add(FileAttribute.STANDARD_TYPE);
+            m_attrs.add(FileAttribute.UNIX_MODE);
         }
 
         public override Value get_value (File dir, FileInfo fi)
@@ -67,7 +67,7 @@ namespace Emperor.Modules {
                 name.append ("@");
                 break;
             default:
-                var mode = fi.get_attribute_uint32 (FILE_ATTRIBUTE_UNIX_MODE);
+                var mode = fi.get_attribute_uint32 (FileAttribute.UNIX_MODE);
                 if (Posix.S_ISSOCK(mode)) {
                     name.append ("=");
                 } else if (Posix.S_ISFIFO(mode)) {
@@ -93,13 +93,13 @@ namespace Emperor.Modules {
         public ModeColumn ()
         {
             m_attrs = new LinkedList<string>();
-            m_attrs.add(FILE_ATTRIBUTE_UNIX_MODE);
+            m_attrs.add(FileAttribute.UNIX_MODE);
         }
 
         public override Value get_value (File dir, FileInfo fi)
         {
             var v = Value(typeof(string));
-            var mode = fi.get_attribute_uint32 (FILE_ATTRIBUTE_UNIX_MODE) & 07777;
+            var mode = fi.get_attribute_uint32 (FileAttribute.UNIX_MODE) & 07777;
             v.set_string("%04o".printf(mode));
             return v;
         }
@@ -115,7 +115,7 @@ namespace Emperor.Modules {
         public MTimeColumn ()
         {
             m_attrs = new LinkedList<string>();
-            m_attrs.add(FILE_ATTRIBUTE_TIME_MODIFIED);
+            m_attrs.add(FileAttribute.TIME_MODIFIED);
         }
 
         public override Value get_value (File dir, FileInfo fi)
@@ -139,7 +139,7 @@ namespace Emperor.Modules {
         public IconColumn ()
         {
             m_attrs = new LinkedList<string>();
-            m_attrs.add(FILE_ATTRIBUTE_STANDARD_ICON);
+            m_attrs.add(FileAttribute.STANDARD_ICON);
         }
 
         public Value get_value (File dir, FileInfo fi)
@@ -150,7 +150,7 @@ namespace Emperor.Modules {
             if (fi.get_file_type() == FileType.SYMBOLIC_LINK) {
                 try {
                     var symlink_file = dir.get_child (fi.get_name());
-                    var info = symlink_file.query_info (FILE_ATTRIBUTE_STANDARD_ICON, 0);
+                    var info = symlink_file.query_info (FileAttribute.STANDARD_ICON, 0);
                     icon = info.get_icon ();
                 } catch {
                     // keep the symlink's (non-)icon
@@ -192,7 +192,7 @@ namespace Emperor.Modules {
         public FileSizeColumn ()
         {
             m_attrs = new LinkedList<string>();
-            m_attrs.add(FILE_ATTRIBUTE_STANDARD_SIZE);
+            m_attrs.add(FileAttribute.STANDARD_SIZE);
         }
 
         public Value get_value (File dir, FileInfo fi)

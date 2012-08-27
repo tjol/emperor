@@ -174,7 +174,7 @@ namespace Emperor.Modules {
                     });
                     configure_event.connect ( (ev) => {
                         // refresh on resize.
-                        preview_file (parent.active_pane.get_file_at_cursor ());
+                        preview_file.begin (parent.active_pane.get_file_at_cursor ());
                         return false;
                     });
                     delete_event.connect ( (ev) => {
@@ -341,7 +341,8 @@ namespace Emperor.Modules {
             {
                 try {
                     var in_stream = f.read ();
-                    var pixbuf = yield Gdk.Pixbuf.new_from_stream_async (in_stream);
+                    var pixbuf = yield new Gdk.Pixbuf.from_stream_async (in_stream, null);
+                    
                     if (pixbuf.width > available_width || pixbuf.height > available_height) {
                         // scale.
                         var ratio_pb = (double)pixbuf.width / (double)pixbuf.height;

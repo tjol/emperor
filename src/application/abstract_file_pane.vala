@@ -115,9 +115,9 @@ namespace Emperor.Application {
          * @param id Unique identifier, can be used to remove filter later with {@link remove_filter}
          */
         public virtual void
-        add_filter (string id, FileFilterFunc filter)
+        add_filter (string id, owned FileFilterFunc filter)
         {
-            m_filters[id] = new FileFilterFuncWrapper (filter);
+            m_filters[id] = new FileFilterFuncWrapper ((owned) filter);
             refilter_list ();
         }
 
@@ -176,9 +176,9 @@ namespace Emperor.Application {
          * @see remove_sort
          */
         public virtual void
-        add_sort (string id, FileInfoCompareFunc cmp)
+        add_sort (string id, owned FileInfoCompareFunc cmp)
         {
-            m_permanent_sort[id] = new FileInfoCompareFuncWrapper (cmp);
+            m_permanent_sort[id] = new FileInfoCompareFuncWrapper ((owned) cmp);
             refresh_sorting ();
         }
 

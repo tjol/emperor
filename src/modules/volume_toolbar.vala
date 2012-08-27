@@ -93,20 +93,24 @@ namespace Emperor.Modules {
                 }
             } else {
                 // Look for the UNIX mount.
-                FileInfo fi = dir.query_info (FileAttribute.ID_FILESYSTEM, 0);
-                string filesystem_id = fi.get_attribute_string (FileAttribute.ID_FILESYSTEM);
+                try {
+                    FileInfo fi = dir.query_info (FileAttribute.ID_FILESYSTEM, 0);
+                    string filesystem_id = fi.get_attribute_string (FileAttribute.ID_FILESYSTEM);
 
-                foreach (unowned UnixMountEntry xmnt in UnixMountEntry.@get()) {
-                    var mnt_point = File.new_for_path(xmnt.get_mount_path ());
-                    fi = mnt_point.query_info (FileAttribute.ID_FILESYSTEM, 0);
-                    var mnt_fs_id = fi.get_attribute_string (FileAttribute.ID_FILESYSTEM);
-                    if (filesystem_id == mnt_fs_id) {
-                        mnt_name = xmnt.get_mount_path ();
-                        mnt_type = xmnt.get_fs_type ();
-                        if (mnt_type != "rootfs") {
-                            break;
+                    foreach (unowned UnixMountEntry xmnt in UnixMountEntry.@get()) {
+                        var mnt_point = File.new_for_path(xmnt.get_mount_path ());
+                        fi = mnt_point.query_info (FileAttribute.ID_FILESYSTEM, 0);
+                        var mnt_fs_id = fi.get_attribute_string (FileAttribute.ID_FILESYSTEM);
+                        if (filesystem_id == mnt_fs_id) {
+                            mnt_name = xmnt.get_mount_path ();
+                            mnt_type = xmnt.get_fs_type ();
+                            if (mnt_type != "rootfs") {
+                                break;
+                            }
                         }
                     }
+                } catch (Error unix_err) {
+                    warning (_("Error looking up UNIX mount."));
                 }
 
                 if (mnt_name == null) {
@@ -199,14 +203,19 @@ namespace Emperor.Modules {
 
             yield m_pane.chdir (File.new_for_path (Environment.get_home_dir()), null);
 
-            if (mnt.can_eject ()) {
-                yield mnt.eject_with_operation (MountUnmountFlags.NONE,
-                        new Gtk.MountOperation (m_app.main_window), null);
-            } else if (mnt.can_unmount ()) {
-                yield mnt.unmount_with_operation (MountUnmountFlags.NONE,
-                        new Gtk.MountOperation (m_app.main_window), null);
-            } else {
-                m_pane.display_error (_("Cannot unmount “%s”.").printf (mnt.get_name));
+            try {
+                if (mnt.can_eject ()) {
+                    yield mnt.eject_with_operation (MountUnmountFlags.NONE,
+                            new Gtk.MountOperation (m_app.main_window), null);
+                } else if (mnt.can_unmount ()) {
+                    yield mnt.unmount_with_operation (MountUnmountFlags.NONE,
+                            new Gtk.MountOperation (m_app.main_window), null);
+                } else {
+                    m_pane.display_error (_("Cannot unmount “%s”.").printf (mnt.get_name));
+                }
+            } catch (Error umount_err) {
+                m_pane.display_error (_("Error unmounting volume."));
+                warning ("%s (%s)", _("Error unmounting volune."), umount_err.message);
             }
         }
 
@@ -279,7 +288,11 @@ namespace Emperor.Modules {
                         var spl2 = spl1[1].split ("/", 2);
                         var domain_name = spl2[0];
                         bm_name = _("%s on %s").printf (bmark.get_basename(), domain_name);
-                        bm_icon = Icon.new_for_string ("folder-remote");
+                        try {
+                            bm_icon = Icon.new_for_string ("folder-remote");
+                        } catch {
+                            warning ("Error loading remote folder icon. Is Gtk installed correctly?");
+                        }
                     }
                 }
                 if (bm_name == null || bm_icon == null) {
@@ -497,7 +510,7 @@ namespace Emperor.Modules {
             public void on_click ()
             {
                 if (m_path != null) {
-                    m_pane.chdir_then_focus (m_path);
+                    m_pane.chdir_then_focus.begin (m_path);
                 } else if (m_volume != null) {
                     do_mount.begin ();
                 }
@@ -505,13 +518,17 @@ namespace Emperor.Modules {
 
             private async void do_mount ()
             {
-                if (yield m_volume.mount (MountMountFlags.NONE,
-                            new Gtk.MountOperation (m_wnd), null)) {
-                    var mnt = m_volume.get_mount ();
-                    if (mnt != null) {
-                        m_pane.chdir_then_focus (mnt.get_root ());
-                        return;
+                try {
+                    if (yield m_volume.mount (MountMountFlags.NONE,
+                                new Gtk.MountOperation (m_wnd), null)) {
+                        var mnt = m_volume.get_mount ();
+                        if (mnt != null) {
+                            m_pane.chdir_then_focus.begin (mnt.get_root ());
+                            return;
+                        }
                     }
+                } catch {
+                    // Error displayed below anyway.
                 }
                 m_pane.display_error (_("Error mounting volume."));
             }

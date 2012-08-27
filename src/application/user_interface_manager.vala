@@ -36,12 +36,12 @@ namespace Emperor.Application {
         public delegate Widget FilePaneToolbarFactoryProper (EmperorCore app, IFilePane fpane);
         
         public void add_filepane_toolbar (string id,
-                                          FilePaneToolbarFactoryProper factory,
+                                          owned FilePaneToolbarFactoryProper factory,
                                           PositionType where)
         {
 	        var tbcfg = new FilePaneToolbarConfig ();
 	        tbcfg.id = id;
-	        tbcfg.factory = (FilePaneToolbarFactory) factory;
+	        tbcfg.factory = (FilePaneToolbarFactory) ((owned)factory);
 	        tbcfg.where = where;
 	     
 		 	filepane_toolbars.append (tbcfg);   
@@ -70,7 +70,7 @@ namespace Emperor.Application {
             internal int default_width;
             internal LinkedList<FileInfoColumn> cells;
             internal FileInfoColumn sort_column;
-            internal CompareFunc cmp_function;
+            internal unowned CompareFunc cmp_function;
         }
 
         /**
@@ -302,7 +302,7 @@ namespace Emperor.Application {
                             var sortflag = node->get_prop("sort");
                             if (sortflag != null) {
                                 if (_current_column.sort_column == null) {
-                                    var sortfunc = m_app.modules.get_sort_function(sortflag);
+                                    unowned CompareFunc? sortfunc = m_app.modules.get_sort_function(sortflag);
                                     if (sortfunc == null) {
                                         throw new ConfigurationError.INVALID_ERROR(
                                                _("Illegal value for \"sort\": \"%s\"").printf(sortflag));

@@ -48,6 +48,7 @@ namespace Emperor.Application {
             bool mount_error = false;
             Mount mnt;
             MountRef parent_mountref = null;
+            mnt_ref = null;
 
             GLib.MountOperation real_mnt_op;
             if (mnt_op == null) {
@@ -118,8 +119,13 @@ namespace Emperor.Application {
                 // unmount immediately. It's not being used, so we don't want the refernece hanging around.
                 if (pwd.get_uri_scheme() == "archive") {
                     if (cancellable.is_cancelled()) {
-                        yield mnt.unmount_with_operation (MountUnmountFlags.NONE,
-                            real_mnt_op);
+                        try {
+                            yield mnt.unmount_with_operation (MountUnmountFlags.NONE,
+                                real_mnt_op);
+                        } catch (Error mnterr4) {
+                            // If this failed, so be it. The user shouldn't be bothered.
+                            // They won't actually be surprised by a dangling mount if they cancel at this time.
+                        }
                         return false;
                     }
                 }

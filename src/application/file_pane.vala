@@ -1144,8 +1144,8 @@ namespace Emperor.Application {
         private class TreeIterCompareFuncWrapper : Object
         {
             int m_col;
-            CompareFunc m_cmp;
-            TreeIterCompareFunc m_prio_sort;
+            unowned CompareFunc m_cmp;
+            unowned TreeIterCompareFunc m_prio_sort;
 
             public TreeIterCompareFuncWrapper (int column, CompareFunc cmp,
                                                TreeIterCompareFunc priosort)

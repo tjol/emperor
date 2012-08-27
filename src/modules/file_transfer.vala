@@ -128,9 +128,9 @@ namespace Emperor.Modules {
             foreach (var file in files) {
                 try {
                     var finfo = yield file.query_info_async (
-                                             FILE_ATTRIBUTE_STANDARD_SIZE + ","
-                                                + FILE_ATTRIBUTE_STANDARD_TYPE + ","
-                                                + FILE_ATTRIBUTE_STANDARD_SIZE,
+                                             FileAttribute.STANDARD_SIZE + ","
+                                                + FileAttribute.STANDARD_TYPE + ","
+                                                + FileAttribute.STANDARD_SIZE,
                                              FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
                     total_size_in_bytes.val += finfo.get_size ();
                     if (finfo.get_file_type() == FileType.DIRECTORY) {
@@ -164,9 +164,9 @@ namespace Emperor.Modules {
 
             try {
                 var enumerator = yield directory.enumerate_children_async (
-                                            FILE_ATTRIBUTE_STANDARD_SIZE + ","
-                                                + FILE_ATTRIBUTE_STANDARD_NAME + ","
-                                                + FILE_ATTRIBUTE_STANDARD_TYPE,
+                                            FileAttribute.STANDARD_SIZE + ","
+                                                + FileAttribute.STANDARD_NAME + ","
+                                                + FileAttribute.STANDARD_TYPE,
                                             flags);
                 GLib.List<FileInfo> fileinfos;
                 while ((fileinfos = yield enumerator.next_files_async (20)) != null) {
@@ -327,12 +327,9 @@ namespace Emperor.Modules {
                 yield get_on_with_it (file, dest.get_child(file.get_basename()),
                                       move, done_bytes_p, copy_flags_p, inverse_flags_p,
                                       cancellable, progress_cb);
-                try {
-					var finfo = file_infos[idx];
-	                *done_bytes_p += finfo.get_size ();
-	            } catch {
-		            // It doesn't really matter if this fails.
-	            }
+
+				var finfo = file_infos[idx];
+                *done_bytes_p += finfo.get_size ();
 	            
                 progress_cb (0, 0); // update progress bar
 
@@ -456,18 +453,18 @@ namespace Emperor.Modules {
             string in_fs_id, out_fs_id;
             try {
                 var in_fs_info = yield file.query_filesystem_info_async (
-                                        FILE_ATTRIBUTE_ID_FILESYSTEM,
+                                        FileAttribute.ID_FILESYSTEM,
                                         Priority.DEFAULT, cancellable);
-                in_fs_id = in_fs_info.get_attribute_string (FILE_ATTRIBUTE_ID_FILESYSTEM);
+                in_fs_id = in_fs_info.get_attribute_string (FileAttribute.ID_FILESYSTEM);
             } catch (Error e1) {
                 in_fs_id = "__in__";
             }
 
             try {
                 var out_fs_info = yield file.query_filesystem_info_async (
-                                        FILE_ATTRIBUTE_ID_FILESYSTEM,
+                                        FileAttribute.ID_FILESYSTEM,
                                         Priority.DEFAULT, cancellable);
-                out_fs_id = out_fs_info.get_attribute_string (FILE_ATTRIBUTE_ID_FILESYSTEM);
+                out_fs_id = out_fs_info.get_attribute_string (FileAttribute.ID_FILESYSTEM);
             } catch (Error e2) {
                 out_fs_id = "__out__";
             }
@@ -636,8 +633,8 @@ namespace Emperor.Modules {
                 }
 
                 var enumerator = yield file.enumerate_children_async (
-                                            FILE_ATTRIBUTE_STANDARD_SIZE + ","
-                                                + FILE_ATTRIBUTE_STANDARD_NAME,
+                                            FileAttribute.STANDARD_SIZE + ","
+                                                + FileAttribute.STANDARD_NAME,
                                             query_flags);
                 GLib.List<FileInfo> fileinfos;
                 while ((fileinfos = yield enumerator.next_files_async (20)) != null) {
@@ -676,7 +673,7 @@ namespace Emperor.Modules {
                            manually. */
 
                         var in_info = yield file.query_info_async (
-                                        FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
+                                        FileAttribute.STANDARD_SYMLINK_TARGET,
                                         FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
                                         Priority.DEFAULT, cancellable);
                         var symlink_target = in_info.get_symlink_target ();

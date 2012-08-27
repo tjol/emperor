@@ -130,7 +130,7 @@ namespace Emperor.Modules {
             FileInfo fileinfo;
             try {
                 fileinfo = yield file.query_info_async (
-                                    FILE_ATTRIBUTE_STANDARD_EDIT_NAME,
+                                    FileAttribute.STANDARD_EDIT_NAME,
                                     FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
             } catch (Error err1) {
                 show_error_message_dialog (application.main_window,
@@ -348,7 +348,7 @@ namespace Emperor.Modules {
 
                 // Delete everything in this directory.
                 var children = yield file.enumerate_children_async (
-                                        FILE_ATTRIBUTE_STANDARD_NAME, 0,
+                                        FileAttribute.STANDARD_NAME, 0,
                                         Priority.DEFAULT, cancellable);
                 GLib.List<FileInfo> fileinfos;
                 while ((fileinfos = yield children.next_files_async (20, Priority.DEFAULT,

@@ -76,7 +76,7 @@ namespace Emperor.Application {
          * Create a mount-wait notification. This is simply a wrapper around 
          * {@link new_waiting_for_mount}.
          */
-        public WaitingForMountIface notify_waiting_for_mount (Cancellable? cancellable=null)
+        public IWaitingForMount notify_waiting_for_mount (Cancellable? cancellable=null)
         {
             return new_waiting_for_mount (owning_window, cancellable);
         }
@@ -108,7 +108,7 @@ namespace Emperor.Application {
          *
          * @param id Unique identifier, can be used to remove filter later with {@link remove_filter}
          */
-        public abstract void add_filter (string id, FileFilterFunc filter);
+        public abstract void add_filter (string id, owned FileFilterFunc filter);
         /**
          * Remove filter added with {@link add_filter}
          *
@@ -137,7 +137,7 @@ namespace Emperor.Application {
          *
          * @see remove_sort
          */
-        public abstract void add_sort (string id, FileInfoCompareFunc cmp);
+        public abstract void add_sort (string id, owned FileInfoCompareFunc cmp);
         /**
          * Remove a sort function installed with {@link add_sort}
          */
@@ -270,10 +270,15 @@ namespace Emperor.Application {
      */
     protected class FileFilterFuncWrapper : Object
     {
-        public FileFilterFuncWrapper (FileFilterFunc f) {
-            this.func = f;
+        public FileFilterFuncWrapper (owned FileFilterFunc f) {
+            m_func = (owned) f;
         }
-        public FileFilterFunc func { get; private set; }
+        FileFilterFunc m_func;
+        public unowned FileFilterFunc func {
+            get {
+                return m_func;
+            }
+        }
     }
 
     /**
@@ -281,13 +286,16 @@ namespace Emperor.Application {
      */
     protected class FileInfoCompareFuncWrapper : Object
     {
-        public FileInfoCompareFuncWrapper (FileInfoCompareFunc f) {
-            this.func = f;
+        public FileInfoCompareFuncWrapper (owned FileInfoCompareFunc f) {
+            m_func = (owned) f;
         }
-        public FileInfoCompareFunc func { get; private set; }
+        FileInfoCompareFunc m_func;
+        public unowned FileInfoCompareFunc func {
+            get {
+                return m_func;
+            }
+        }
     }
-    
-    
  
  }
  

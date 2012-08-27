@@ -19,7 +19,7 @@ using Notify;
 
 namespace Emperor.Application {
 
-    internal class WaitingForMountNotify : Object, WaitingForMountIface
+    internal class WaitingForMountNotify : Object, IWaitingForMount
     {
         Gtk.Window m_wnd;
         Cancellable m_cancellable;
@@ -44,10 +44,18 @@ namespace Emperor.Application {
                                 "emperor-fm");
             m_notification.add_action ("cancel", _("Cancel"), (n,a) => {
                     m_cancellable.cancel ();
-                    m_notification.close ();
+                    try {
+                        m_notification.close ();
+                    } catch (Error notification_error) {
+                        warning (_("Error closing notification: %s"), notification_error.message);
+                    }
                     m_notification = null;
                 });
-            m_notification.show ();
+            try {
+                m_notification.show ();
+            } catch (Error notification_error) {
+                warning (_("Error showing notification: %s"), notification_error.message);
+            }
             return false;
         }
 
@@ -64,7 +72,11 @@ namespace Emperor.Application {
         {
             m_done = true;
             if (m_notification != null) {
-                m_notification.close ();
+                try {
+                    m_notification.close ();
+                } catch (Error notification_error) {
+                    warning (_("Error closing notification: %s"), notification_error.message);
+                }
                 m_notification = null;
             }
         }

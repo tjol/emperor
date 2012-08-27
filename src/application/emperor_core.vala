@@ -240,7 +240,15 @@ namespace Emperor.Application {
 
             string name_text = "Emperor " + Config.PACKAGE_VERSION_NAME;
             string effigy_file_name = Config.PACKAGE_VERSION_NAME + ".png";
-            var logo = new Gdk.Pixbuf.from_file (get_resource_file_path(effigy_file_name));
+            Gdk.Pixbuf logo;
+            try {
+                logo = new Gdk.Pixbuf.from_file (get_resource_file_path(effigy_file_name));
+            } catch (Error load_error) {
+                // Okay, so the effigy failed to load. Tough luck. Displaying nothing
+                // is probably the best we can do.
+                logo = null;
+                warning (_("Error loading logo image: %s"), load_error.message);
+            }
 
             Gtk.show_about_dialog (main_window,
                 program_name : name_text,

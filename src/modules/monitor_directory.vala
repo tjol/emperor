@@ -60,6 +60,7 @@ namespace Emperor.Modules {
                 current_monitor = monitor;
             } catch {
                 // Failed to create monitor. May not be supported. Continue.
+                message (_("Creating file monitor failed."));
             }
         }
 
