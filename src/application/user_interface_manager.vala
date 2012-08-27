@@ -118,12 +118,12 @@ namespace Emperor.Application {
         private Gdk.RGBA m_label_foreground;
         private Gdk.RGBA m_label_background;
 
-        internal Gdk.RGBA default_foreground { get { return m_default_foreground; } }
-        internal Gdk.RGBA default_background { get { return m_default_background; } }
-        internal Gdk.RGBA selected_foreground { get { return m_selected_foreground; } }
-        internal Gdk.RGBA selected_background { get { return m_selected_background; } }
-        internal Gdk.RGBA label_foreground { get { return m_label_foreground; } }
-        internal Gdk.RGBA label_background { get { return m_label_background; } }
+        public Gdk.RGBA default_foreground { get { return m_default_foreground; } }
+        public Gdk.RGBA default_background { get { return m_default_background; } }
+        public Gdk.RGBA selected_foreground { get { return m_selected_foreground; } }
+        public Gdk.RGBA selected_background { get { return m_selected_background; } }
+        public Gdk.RGBA label_foreground { get { return m_label_foreground; } }
+        public Gdk.RGBA label_background { get { return m_label_background; } }
 
         internal Value default_foreground_value { get; private set; }
         internal Value default_background_value { get; private set; }

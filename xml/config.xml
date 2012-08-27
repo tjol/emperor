@@ -7,6 +7,7 @@
         <load name="basic_actions"/>
         <load name="file_transfer"/>
         <load name="sort"/>
+        <load name="file_pane_title_bar"/>
         <load name="volume_toolbar"/>
         <load name="netmenu"/>
         <load name="monitor_directory"/>

@@ -96,19 +96,6 @@ namespace Emperor.Modules {
             action.connect_accelerator ();
             app.ui_manager.add_action_to_menu (_("_File"), action, 99);
 
-            /*
-            // Ctrl+L: Change directory
-            action = reg.new_action ("chdir");
-            action.label = _("Change Directory");
-            action.set_accel_path ("<Emperor-Main>/BasicActions/Chdir");
-            Gtk.AccelMap.add_entry ("<Emperor-Main>/BasicActions/Chdir",
-                                    Gdk.Key.L, Gdk.ModifierType.CONTROL_MASK);
-            action.activate.connect ( () => { 
-                    app.main_window.active_pane.edit_title ();
-                } );
-            action.connect_accelerator ();
-            */
-
             // Ctrl+R: Refresh
             action = reg.new_action ("refresh");
             action.label = _("Reload directories");

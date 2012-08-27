@@ -41,8 +41,6 @@ namespace Emperor.Application {
         
 
         TreeView m_list;
-        Label m_pane_title;
-        EventBox m_pane_title_bg;
         ListStore m_data_store = null;
         TreeModelSort m_sorted_list = null;
         TreeModelFilter m_list_filter = null;
@@ -79,23 +77,6 @@ namespace Emperor.Application {
             this.destroy.connect (on_destroy);
 
             init_file_pane_mixin ();
-
-            /*
-             * Create and add the title Label
-             */
-            m_pane_title = new Label("");
-            m_pane_title.ellipsize = Pango.EllipsizeMode.START;
-            m_pane_title.single_line_mode = true;
-            m_pane_title.halign = Align.FILL | Align.START;
-            m_pane_title.margin = 3;
-            m_pane_title_bg = new EventBox();
-            m_pane_title_bg.margin = 2;
-            m_pane_title_bg.add (m_pane_title);
-            m_pane_title_bg.button_press_event.connect (on_title_click);
-            var attr_list = new Pango.AttrList ();
-            attr_list.insert (Pango.attr_weight_new (Pango.Weight.BOLD));
-            m_pane_title.set_attributes (attr_list);
-            pack_start(m_pane_title_bg, false, false);
 
             /*
              * Create and add the TreeView
@@ -505,19 +486,6 @@ namespace Emperor.Application {
                     fp.m_list.set_cursor (curs, null, false);
                 }
 
-                // set title.
-                string title;
-                // Are we in an archive?
-                if (directory.get_uri_scheme() == "archive") {
-                    var archive_uri = directory.get_uri();
-                    var archive_file = MountManager.get_archive_file (archive_uri);
-                    var rel_path = fp.mnt.get_root().get_relative_path (directory);
-                    title = "[ %s ] /%s".printf (archive_file.get_basename(), rel_path);
-                } else {
-                    title = directory.get_parse_name ();
-                }
-                fp.m_pane_title.set_text (title);
-
                 fp.restyle_complete_list ();
             }
 
@@ -851,68 +819,6 @@ namespace Emperor.Application {
 
             return false;
         }
-        
-        private bool m_editing_title = false;
-        private bool on_title_click (EventButton e)
-        {
-            if (e.type == EventType.BUTTON_PRESS) {
-                switch (e.button) {
-                case 1:
-                    // left-click!
-                    edit_title ();
-                    break;
-                }
-            }
-            
-            return false;
-        }
-
-        public void edit_title ()
-        {
-            // ignore clicks on title when it is already being edited.
-            if (m_editing_title) return;
-                    
-            m_editing_title = true;
-            
-            var dir_text = new Entry();
-            dir_text.text = m_pwd.get_parse_name ();
-            
-            dir_text.focus_out_event.connect ((e) => {
-                    // Remove the Entry, switch back to plain title.
-                    if (m_editing_title) {
-                        m_pane_title_bg.remove (dir_text);
-                        m_pane_title_bg.add (m_pane_title);
-                        m_pane_title_bg.show_all ();
-                        m_editing_title = false;
-                    }
-                    return true;
-                });
-                
-            dir_text.key_press_event.connect ((e) => {
-                    if (e.keyval == Key.Escape) { // Escape
-                        // This moves the focus to the list, and focus_out_event 
-                        // is called (see above)
-                        this.active = true;
-                        return true;
-                    }
-                    return false;
-                });
-                
-            dir_text.activate.connect (() => {
-                    // Try to chdir to the new location
-                    string dirpath = dir_text.text;
-                    var f = File.parse_name (dirpath);
-                    chdir.begin (f, null);
-                    this.active = true;
-                });
-            
-            // display Entry
-            m_pane_title_bg.remove (m_pane_title);
-            m_pane_title_bg.add (dir_text);
-            dir_text.show ();
-            dir_text.grab_focus ();
-        }
-
 
         private bool m_active = false;
         /**
@@ -948,9 +854,6 @@ namespace Emperor.Application {
                             // restyle cursor item
                             restyle_path(m_cursor_path, true);
                         }
-
-                        // The header style always depends on focus
-                        restyle_header ();
                     }
                     
                     // Ensure everything makes sense.
@@ -1117,23 +1020,6 @@ namespace Emperor.Application {
             // Handle cursor specially: restyle() doesn't recognize the cursor.
             if (m_cursor_path != null) {
                 restyle_path (m_cursor_path, true);
-            }
-
-            restyle_header ();
-        }
-
-        private void restyle_header ()
-        {
-            if (m_active) {
-                m_pane_title.override_color(StateFlags.NORMAL,
-                            m_app.ui_manager.selected_foreground);
-                m_pane_title_bg.override_background_color(StateFlags.NORMAL,
-                            m_app.ui_manager.selected_background);
-            } else {
-                m_pane_title.override_color(StateFlags.NORMAL,
-                            m_app.ui_manager.label_foreground);
-                m_pane_title_bg.override_background_color(StateFlags.NORMAL,
-                            m_app.ui_manager.label_background);
             }
         }
 
