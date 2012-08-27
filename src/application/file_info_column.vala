@@ -140,7 +140,7 @@ namespace Emperor {
                     } else {
                         // not today.
                         var delta = now.difference (value);
-                        if (delta.DAY >= 0 && delta.DAY < 6) {
+                        if (delta < 7 * TimeSpan.DAY) {
                             // Within the past few days
                             text = value.format (_("%A, %H:%M"));
                         } else {
