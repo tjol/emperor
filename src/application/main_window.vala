@@ -163,11 +163,11 @@ namespace Emperor.Application {
 
         async void set_directories ()
         {
-            if (!yield left_pane.chdir_from_pref()) {
-                yield left_pane.chdir(File.new_for_path("."));
-            }
             if (!yield right_pane.chdir_from_pref()) {
                 yield right_pane.chdir(File.new_for_path("."));
+            }
+            if (!yield left_pane.chdir_from_pref()) {
+                yield left_pane.chdir(File.new_for_path("."));
             }
         }
 
