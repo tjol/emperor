@@ -17,7 +17,7 @@
 
 using GLib;
 
-namespace Emperor {
+namespace Emperor.App {
     public delegate int CompareFunc (Value a, Value b);
     public delegate int FileInfoCompareFunc (FileInfo a, FileInfo b);
     public delegate void Command (string[] args);
