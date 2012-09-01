@@ -16,7 +16,6 @@
  */
 
 using GLib;
-using Emperor;
 using Emperor.App;
 
 namespace Emperor.Modules {

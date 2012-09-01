@@ -19,7 +19,6 @@ using GLib;
 using Gtk;
 using Gdk;
 using Pango;
-using Emperor;
 using Emperor.App;
 
 namespace Emperor.Modules {
