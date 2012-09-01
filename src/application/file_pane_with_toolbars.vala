@@ -29,20 +29,17 @@ namespace Emperor.Application {
     public abstract class FilePaneWithToolbars : AbstractFilePane
     {
     	/* *****************************************************
-    	 * REQUIRED INTERNAL PROPERTIES
+    	 * INSTANCE VARIABLES
     	 ******************************************************/
     	protected Map<string,Widget> m_addon_toolbars;
     	protected Label m_error_message;
     	protected Widget m_error_message_bg;
 
-    	/**
-    	 * Initialization method for the mixin. Call this from your
-    	 * constructor.
-    	 */
-    	protected void
-    	init_file_pane_toolbar_mixin ()
-    	{
-
+        /* *****************************************************
+         * SETUP CODE
+         ******************************************************/
+    	
+        construct {
 			// Add widget for displaying error messages.
             m_error_message = new Label ("");
             var error_message_bg = new EventBox ();
@@ -60,6 +57,15 @@ namespace Emperor.Application {
 
     		// install add-on toolbars previously registered.
             m_addon_toolbars = new Gee.HashMap<string,Widget> ();
+        }
+        
+        /*
+         * Initialization method. Call this from your
+         * constructor.
+         */
+        protected void
+        add_file_pane_toolbars ()
+        {
             foreach (var tbcfg in application.ui_manager.filepane_toolbars) {
 	            tbcfg.add_to_pane (this);
             }
@@ -147,13 +153,6 @@ namespace Emperor.Application {
         hide_error ()
         {
             m_error_message_bg.visible = false;
-        }
-
-
-        public override Gtk.Window owning_window {
-        	get {
-        		return application.main_window;
-        	}
         }
 
     }

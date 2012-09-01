@@ -32,14 +32,10 @@ namespace Emperor.Application {
      * The heart of the file manager
      */
     public class FilePane : FilePaneWithToolbars
-    {
-        
-        EmperorCore m_app;
-        string m_designation;
-        public override EmperorCore application { get { return m_app; } }
-        public override string designation { get { return m_designation; } }
-        
-
+    {       
+        //
+        // Table related members
+        //
         TreeView m_list;
         ListStore m_data_store = null;
         TreeModelSort m_sorted_list = null;
@@ -50,8 +46,9 @@ namespace Emperor.Application {
         Type[] m_store_types;
         Map<int,TreeIterCompareFuncWrapper> m_cmp_funcs;
         
-
+        //
         // Indices of well-known data columns in the TreeModel
+        //
         public int COL_FILEINFO { get; private set; }
         public int COL_SELECTED { get; private set; }
         public int COL_FG_COLOR { get; private set; }
@@ -71,12 +68,13 @@ namespace Emperor.Application {
          */
         public FilePane (EmperorCore app, string pane_designation)
         {
-            m_app = app;
-            m_designation = pane_designation;
+            Object ( application : app,
+                     owning_window : app.main_window,
+                     designation : designation );
+        }
 
+        construct {
             this.destroy.connect (on_destroy);
-
-            init_file_pane_mixin ();
 
             /*
              * Create and add the TreeView
@@ -159,15 +157,15 @@ namespace Emperor.Application {
 
             // get the actual, visible columns from configuration.
 
-            foreach (var col in m_app.ui_manager.panel_columns) {
+            foreach (var col in application.ui_manager.panel_columns) {
                 // get column
                 var tvcol = new TreeViewColumn();
                 tvcol.title = col.title;
                 tvcol.resizable = true;
 
                 // get width from prefs
-                var pref_w_name = "%s-col-width-%d".printf(m_designation,colidx);
-                var pref_w = m_app.prefs.get_int32 (pref_w_name, -1);
+                var pref_w_name = "%s-col-width-%d".printf(designation,colidx);
+                var pref_w = application.prefs.get_int32 (pref_w_name, -1);
                 if (pref_w > 0) {
                     tvcol.sizing = TreeViewColumnSizing.FIXED;
                     tvcol.fixed_width = pref_w;
@@ -218,7 +216,7 @@ namespace Emperor.Application {
 
             // Add TreeView widget, within a ScrolledWindow to make it behave.
             var scrwnd = new ScrolledWindow (null, null);
-            if (m_designation.has_prefix ("left")) {
+            if (designation.has_prefix ("left")) {
                 scrwnd.set_placement (CornerType.TOP_RIGHT);
             }
             scrwnd.add(m_list);
@@ -231,7 +229,7 @@ namespace Emperor.Application {
             pack_start (scrwnd, true, true);
             
             // Add toolbars
-            init_file_pane_toolbar_mixin ();
+            add_file_pane_toolbars ();
         }
 
         private void on_destroy ()
@@ -255,8 +253,8 @@ namespace Emperor.Application {
             int colidx = 0;
             TreeViewColumn last_col = null;
             foreach (var tvcol in m_list.get_columns()) {
-                var pref_w_name = "%s-col-width-%d".printf(m_designation, colidx);
-                m_app.prefs.set_int32 (pref_w_name, tvcol.width);
+                var pref_w_name = "%s-col-width-%d".printf(designation, colidx);
+                application.prefs.set_int32 (pref_w_name, tvcol.width);
                 last_col = tvcol;
                 colidx ++;
             }
@@ -699,8 +697,8 @@ namespace Emperor.Application {
 
             m_sorted_list.get_sort_column_id (out sort_column, out sort_type);
 
-            m_app.prefs.set_int32 (m_designation + "-sort-column", (int32) sort_column);
-            m_app.prefs.set_string (m_designation + "-sort-type", 
+            application.prefs.set_int32 (designation + "-sort-column", (int32) sort_column);
+            application.prefs.set_string (designation + "-sort-type", 
                                     sort_type == SortType.ASCENDING ? "asc" : "desc");
         }
 
@@ -709,8 +707,8 @@ namespace Emperor.Application {
          */
         private void get_sort_from_prefs (TreeSortable model)
         {
-            int sort_column = (int) m_app.prefs.get_int32 (m_designation + "-sort-column", -1);
-            string sort_type_str = m_app.prefs.get_string (m_designation + "-sort-type", null);
+            int sort_column = (int) application.prefs.get_int32 (designation + "-sort-column", -1);
+            string sort_type_str = application.prefs.get_string (designation + "-sort-type", null);
             if (sort_column == -1 || sort_type_str == null) {
                 return;
             }
@@ -832,13 +830,13 @@ namespace Emperor.Application {
                     m_active = value;
 
                     // Restyle the list items where the style depends on the focus.
-                    if (m_app.ui_manager.style_info.other_styles_use_focus) {
+                    if (application.ui_manager.style_info.other_styles_use_focus) {
                         // Every item's style is focus-dependent.
                         // NB: This kind of styling is possible, but it should be avoided
                         //     since switching panels takes much longer this way.
                         restyle_complete_list ();
                     } else {
-                        if (m_app.ui_manager.style_info.selected_style_uses_focus) {
+                        if (application.ui_manager.style_info.selected_style_uses_focus) {
                             // restyle selected items
                             m_data_store.@foreach ((model, path, iter) => {
                                     Value selected;
@@ -849,7 +847,7 @@ namespace Emperor.Application {
                                     return false;
                                 });
                         }
-                        if (m_app.ui_manager.style_info.cursor_style_uses_focus
+                        if (application.ui_manager.style_info.cursor_style_uses_focus
                                 && m_cursor_path != null) {
                             // restyle cursor item
                             restyle_path(m_cursor_path, true);
@@ -1074,7 +1072,7 @@ namespace Emperor.Application {
 
             // Apply the style rules one by one.
 
-            foreach (var style in m_app.ui_manager.style_directives) {
+            foreach (var style in application.ui_manager.style_directives) {
 
                 // Does this rule apply? If not, continue;
 

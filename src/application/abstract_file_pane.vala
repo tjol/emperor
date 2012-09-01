@@ -30,6 +30,15 @@ namespace Emperor.Application {
                                              IUIFeedbackComponent,
                                              IFilePane
     {
+        /* *****************************************************
+         * CONSTRUCT PROPERTIES
+         ******************************************************/
+        // I'd rather these were declared { get; construct; }, but this is not possible.
+        // See https://bugzilla.gnome.org/show_bug.cgi?id=683160
+        public Gtk.Window owning_window { get; protected construct set; }
+        public EmperorCore application { get; protected construct set; }
+        public string designation { get; protected construct set; }
+
     	/* *****************************************************
     	 * INSTANCE VARIABLES
     	 ******************************************************/
@@ -42,13 +51,10 @@ namespace Emperor.Application {
     	protected Mount? m_mnt = null;
     	protected MountManager.MountRef? m_mnt_ref = null;
 
-    	/**
-    	 * Initialization method for the mixin. Call this from your
-    	 * constructor.
+    	/*
+    	 * GObject style constructor. Called automatically.
     	 */
-    	protected void
-    	init_file_pane_mixin ()
-    	{
+        construct {
     		m_filters = new HashMap<string,FileFilterFuncWrapper> ();
 
     		m_file_attributes = new HashSet<string>();
@@ -552,7 +558,6 @@ namespace Emperor.Application {
          * NOT IMPLEMENTED HERE
          ******************************************************/
 
-        public abstract Gtk.Window owning_window { get; }
         public abstract void display_error (string message);
         public abstract void hide_error ();
         public abstract void set_busy_state (bool busy);
@@ -562,8 +567,6 @@ namespace Emperor.Application {
         public abstract async void refresh ();
         public abstract GLib.List<File> get_selected_files ();
         public abstract File? get_file_at_cursor ();
-        public abstract EmperorCore application { get; }
-        public abstract string designation { get; }
         public abstract bool active { get; set; }
     }
 

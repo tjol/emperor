@@ -53,7 +53,9 @@ namespace Emperor.Application {
         /**
          * The Gtk.Window that owns that this component is associated with.
          */
-        public abstract Gtk.Window owning_window { get; }
+        public abstract Gtk.Window owning_window { get; protected construct set; }
+        // I'd rather this was declared { get; construct; }, but this is not possible.
+        // See https://bugzilla.gnome.org/show_bug.cgi?id=683160  
 
         /**
          * Show error.
@@ -93,9 +95,11 @@ namespace Emperor.Application {
                 }
             }
         }
-       
-        public abstract EmperorCore application { get; }
-        public abstract string designation { get; }
+
+        // I'd rather these were declared { get; construct; }, but this is not possible.
+        // See https://bugzilla.gnome.org/show_bug.cgi?id=683160       
+        public abstract EmperorCore application { get; protected construct set; }
+        public abstract string designation { get; protected construct set; }
         
         /**
          * Whether or not this pane is active. Setting this property
