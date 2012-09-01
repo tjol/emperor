@@ -18,11 +18,12 @@
     <user-interface>
         <file-pane>
             <style>
-                <!--
-                <cursor pane="active" bg="gtk:background-color:selected" fg="gtk:color:selected"/>
-                <cursor pane="passive" bg="gtk:background-color:prelight"/>
-                -->
-                <selected fg="#ff0000"/>
+                
+                <cursor pane="active" bg="gtk:entry:background-color:selected" fg="gtk:entry:color:selected"/>
+                <cursor pane="passive" bg="gtk:entry:background-color:selected|backdrop"
+                        bg="gtk:entry:color:selected|backdrop"/>
+                
+                <selected fg="red"/>
                 <symlink style="italic"/>
             </style>
             <columns>

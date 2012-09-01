@@ -98,7 +98,7 @@ namespace Emperor.App {
          * Information about the nature of the style that allows
          * FilePane to only restyle the rows that need it.
          */
-        internal struct AboutStyle
+        internal class AboutStyle
         {
             public bool selected_style_uses_focus;
             public bool cursor_style_uses_focus;
@@ -138,7 +138,7 @@ namespace Emperor.App {
             create_style_context ();
 
             style_directives = new LinkedList<StyleDirective> ();
-            style_info = AboutStyle();
+            style_info = new AboutStyle();
             style_info.selected_style_uses_focus = false;
             style_info.cursor_style_uses_focus = false;
             style_info.other_styles_use_focus = false;
@@ -463,6 +463,8 @@ namespace Emperor.App {
         }
 
         private StyleContext m_style_context;
+        private WidgetPath m_entry_path;
+        private WidgetPath m_button_path;
 
         /**
          * Retrieve default colour values from theme
@@ -474,13 +476,22 @@ namespace Emperor.App {
             var provider = CssProvider.get_default();
             m_style_context.add_provider(provider, 1);
 
-            var path = new WidgetPath();
-            path.append_type(typeof(TreeView));
-            path.append_type(typeof(CellArea));
-            path.append_type(typeof(Entry));
-            path.iter_add_class(-1, STYLE_CLASS_ENTRY);
+            m_button_path = new WidgetPath();
+            m_button_path.append_type(typeof(Button));
+            m_button_path.iter_add_class(-1, STYLE_CLASS_BUTTON);
 
-            m_style_context.set_path(path);
+            m_style_context.set_path(m_button_path);
+
+            m_label_foreground = m_style_context.get_color(StateFlags.NORMAL);
+            m_label_background = m_style_context.get_background_color(StateFlags.NORMAL);
+
+            m_entry_path = new WidgetPath();
+            m_entry_path.append_type(typeof(TreeView));
+            m_entry_path.append_type(typeof(CellArea));
+            m_entry_path.append_type(typeof(Entry));
+            m_entry_path.iter_add_class(-1, STYLE_CLASS_ENTRY);
+
+            m_style_context.set_path(m_entry_path);
 
             m_default_foreground = m_style_context.get_color(StateFlags.NORMAL);
             default_foreground_value = Value(typeof(Gdk.RGBA));
@@ -492,14 +503,6 @@ namespace Emperor.App {
 
             m_selected_foreground = m_style_context.get_color(StateFlags.SELECTED);
             m_selected_background = m_style_context.get_background_color(StateFlags.SELECTED);
-
-            path = new WidgetPath();
-            path.append_type(typeof(Button));
-            path.iter_add_class(-1, STYLE_CLASS_BUTTON);
-            m_style_context.set_path(path);
-
-            m_label_foreground = m_style_context.get_color(StateFlags.NORMAL);
-            m_label_background = m_style_context.get_background_color(StateFlags.NORMAL);
         }
 
         /**
@@ -526,8 +529,9 @@ namespace Emperor.App {
             }
             if (spec.has_prefix("gtk:")) {
                 string[] spec_a = spec.split(":");
-                string property = spec_a[1];
-                string[] flags = spec_a[2].split("|");
+                string control = spec_a[1];
+                string property = spec_a[2];
+                string[] flags = spec_a[3].split("|");
                 StateFlags flags_i = 0;
                 foreach (var flag in flags) {
                     switch (flag) {
@@ -552,22 +556,37 @@ namespace Emperor.App {
                     case "focused":
                         flags_i |= StateFlags.FOCUSED;
                         break;
+                    case "backdrop":
+                        flags_i |= StateFlags.BACKDROP;
+                        break;
                     default:
                         break;
                     }
                 }
-
-                var v = Value(typeof(Gdk.RGBA));
-                m_style_context.get_property(property, flags_i, /*out*/ v);
-                if (v.holds(typeof(Gdk.RGBA))) {
-                    return (Gdk.RGBA?)v.get_boxed();
-                } else {
+                switch (control) {
+                case "entry":
+                    m_style_context.set_path (m_entry_path);
+                    break;
+                case "button":
+                    m_style_context.set_path (m_button_path);
+                    break;
+                default:
                     return null;
                 }
-
+                switch (property) {
+                case "color":
+                    return m_style_context.get_color (flags_i);
+                case "background-color":
+                    return m_style_context.get_background_color (flags_i);
+                case "border-color":
+                    return m_style_context.get_border_color (flags_i);
+                default:
+                    return null;
+                }
             } else {
                 var color = Gdk.RGBA();
-                if (color.parse(spec)) {
+                if (m_style_context.lookup_color (spec, out color) ||
+                        color.parse(spec)) {
                     return color;
                 } else {
                     return null;
