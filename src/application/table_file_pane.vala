@@ -20,7 +20,7 @@ using Gtk;
 using Gdk;
 using Gee;
 
-namespace Emperor.Application {
+namespace Emperor.App {
 
     public enum FilePaneState {
         ACTIVE,
@@ -31,7 +31,7 @@ namespace Emperor.Application {
     /**
      * The heart of the file manager
      */
-    public class FilePane : FilePaneWithToolbars
+    public class TableFilePane : FilePaneWithToolbars
     {
         /* *****************************************************
          * INSTANCE MEMBERS AND PROPERTIES
@@ -75,7 +75,7 @@ namespace Emperor.Application {
          * @param pane_designation Either "left" or "right" -- used for preferences
          */
         public
-        FilePane (EmperorCore app, string pane_designation)
+        TableFilePane (EmperorCore app, string pane_designation)
         {
             Object ( application : app,
                      owning_window : app.main_window,
@@ -719,17 +719,17 @@ namespace Emperor.Application {
          * Provide implementation specific parts of the chdir
          * method.
          */
-        protected override IDirectoryLoadHelper
+        protected override DirectoryLoadHelper
         get_directory_load_helper (File dir, string? prev_name)
         {
-            return new DirectoryLoadHelper (this, dir, prev_name);
+            return new TableDirectoryLoader (this, dir, prev_name);
         }
 
 
-        private class DirectoryLoadHelper : Object,
-                                            IDirectoryLoadHelper
+        private class TableDirectoryLoader : Object,
+                                             DirectoryLoadHelper
         {
-            public FilePane fp { get; construct; }
+            public TableFilePane fp { get; construct; }
             public File directory { get; construct; }
             public string? prev_name { get; construct; }
 
@@ -741,7 +741,7 @@ namespace Emperor.Application {
             ListStore store;
 
             public
-            DirectoryLoadHelper (FilePane pane, File dir, string? prev_name)
+            TableDirectoryLoader (TableFilePane pane, File dir, string? prev_name)
             {
                 Object ( fp : pane,
                          directory : dir,

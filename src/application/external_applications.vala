@@ -18,7 +18,7 @@
 using GLib;
 using Gee;
 
-namespace Emperor.Application {
+namespace Emperor.App {
 
     public errordomain AppManagementError {
         APPLICATION_NOT_FOUND

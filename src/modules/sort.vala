@@ -17,7 +17,7 @@
 
 using GLib;
 using Emperor;
-using Emperor.Application;
+using Emperor.App;
 
 namespace Emperor.Modules {
 

@@ -19,7 +19,7 @@ using GLib;
 using Gtk;
 using Gee;
 
-namespace Emperor {
+namespace Emperor.App {
 
     /**
      * Module interface type providing a column in the file listing.

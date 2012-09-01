@@ -19,7 +19,7 @@ using GLib;
 using Gtk;
 using Gee;
 
-namespace Emperor.Application {
+namespace Emperor.App {
 
     public class InputDialog : Dialog
     {

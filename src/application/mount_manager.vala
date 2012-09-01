@@ -18,7 +18,7 @@
 using GLib;
 using Gee;
  
-namespace Emperor.Application {
+namespace Emperor.App {
 
     public class MountManager : Object
     {
@@ -41,7 +41,7 @@ namespace Emperor.Application {
          * @return True if mounted without error and Mount object writter to "mnt"
          */
         public async bool procure_mount (File pwd, out MountRef mnt_ref,
-                                         IUIFeedbackComponent feedback,
+                                         UIFeedbackComponent feedback,
                                          GLib.MountOperation? mnt_op,
                                          Cancellable? cancellable=null)
         {
@@ -186,11 +186,11 @@ namespace Emperor.Application {
             public Mount? mount { get; internal construct set; }
             private File? m_mnt_root;
             private MountManager m_mount_manager;
-            private IUIFeedbackComponent m_feedback;
+            private UIFeedbackComponent m_feedback;
             private GLib.MountOperation m_mount_operation;
             internal MountRef? parent_mountref { get; set; default = null; }
 
-            internal MountRef (MountManager mntmgr, Mount? mnt, IUIFeedbackComponent feedback,
+            internal MountRef (MountManager mntmgr, Mount? mnt, UIFeedbackComponent feedback,
                                GLib.MountOperation mnt_op)
             {              
                 Object ( mount : mnt );

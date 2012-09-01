@@ -19,7 +19,7 @@ using GLib;
 using Gtk;
 using Gee;
 
-namespace Emperor.Application {
+namespace Emperor.App {
 
     /**
      * Class responsible for handling user interface configuration.
@@ -33,7 +33,7 @@ namespace Emperor.Application {
          */
         public signal void main_window_ready (MainWindow main_window);
 
-        public delegate Widget FilePaneToolbarFactoryProper (EmperorCore app, IFilePane fpane);
+        public delegate Widget FilePaneToolbarFactoryProper (EmperorCore app, FilePane fpane);
         
         public void add_filepane_toolbar (string id,
                                           owned FilePaneToolbarFactoryProper factory,
@@ -53,7 +53,7 @@ namespace Emperor.Application {
 	        public FilePaneToolbarFactory factory;
 	        public PositionType where;
 	        
-	        public void add_to_pane (IFilePane pane)
+	        public void add_to_pane (FilePane pane)
 	        {
 		        pane.install_toolbar (id, factory, where);
 	        }

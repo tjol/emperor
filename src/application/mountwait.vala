@@ -15,15 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Emperor.Application {
+namespace Emperor.App {
 
-    public interface IWaitingForMount : Object {
+    public interface WaitingForMount : Object {
         public abstract Cancellable go ();
         public abstract void done ();
     }
 
 #if HAVE_LIBNOTIFY
-    public IWaitingForMount
+    public WaitingForMount
     new_waiting_for_mount (Gtk.Window wnd, Cancellable? cancellable=null)
     {
         // Do we want to use libnotify for this?
@@ -47,7 +47,7 @@ namespace Emperor.Application {
         return new WaitingForMountDialog (wnd, cancellable);
     }
 #else
-    public WaitingForMountIface
+    public WaitingForMount
     new_waiting_for_mount (Gtk.Window wnd, Cancellable? cancellable=null)
     {
         return new WaitingForMountDialog (wnd, cancellable);

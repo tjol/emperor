@@ -18,7 +18,7 @@
 using GLib;
 using Gee;
 
-namespace Emperor.Application {
+namespace Emperor.App {
     
     public class PrefsMachine : Object
     {

@@ -18,9 +18,9 @@
 using Gdk;
 using Gtk;
 
-namespace Emperor.Application {
+namespace Emperor.App {
 
-    internal class WaitingForMountDialog : Object, IWaitingForMount
+    internal class WaitingForMountDialog : Object, WaitingForMount
     {
         Gtk.Window m_wnd;
         Cancellable m_cancellable;

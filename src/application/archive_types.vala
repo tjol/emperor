@@ -16,7 +16,7 @@
  */
 
 
-namespace Emperor.Application {
+namespace Emperor.App {
 
     // Extracted from file-roller's desktop entry.
     public const string[] ARCHIVE_TYPES = {

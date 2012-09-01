@@ -18,17 +18,17 @@
 using GLib;
 using Gee;
 
-namespace Emperor.Application {
+namespace Emperor.App {
 
     /**
-     * Generic superclass for IFilePane implementations that implements 
+     * Generic superclass for FilePane implementations that implements 
      * UI independent functionality.
      *
      * 
      */
     public abstract class AbstractFilePane : Gtk.VBox,
-                                             IUIFeedbackComponent,
-                                             IFilePane
+                                             UIFeedbackComponent,
+                                             FilePane
     {
         /* *****************************************************
          * CONSTRUCT PROPERTIES
@@ -103,7 +103,7 @@ namespace Emperor.Application {
     	 * Provide implementation specific parts of the chdir
     	 * method.
     	 */
-    	protected abstract IDirectoryLoadHelper get_directory_load_helper (File dir, string? prev_name);
+    	protected abstract DirectoryLoadHelper get_directory_load_helper (File dir, string? prev_name);
 
 
     	/* *****************************************************
@@ -567,12 +567,9 @@ namespace Emperor.Application {
     }
 
 
-	public interface IDirectoryLoadHelper : Object
+	public interface DirectoryLoadHelper : Object
 	{
 		public abstract void add_row (FileInfo finfo);
 		public abstract void commit ();
 	}
-
-
-
 }

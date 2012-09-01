@@ -19,11 +19,11 @@ using GLib;
 using Gee;
 using Gtk;
 using Emperor;
-using Emperor.Application;
+using Emperor.App;
 
 namespace Emperor.Modules {
     
-    private Widget create_volume_toolbar (EmperorCore app, IFilePane file_pane)
+    private Widget create_volume_toolbar (EmperorCore app, FilePane file_pane)
     {
 	    var tb = new VolumeToolbar (app, file_pane); 
 	    return (Widget) tb;
@@ -32,7 +32,7 @@ namespace Emperor.Modules {
     public class VolumeToolbar : HBox
     {
         private EmperorCore m_app;
-        private IFilePane m_pane;
+        private FilePane m_pane;
         private Label m_mount_desc;
         private Button m_home_button;
         private Button m_root_button;
@@ -42,7 +42,7 @@ namespace Emperor.Modules {
 
         private Gtk.Menu m_volmenu;
 
-        public VolumeToolbar (EmperorCore app, IFilePane pane)
+        public VolumeToolbar (EmperorCore app, FilePane pane)
         {
             m_pane = pane;
             m_app = app;
@@ -490,7 +490,7 @@ namespace Emperor.Modules {
         {
             private VolumeToolbar m_parent;
             private Window m_wnd;
-            private IFilePane m_pane;
+            private FilePane m_pane;
             private File? m_path;
             private Volume? m_volume;
             private Gtk.Menu? m_context_menu;

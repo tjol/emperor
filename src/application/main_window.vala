@@ -19,7 +19,7 @@ using GLib;
 using Gtk;
 using Gee;
 
-namespace Emperor.Application {
+namespace Emperor.App {
     
     /**
      * Main application window
@@ -33,15 +33,15 @@ namespace Emperor.Application {
         HPaned m_panes;
         HBox m_command_buttons;
 
-        public IFilePane left_pane { get; private set; }
-        public IFilePane right_pane { get; private set; }
+        public FilePane left_pane { get; private set; }
+        public FilePane right_pane { get; private set; }
 
         /**
          * Returns the active pane. This property does NOT notify. Setting this property
          * makes a pane active and has the same effect as setting {@link FilePane.active}
          * to true.
          */
-        public IFilePane active_pane {
+        public FilePane active_pane {
             get { 
                 if (left_pane.active) {
                     return left_pane;
@@ -57,7 +57,7 @@ namespace Emperor.Application {
         /**
          * Returns the passive pane. This property does NOT notify.
          */
-        public IFilePane passive_pane {
+        public FilePane passive_pane {
             get {
                 return active_pane.other_pane;
             }
@@ -75,10 +75,10 @@ namespace Emperor.Application {
 
             m_panes = new HPaned ();
 
-            left_pane = new FilePane(m_app, "left");
-            right_pane = new FilePane(m_app, "right");
-            m_panes.pack1 ((FilePane) left_pane, true, true);
-            m_panes.pack2 ((FilePane) right_pane, true, true);
+            left_pane = new TableFilePane(m_app, "left");
+            right_pane = new TableFilePane(m_app, "right");
+            m_panes.pack1 (left_pane, true, true);
+            m_panes.pack2 (right_pane, true, true);
 
             this.map_event.connect (on_paned_map);
 

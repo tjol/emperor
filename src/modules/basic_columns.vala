@@ -19,7 +19,7 @@ using GLib;
 using Gtk;
 using Gee;
 using Emperor;
-using Emperor.Application;
+using Emperor.App;
 
 namespace Emperor.Modules {
     

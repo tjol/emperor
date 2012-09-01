@@ -19,7 +19,7 @@ using GLib;
 using Gtk;
 using Gee;
  
-namespace Emperor.Application {
+namespace Emperor.App {
 
     /**
      * Method that determines whether a file is shown in the list or not.
@@ -34,7 +34,7 @@ namespace Emperor.Application {
     
     /**
      * Method that creates a toolbar for the file pane.
-     * NOTE: The type of the second argument should be IFilePane, not Object.
+     * NOTE: The type of the second argument should be FilePane, not Object.
      * This causes some dependency issues in the generated C code, however,
      * so this delegate uses Object, and, as a workaround, another delagate
      * is defined in `user_interface_manager.vala` for public use.
@@ -49,7 +49,7 @@ namespace Emperor.Application {
      * Interface providing basic user-feedback functionality: displaying and hiding
      * an error message, setting the cursor to "busy", etc.
      */
-    public interface IUIFeedbackComponent : Widget {
+    public interface UIFeedbackComponent : Widget {
         /**
          * The Gtk.Window that owns that this component is associated with.
          */
@@ -78,15 +78,15 @@ namespace Emperor.Application {
          * Create a mount-wait notification. This is simply a wrapper around 
          * {@link new_waiting_for_mount}.
          */
-        public IWaitingForMount notify_waiting_for_mount (Cancellable? cancellable=null)
+        public WaitingForMount notify_waiting_for_mount (Cancellable? cancellable=null)
         {
             return new_waiting_for_mount (owning_window, cancellable);
         }
     }
  
-    public interface IFilePane : IUIFeedbackComponent {
+    public interface FilePane : UIFeedbackComponent {
 
-        public IFilePane other_pane {
+        public FilePane other_pane {
             get {
                 if (this == application.main_window.left_pane) {
                     return application.main_window.right_pane;

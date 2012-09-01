@@ -17,9 +17,9 @@
 
 using Notify;
 
-namespace Emperor.Application {
+namespace Emperor.App {
 
-    internal class WaitingForMountNotify : Object, IWaitingForMount
+    internal class WaitingForMountNotify : Object, WaitingForMount
     {
         Gtk.Window m_wnd;
         Cancellable m_cancellable;

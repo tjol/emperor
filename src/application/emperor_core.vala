@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Emperor.Application {
+namespace Emperor.App {
 
     public errordomain ConfigurationError {
         PARSE_ERROR,

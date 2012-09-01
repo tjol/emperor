@@ -20,11 +20,11 @@ using Gtk;
 using Gdk;
 using Pango;
 using Emperor;
-using Emperor.Application;
+using Emperor.App;
 
 namespace Emperor.Modules {
     
-    private Widget create_title_bar (EmperorCore app, IFilePane file_pane)
+    private Widget create_title_bar (EmperorCore app, FilePane file_pane)
     {
 	    var tb = new FilePaneTitlebar (app, file_pane); 
 	    return (Widget) tb;
@@ -33,10 +33,10 @@ namespace Emperor.Modules {
     public class FilePaneTitlebar : EventBox
     {
     	public EmperorCore application { get; construct; }
-    	public IFilePane pane { get; construct; }
+    	public FilePane pane { get; construct; }
     	public Label title_label { get; construct; }
 
-    	public FilePaneTitlebar (EmperorCore app, IFilePane file_pane)
+    	public FilePaneTitlebar (EmperorCore app, FilePane file_pane)
     	{
     		Object ( application : app,
     				 pane : file_pane,

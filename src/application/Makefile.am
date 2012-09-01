@@ -7,7 +7,7 @@ NOTIFY_COMPONENTS_VALA =
 endif
 
 
-emperor_SOURCES=emperor_core.vala file_pane.vala \
+emperor_SOURCES=emperor_core.vala table_file_pane.vala \
         file_pane_interface.vala \
         abstract_file_pane.vala file_pane_with_toolbars.vala \
 		module_delegates.vala file_info_column.vala \

@@ -19,22 +19,22 @@ using GLib;
 using Gee;
 using Gtk;
 using Emperor;
-using Emperor.Application;
+using Emperor.App;
 
 namespace Emperor.Modules {
 	
-	public Widget create_quick_filter_bar (EmperorCore app, IFilePane file_pane)
+	public Widget create_quick_filter_bar (EmperorCore app, FilePane file_pane)
 	{
 		return new QuickFilterBar (app, file_pane);
 	}
 	
 	public class QuickFilterBar : HBox
 	{
-		IFilePane m_pane;
+		FilePane m_pane;
 		EmperorCore m_app;
 		Entry m_entry;
 		
-		public QuickFilterBar (EmperorCore app, IFilePane pane)
+		public QuickFilterBar (EmperorCore app, FilePane pane)
 		{
 			m_pane = pane;
 			m_app = app;

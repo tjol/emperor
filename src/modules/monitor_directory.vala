@@ -16,7 +16,7 @@
  */
 
 using Emperor;
-using Emperor.Application;
+using Emperor.App;
 
 namespace Emperor.Modules {
 
@@ -31,11 +31,11 @@ namespace Emperor.Modules {
 
     public class DirectoryMonitorManager : Object
     {
-        public IFilePane file_pane { get; construct; }
+        public FilePane file_pane { get; construct; }
         public FileMonitor current_monitor { get; private set; default = null; }
         private Cancellable m_cancellable;
 
-        public DirectoryMonitorManager (IFilePane fp)
+        public DirectoryMonitorManager (FilePane fp)
         {
             Object ( file_pane : fp );
         }

@@ -20,11 +20,11 @@ using Gee;
 using Gtk;
 using Gdk;
 
-namespace Emperor.Application {
+namespace Emperor.App {
 
     /**
      * Abstract class providing standard toolbar layout for file panes.
-     * Implements IUIFeedbackComponent.
+     * Implements UIFeedbackComponent.
      */
     public abstract class FilePaneWithToolbars : AbstractFilePane
     {

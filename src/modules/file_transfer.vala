@@ -19,7 +19,7 @@ using GLib;
 using Gtk;
 using Gee;
 using Emperor;
-using Emperor.Application;
+using Emperor.App;
 
 namespace Emperor.Modules {
 
@@ -224,7 +224,7 @@ namespace Emperor.Modules {
 
         }
 
-        private async void transfer_files (IFilePane file_pane,
+        private async void transfer_files (FilePane file_pane,
                                            owned GLib.List<File> files, Gee.List<FileInfo> file_infos,
                                            uint total_n_files,
                                            Ref<uint64?> total_size_in_bytes,

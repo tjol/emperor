@@ -19,7 +19,7 @@ using GLib;
 using Gee;
 using Gtk;
 
-namespace Emperor.Application {
+namespace Emperor.App {
 
     /**
      * Handles modules.
