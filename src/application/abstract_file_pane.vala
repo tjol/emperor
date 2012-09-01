@@ -100,11 +100,6 @@ namespace Emperor.Application {
     	protected abstract void refresh_sorting ();
 
     	/**
-    	 * Grab focus
-    	 */
-    	protected abstract void give_focus_to_list ();
-
-    	/**
     	 * Provide implementation specific parts of the chdir
     	 * method.
     	 */
@@ -568,6 +563,7 @@ namespace Emperor.Application {
         public abstract GLib.List<File> get_selected_files ();
         public abstract File? get_file_at_cursor ();
         public abstract bool active { get; set; }
+        protected abstract void give_focus_to_list ();
     }
 
 

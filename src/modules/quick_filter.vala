@@ -90,7 +90,7 @@ namespace Emperor.Modules {
 		public void close ()
 		{
 			hide ();
-			m_pane.active = true;
+			m_pane.focus_file_list_if_active ();
 			m_pane.remove_filter ("quick-filter");
 		}
 		

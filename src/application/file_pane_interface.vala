@@ -106,6 +106,24 @@ namespace Emperor.Application {
          * will change the other pane's state accordingly.
          */
         public abstract bool active { get; set; }
+
+
+        /**
+         * Make sure the file list has focus, assuming the pane should have focus.
+         */
+        public void focus_file_list_if_active ()
+        {
+            if (active) {
+                give_focus_to_list ();
+            }
+        }
+
+        /**
+         * Grab focus
+         *
+         * This method should not alter which pane is active.
+         */
+        protected abstract void give_focus_to_list ();
         
         /**
          * Install file filter.
@@ -193,8 +211,8 @@ namespace Emperor.Application {
          * @see chdir
          */
         public abstract async bool chdir_then_focus (File pwd,
-                                                        string? prev_name=null,
-                                                        GLib.MountOperation? mnt_op=null);
+                                                     string? prev_name=null,
+                                                     GLib.MountOperation? mnt_op=null);
         /**
          * Change directory.
          *
