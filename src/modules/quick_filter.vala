@@ -22,95 +22,95 @@ using Emperor;
 using Emperor.App;
 
 namespace Emperor.Modules {
-	
-	public Widget create_quick_filter_bar (EmperorCore app, FilePane file_pane)
-	{
-		return new QuickFilterBar (app, file_pane);
-	}
-	
-	public class QuickFilterBar : HBox
-	{
-		FilePane m_pane;
-		EmperorCore m_app;
-		Entry m_entry;
-		
-		public QuickFilterBar (EmperorCore app, FilePane pane)
-		{
-			m_pane = pane;
-			m_app = app;
-			
-			// Build quick filter bar
-			m_entry = new Entry ();
-			m_entry.primary_icon_stock = Stock.FIND;
-			m_entry.primary_icon_activatable = false;
-			m_entry.secondary_icon_stock = Stock.CLOSE;
-			m_entry.secondary_icon_activatable = true;
-			
-			m_entry.notify["text"].connect ( (p) => {
-				// replaces old filter with the same function and forces re-filter.
-				m_pane.add_filter ("quick-filter", filter_files);
-			});
-			// handle escape.
-			m_entry.key_press_event.connect (handle_key_press_event);
-			m_entry.icon_press.connect ( (pos, ev) => {
-				// This can only be the close icon.
-				close ();
-			});
-			m_entry.activate.connect (() => {
-				m_pane.active = true;
-			});
-			
-			m_pane.notify["pwd"].connect ((p) => {
-				close ();
-			});
+    
+    public Widget create_quick_filter_bar (EmperorCore app, FilePane file_pane)
+    {
+        return new QuickFilterBar (app, file_pane);
+    }
+    
+    public class QuickFilterBar : HBox
+    {
+        FilePane m_pane;
+        EmperorCore m_app;
+        Entry m_entry;
+        
+        public QuickFilterBar (EmperorCore app, FilePane pane)
+        {
+            m_pane = pane;
+            m_app = app;
+            
+            // Build quick filter bar
+            m_entry = new Entry ();
+            m_entry.primary_icon_stock = Stock.FIND;
+            m_entry.primary_icon_activatable = false;
+            m_entry.secondary_icon_stock = Stock.CLOSE;
+            m_entry.secondary_icon_activatable = true;
+            
+            m_entry.notify["text"].connect ( (p) => {
+                // replaces old filter with the same function and forces re-filter.
+                m_pane.add_filter ("quick-filter", filter_files);
+            });
+            // handle escape.
+            m_entry.key_press_event.connect (handle_key_press_event);
+            m_entry.icon_press.connect ( (pos, ev) => {
+                // This can only be the close icon.
+                close ();
+            });
+            m_entry.activate.connect (() => {
+                m_pane.active = true;
+            });
+            
+            m_pane.notify["pwd"].connect ((p) => {
+                close ();
+            });
 
-			pack_start (m_entry, true, true, 0);
+            pack_start (m_entry, true, true, 0);
 
-		}
-		
-		private bool handle_key_press_event (Gdk.EventKey ev)
-		{
-			switch (ev.keyval) {
-				case Gdk.Key.Escape:
-					close ();
-					return true;
-				default:
-					return false;
-			}
-		}
-		
-		public void start_filter ()
-		{
-			show_all ();
-			
-			m_entry.grab_focus ();
-			m_pane.add_filter ("quick-filter", filter_files);
-		}
-		
-		public void close ()
-		{
-			hide ();
-			m_pane.focus_file_list_if_active ();
-			m_pane.remove_filter ("quick-filter");
-		}
-		
-		public bool filter_files (File f, FileInfo fi, bool currently_visible)
-		{
-			return currently_visible && m_entry.text.down () in fi.get_display_name ().down ();
-		}
-	}
+        }
+        
+        private bool handle_key_press_event (Gdk.EventKey ev)
+        {
+            switch (ev.keyval) {
+                case Gdk.Key.Escape:
+                    close ();
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        
+        public void start_filter ()
+        {
+            show_all ();
+            
+            m_entry.grab_focus ();
+            m_pane.add_filter ("quick-filter", filter_files);
+        }
+        
+        public void close ()
+        {
+            hide ();
+            m_pane.focus_file_list_if_active ();
+            m_pane.remove_filter ("quick-filter");
+        }
+        
+        public bool filter_files (File f, FileInfo fi, bool currently_visible)
+        {
+            return currently_visible && m_entry.text.down () in fi.get_display_name ().down ();
+        }
+    }
 }
 
 delegate Emperor.Modules.QuickFilterBar ReturnsQuickFilterBar ();
 
 public void load_module (ModuleRegistry reg)
 {
-	var app = reg.application;
-	
-	app.ui_manager.add_filepane_toolbar ("quick-filter",
-    									 Emperor.Modules.create_quick_filter_bar,
-    									 PositionType.BOTTOM);
-	// function
+    var app = reg.application;
+    
+    app.ui_manager.add_filepane_toolbar ("quick-filter",
+                                         Emperor.Modules.create_quick_filter_bar,
+                                         PositionType.BOTTOM);
+    // function
     ReturnsQuickFilterBar get_active_toolbar = () => {
         return (Emperor.Modules.QuickFilterBar) app.main_window.active_pane.get_addon_toolbar ("quick-filter");
     };

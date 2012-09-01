@@ -116,7 +116,7 @@ namespace Emperor.App {
             m_list.search_column = COL_STYLE_SET + 1;
             m_list.enable_search = true;
             m_list.row_activated.connect ( (path, col) => {
-	           activate_row (path); 
+               activate_row (path); 
             });
             pack_start (scrwnd, true, true);
             
@@ -446,15 +446,15 @@ namespace Emperor.App {
         private bool
         search_equal_func (TreeModel model, int column, string query, TreeIter iter)
         {
-	        Value finfo_val;
-	        
-	        model.get_value (iter, COL_FILEINFO, out finfo_val);
-	        
-	        FileInfo finfo = (FileInfo) finfo_val.get_object ();
-	        
-	        // Returns FALSE on match, because it's a bit weird like that.
-	        return ! (finfo != null
-	        		 && finfo.get_display_name ().down ().has_prefix (query.down ()));
+            Value finfo_val;
+            
+            model.get_value (iter, COL_FILEINFO, out finfo_val);
+            
+            FileInfo finfo = (FileInfo) finfo_val.get_object ();
+            
+            // Returns FALSE on match, because it's a bit weird like that.
+            return ! (finfo != null
+                     && finfo.get_display_name ().down ().has_prefix (query.down ()));
         }
 
         /**
@@ -480,9 +480,9 @@ namespace Emperor.App {
         }
 
         /**
-         * Apply permanent sort functions installed with {@link add_sort}
+         * Apply permanent sort functions installed with {@link FilePane.add_sort}
          *
-         * This is a {@link TreeIterCompareFunc}.
+         * This is a {@link Gtk.TreeIterCompareFunc}.
          */
         private int
         compare_using_global_sort (TreeModel model, TreeIter it1, TreeIter it2)
@@ -1006,7 +1006,7 @@ namespace Emperor.App {
         }
 
         /**
-         * Routine housekeeping tasks when the cursor moves. Emits {@link cursor_changed} signal
+         * Routine housekeeping tasks when the cursor moves. Emits {@link FilePane.cursor_changed} signal
          * when done.
          */
         private void

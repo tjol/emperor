@@ -39,8 +39,8 @@ namespace Emperor.App {
      * so this delegate uses Object, and, as a workaround, another delagate
      * is defined in `user_interface_manager.vala` for public use.
      *
-     * @param mwnd	Main application window.
-     * @param fpane	The file pane the toolbar is associated with
+     * @param app   The Emperor application object
+     * @param fpane The file pane the toolbar is associated with
      * @see UserInterfaceManager.FilePaneToolbarFactoryProper
      */
     public delegate Widget FilePaneToolbarFactory (EmperorCore app, Object fpane);

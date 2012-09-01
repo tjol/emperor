@@ -1,5 +1,5 @@
 /* Emperor - an orthodox file manager for the GNOME desktop
- * Copyright (C) 2011    Thomas Jollans
+ * Copyright (C) 2012    Thomas Jollans
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,46 +26,46 @@ namespace Emperor.Modules {
     
     private Widget create_title_bar (EmperorCore app, FilePane file_pane)
     {
-	    var tb = new FilePaneTitlebar (app, file_pane); 
-	    return (Widget) tb;
+        var tb = new FilePaneTitlebar (app, file_pane); 
+        return (Widget) tb;
     }
 
     public class FilePaneTitlebar : EventBox
     {
-    	public EmperorCore application { get; construct; }
-    	public FilePane pane { get; construct; }
-    	public Label title_label { get; construct; }
+        public EmperorCore application { get; construct; }
+        public FilePane pane { get; construct; }
+        public Label title_label { get; construct; }
 
-    	public FilePaneTitlebar (EmperorCore app, FilePane file_pane)
-    	{
-    		Object ( application : app,
-    				 pane : file_pane,
-    				 title_label : new Label ("") );
-    	}
+        public FilePaneTitlebar (EmperorCore app, FilePane file_pane)
+        {
+            Object ( application : app,
+                     pane : file_pane,
+                     title_label : new Label ("") );
+        }
 
-    	construct {
-    		title_label.ellipsize = EllipsizeMode.START;
-    		title_label.single_line_mode = true;
-    		title_label.halign = Align.FILL | Align.START;
-    		title_label.margin = 3;
-    		var attr_list = new AttrList ();
-    		attr_list.insert (attr_weight_new (Weight.BOLD));
-    		title_label.set_attributes (attr_list);
+        construct {
+            title_label.ellipsize = EllipsizeMode.START;
+            title_label.single_line_mode = true;
+            title_label.halign = Align.FILL | Align.START;
+            title_label.margin = 3;
+            var attr_list = new AttrList ();
+            attr_list.insert (attr_weight_new (Weight.BOLD));
+            title_label.set_attributes (attr_list);
 
-    		this.margin = 2;
-    		this.add (title_label);
+            this.margin = 2;
+            this.add (title_label);
 
-    		this.button_press_event.connect (on_click);
-    		pane.notify["pwd"].connect (on_pwd_change);
-    		pane.notify["active"].connect (on_active_state_change);
-    	}
+            this.button_press_event.connect (on_click);
+            pane.notify["pwd"].connect (on_pwd_change);
+            pane.notify["active"].connect (on_active_state_change);
+        }
 
-    	private bool m_editing = false;
+        private bool m_editing = false;
 
-    	private bool
-    	on_click (EventButton e)
-    	{
-    		if (e.type == EventType.BUTTON_PRESS) {
+        private bool
+        on_click (EventButton e)
+        {
+            if (e.type == EventType.BUTTON_PRESS) {
                 switch (e.button) {
                 case 1:
                     // left-click!
@@ -75,10 +75,10 @@ namespace Emperor.Modules {
             }
             
             return false;
-    	}
+        }
 
-    	public void
-    	edit_title ()
+        public void
+        edit_title ()
         {
             // ignore clicks on title when it is already being edited.
             if (m_editing) return;
@@ -127,9 +127,9 @@ namespace Emperor.Modules {
         private void
         on_active_state_change (ParamSpec ps)
         {
-        	// restyle title bar
-        	if (pane.active) {
-        		title_label.override_color(StateFlags.NORMAL,
+            // restyle title bar
+            if (pane.active) {
+                title_label.override_color(StateFlags.NORMAL,
                             application.ui_manager.selected_foreground);
                 this.override_background_color(StateFlags.NORMAL,
                             application.ui_manager.selected_background);
@@ -138,13 +138,13 @@ namespace Emperor.Modules {
                             application.ui_manager.label_foreground);
                 this.override_background_color(StateFlags.NORMAL,
                             application.ui_manager.label_background);
-        	}
+            }
         }
 
         private void
         on_pwd_change (ParamSpec ps)
         {
-        	// set title.
+            // set title.
             string title;
             // Are we in an archive?
             if (pane.pwd.get_uri_scheme() == "archive") {
@@ -165,13 +165,13 @@ namespace Emperor.Modules {
 
 public void load_module (ModuleRegistry reg)
 {
-	var app = reg.application;
+    var app = reg.application;
     app.ui_manager.add_filepane_toolbar ("titlebar",
-    									 Emperor.Modules.create_title_bar,
-    									 PositionType.TOP);
+                                         Emperor.Modules.create_title_bar,
+                                         PositionType.TOP);
 
 
-   	// Ctrl+L: Change directory
+       // Ctrl+L: Change directory
     var action = reg.new_action ("chdir");
     action.label = _("Change Directory");
     action.set_accel_path ("<Emperor-Main>/TitleBar/Chdir");
@@ -180,7 +180,7 @@ public void load_module (ModuleRegistry reg)
     action.activate.connect ( () => { 
             // Get the toolbar instance
             var toolbar = (Emperor.Modules.FilePaneTitlebar)
-            	app.main_window.active_pane.get_addon_toolbar ("titlebar");
+                app.main_window.active_pane.get_addon_toolbar ("titlebar");
 
             toolbar.edit_title ();
         } );

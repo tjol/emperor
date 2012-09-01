@@ -1,5 +1,5 @@
 /* Emperor - an orthodox file manager for the GNOME desktop
- * Copyright (C) 2011    Thomas Jollans
+ * Copyright (C) 2012    Thomas Jollans
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@ namespace Emperor.Modules {
     
     private Widget create_volume_toolbar (EmperorCore app, FilePane file_pane)
     {
-	    var tb = new VolumeToolbar (app, file_pane); 
-	    return (Widget) tb;
+        var tb = new VolumeToolbar (app, file_pane); 
+        return (Widget) tb;
     }
 
     public class VolumeToolbar : HBox
@@ -240,9 +240,9 @@ namespace Emperor.Modules {
             menuitem.set_always_show_image (true);
             
             click_handler = new VolumeMenuClickHandler (this,
-                        				home, null);
-			menuitem.activate.connect (click_handler.on_click);
-			menuitem.destroy.connect (click_handler.unref);
+                                        home, null);
+            menuitem.activate.connect (click_handler.on_click);
+            menuitem.destroy.connect (click_handler.unref);
 
             volmenu.append (menuitem);
 
@@ -349,8 +349,8 @@ namespace Emperor.Modules {
                     mnt.get_icon (), IconSize.MENU));
                 menuitem.set_always_show_image (true);
 
-				click_handler = new VolumeMenuClickHandler (this,
-                        						mnt.get_root(), null);
+                click_handler = new VolumeMenuClickHandler (this,
+                                                mnt.get_root(), null);
                 menuitem.activate.connect (click_handler.on_click);
                 menuitem.destroy.connect (click_handler.unref);
 
@@ -383,8 +383,8 @@ namespace Emperor.Modules {
                     }
 
                     click_handler = new VolumeMenuClickHandler (this,
-                            	(vol_mnt == null) ? null : vol_mnt.get_root(),
-                            	vol);
+                                (vol_mnt == null) ? null : vol_mnt.get_root(),
+                                vol);
                     menuitem.activate.connect (click_handler.on_click);
                     menuitem.destroy.connect (click_handler.unref);
 
@@ -414,7 +414,7 @@ namespace Emperor.Modules {
                 menuitem.set_always_show_image (true);
 
                 click_handler = new VolumeMenuClickHandler (this,
-                        					File.new_for_path(path), null);
+                                            File.new_for_path(path), null);
                 menuitem.activate.connect (click_handler.on_click);
                 menuitem.destroy.connect (click_handler.unref);
                 
@@ -596,15 +596,15 @@ delegate Emperor.Modules.VolumeToolbar ReturnsToolbar ();
 
 public void load_module (ModuleRegistry reg)
 {
-	var app = reg.application;
+    var app = reg.application;
     app.ui_manager.add_filepane_toolbar ("volumes",
-    									 Emperor.Modules.create_volume_toolbar,
-    									 PositionType.TOP);
+                                         Emperor.Modules.create_volume_toolbar,
+                                         PositionType.TOP);
     
     // function
     ReturnsToolbar get_active_toolbar = () => {
         return (Emperor.Modules.VolumeToolbar)
-        	reg.application.main_window.active_pane.get_addon_toolbar ("volumes");
+            reg.application.main_window.active_pane.get_addon_toolbar ("volumes");
     };
 
     // set up keyboard shortcuts

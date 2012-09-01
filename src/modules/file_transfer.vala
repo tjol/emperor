@@ -328,9 +328,9 @@ namespace Emperor.Modules {
                                       move, done_bytes_p, copy_flags_p, inverse_flags_p,
                                       cancellable, progress_cb);
 
-				var finfo = file_infos[idx];
+                var finfo = file_infos[idx];
                 *done_bytes_p += finfo.get_size ();
-	            
+                
                 progress_cb (0, 0); // update progress bar
 
                 if (cancellable.is_cancelled()) {

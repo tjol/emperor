@@ -39,25 +39,25 @@ namespace Emperor.App {
         public EmperorCore application { get; protected construct set; }
         public string designation { get; protected construct set; }
 
-    	/* *****************************************************
-    	 * INSTANCE VARIABLES
-    	 ******************************************************/
-    	protected Map<string,FileFilterFuncWrapper> m_filters;
-    	protected Set<string> m_file_attributes;
-    	protected string m_file_attributes_str;
-    	protected Map<string,FileInfoCompareFuncWrapper> m_permanent_sort;
-    	protected File m_pwd;
+        /* *****************************************************
+         * INSTANCE VARIABLES
+         ******************************************************/
+        protected Map<string,FileFilterFuncWrapper> m_filters;
+        protected Set<string> m_file_attributes;
+        protected string m_file_attributes_str;
+        protected Map<string,FileInfoCompareFuncWrapper> m_permanent_sort;
+        protected File m_pwd;
         protected File? m_parent_dir = null;
-    	protected Mount? m_mnt = null;
-    	protected MountManager.MountRef? m_mnt_ref = null;
+        protected Mount? m_mnt = null;
+        protected MountManager.MountRef? m_mnt_ref = null;
 
-    	/*
-    	 * GObject style constructor. Called automatically.
-    	 */
+        /*
+         * GObject style constructor. Called automatically.
+         */
         construct {
-    		m_filters = new HashMap<string,FileFilterFuncWrapper> ();
+            m_filters = new HashMap<string,FileFilterFuncWrapper> ();
 
-    		m_file_attributes = new HashSet<string>();
+            m_file_attributes = new HashSet<string>();
             m_file_attributes.add(FileAttribute.STANDARD_NAME);
             m_file_attributes.add(FileAttribute.STANDARD_TYPE);
             m_file_attributes.add(FileAttribute.STANDARD_CONTENT_TYPE);
@@ -65,15 +65,15 @@ namespace Emperor.App {
             m_file_attributes.add(FileAttribute.STANDARD_TARGET_URI);
 
             m_permanent_sort = new HashMap<string,FileInfoCompareFuncWrapper> ();
-    	}
+        }
 
-    	/**
-    	 * Build m_file_attributes_str
-    	 */
-    	protected void
-    	recreate_file_attributes_string ()
-    	{
-    		var sb = new StringBuilder();
+        /**
+         * Build m_file_attributes_str
+         */
+        protected void
+        recreate_file_attributes_string ()
+        {
+            var sb = new StringBuilder();
             bool first = true;
             foreach (string attr in m_file_attributes) {
                 if (!first) sb.append_c(',');
@@ -82,33 +82,33 @@ namespace Emperor.App {
                 sb.append(attr);
             }
             m_file_attributes_str = sb.str;
-    	}
+        }
 
-    	/* *****************************************************
-    	 * ADDITIONAL ABSTRACT METHODS THAT MUST BE IMPLEMENTED
-    	 ******************************************************/
+        /* *****************************************************
+         * ADDITIONAL ABSTRACT METHODS THAT MUST BE IMPLEMENTED
+         ******************************************************/
 
-    	/**
-    	 * Re-apply list filters
-    	 */
-    	protected abstract void refilter_list ();
-
-
-    	/**
-    	 * Refresh list sorting
-    	 */
-    	protected abstract void refresh_sorting ();
-
-    	/**
-    	 * Provide implementation specific parts of the chdir
-    	 * method.
-    	 */
-    	protected abstract DirectoryLoadHelper get_directory_load_helper (File dir, string? prev_name);
+        /**
+         * Re-apply list filters
+         */
+        protected abstract void refilter_list ();
 
 
-    	/* *****************************************************
-    	 * IMPLEMENTATION
-    	 ******************************************************/
+        /**
+         * Refresh list sorting
+         */
+        protected abstract void refresh_sorting ();
+
+        /**
+         * Provide implementation specific parts of the chdir
+         * method.
+         */
+        protected abstract DirectoryLoadHelper get_directory_load_helper (File dir, string? prev_name);
+
+
+        /* *****************************************************
+         * IMPLEMENTATION
+         ******************************************************/
 
         /**
          * Install file filter.
@@ -132,7 +132,7 @@ namespace Emperor.App {
         {
             bool removed = m_filters.unset (id);
             if (removed) {
-            	refilter_list ();
+                refilter_list ();
             }
             return removed;
         }
@@ -261,7 +261,7 @@ namespace Emperor.App {
             return success;
         }
 
-    	protected Cancellable? m_chdir_cancellable = null;
+        protected Cancellable? m_chdir_cancellable = null;
 
         /**
          * Change directory.
@@ -434,11 +434,11 @@ namespace Emperor.App {
         /**
          * Activate/open a file.
          * 
-         * @param file_info		A GLib.FileInfo describing the file
-         * @param real_file	\
-         *						The actual file in question. This is for 
-         *						internal use when encountering symbolic 
-         *						links.
+         * @param file_info     A GLib.FileInfo describing the file
+         * @param real_file \
+         *                      The actual file in question. This is for 
+         *                      internal use when encountering symbolic 
+         *                      links.
          */
         protected virtual async void
         activate_file (FileInfo file_info, File? real_file=null)
@@ -567,9 +567,9 @@ namespace Emperor.App {
     }
 
 
-	public interface DirectoryLoadHelper : Object
-	{
-		public abstract void add_row (FileInfo finfo);
-		public abstract void commit ();
-	}
+    public interface DirectoryLoadHelper : Object
+    {
+        public abstract void add_row (FileInfo finfo);
+        public abstract void commit ();
+    }
 }

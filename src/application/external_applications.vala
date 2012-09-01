@@ -1,5 +1,5 @@
 /* Emperor - an orthodox file manager for the GNOME desktop
- * Copyright (C) 2011    Thomas Jollans
+ * Copyright (C) 2012    Thomas Jollans
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

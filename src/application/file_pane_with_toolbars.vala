@@ -28,19 +28,19 @@ namespace Emperor.App {
      */
     public abstract class FilePaneWithToolbars : AbstractFilePane
     {
-    	/* *****************************************************
-    	 * INSTANCE VARIABLES
-    	 ******************************************************/
-    	protected Map<string,Widget> m_addon_toolbars;
-    	protected Label m_error_message;
-    	protected Widget m_error_message_bg;
+        /* *****************************************************
+         * INSTANCE VARIABLES
+         ******************************************************/
+        protected Map<string,Widget> m_addon_toolbars;
+        protected Label m_error_message;
+        protected Widget m_error_message_bg;
 
         /* *****************************************************
          * SETUP CODE
          ******************************************************/
-    	
+        
         construct {
-			// Add widget for displaying error messages.
+            // Add widget for displaying error messages.
             m_error_message = new Label ("");
             var error_message_bg = new EventBox ();
             m_error_message_bg = error_message_bg;
@@ -55,7 +55,7 @@ namespace Emperor.App {
             error_message_bg.add(m_error_message);
             pack_start (m_error_message_bg, false, false);
 
-    		// install add-on toolbars previously registered.
+            // install add-on toolbars previously registered.
             m_addon_toolbars = new Gee.HashMap<string,Widget> ();
         }
         
@@ -67,19 +67,19 @@ namespace Emperor.App {
         add_file_pane_toolbars ()
         {
             foreach (var tbcfg in application.ui_manager.filepane_toolbars) {
-	            tbcfg.add_to_pane (this);
+                tbcfg.add_to_pane (this);
             }
-    	}
+        }
 
-    	/* *****************************************************
-    	 * IMPLEMENTATION
-    	 ******************************************************/
+        /* *****************************************************
+         * IMPLEMENTATION
+         ******************************************************/
 
         /**
          * Add a toolbar to this FilePane.
          *
          * @param id \
-         *				identifier that can be used to retrieve the toolbar
+         *              identifier that can be used to retrieve the toolbar
          *              using {@link get_addon_toolbar}
          * @param factory FilePaneToolbarFactory that creates the toolbar.
          * @param where   desired position of the toolbar.
@@ -87,21 +87,21 @@ namespace Emperor.App {
         public override void
         install_toolbar (string id, FilePaneToolbarFactory factory, PositionType where)
         {
-	        var toolbar = factory (application, this);
-	        
-	        switch (where) {
-		        case PositionType.TOP:
-		        case PositionType.LEFT: // left not supported yet. This is silly.
-		        	pack_start (toolbar, false, false, 0);
-		        	reorder_child (toolbar, 0);
-		        	break;
-		        case PositionType.BOTTOM:
-		        case PositionType.RIGHT:
-		        	pack_end (toolbar, false, false, 0);
-		        	break;
-	        }
-	        
-	        m_addon_toolbars[id] = toolbar;
+            var toolbar = factory (application, this);
+            
+            switch (where) {
+                case PositionType.TOP:
+                case PositionType.LEFT: // left not supported yet. This is silly.
+                    pack_start (toolbar, false, false, 0);
+                    reorder_child (toolbar, 0);
+                    break;
+                case PositionType.BOTTOM:
+                case PositionType.RIGHT:
+                    pack_end (toolbar, false, false, 0);
+                    break;
+            }
+            
+            m_addon_toolbars[id] = toolbar;
         }
         
         /**
@@ -110,7 +110,7 @@ namespace Emperor.App {
         public override Widget?
         get_addon_toolbar (string id)
         {
-	        return m_addon_toolbars[id];
+            return m_addon_toolbars[id];
         }
 
         /**

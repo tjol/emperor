@@ -1,5 +1,5 @@
 /* Emperor - an orthodox file manager for the GNOME desktop
- * Copyright (C) 2011    Thomas Jollans
+ * Copyright (C) 2012    Thomas Jollans
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,24 +39,24 @@ namespace Emperor.App {
                                           owned FilePaneToolbarFactoryProper factory,
                                           PositionType where)
         {
-	        var tbcfg = new FilePaneToolbarConfig ();
-	        tbcfg.id = id;
-	        tbcfg.factory = (FilePaneToolbarFactory) ((owned)factory);
-	        tbcfg.where = where;
-	     
-		 	filepane_toolbars.append (tbcfg);   
-	    } 
+            var tbcfg = new FilePaneToolbarConfig ();
+            tbcfg.id = id;
+            tbcfg.factory = (FilePaneToolbarFactory) ((owned)factory);
+            tbcfg.where = where;
+         
+             filepane_toolbars.append (tbcfg);   
+        } 
         
-	    internal class FilePaneToolbarConfig
-		{
-	        public string id;
-	        public FilePaneToolbarFactory factory;
-	        public PositionType where;
-	        
-	        public void add_to_pane (FilePane pane)
-	        {
-		        pane.install_toolbar (id, factory, where);
-	        }
+        internal class FilePaneToolbarConfig
+        {
+            public string id;
+            public FilePaneToolbarFactory factory;
+            public PositionType where;
+            
+            public void add_to_pane (FilePane pane)
+            {
+                pane.install_toolbar (id, factory, where);
+            }
         }
         
         internal GLib.List<FilePaneToolbarConfig> filepane_toolbars;
