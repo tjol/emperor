@@ -32,10 +32,13 @@ namespace Emperor.Application {
      * The heart of the file manager
      */
     public class FilePane : FilePaneWithToolbars
-    {       
-        //
+    {
+        /* *****************************************************
+         * INSTANCE MEMBERS AND PROPERTIES
+         ******************************************************/
+        
         // Table related members
-        //
+        
         TreeView m_list;
         ListStore m_data_store = null;
         TreeModelSort m_sorted_list = null;
@@ -46,9 +49,9 @@ namespace Emperor.Application {
         Type[] m_store_types;
         Map<int,TreeIterCompareFuncWrapper> m_cmp_funcs;
         
-        //
+        
         // Indices of well-known data columns in the TreeModel
-        //
+        
         public int COL_FILEINFO { get; private set; }
         public int COL_SELECTED { get; private set; }
         public int COL_FG_COLOR { get; private set; }
@@ -60,13 +63,19 @@ namespace Emperor.Application {
         public int COL_STYLE { get; private set; }
         public int COL_STYLE_SET { get; private set; }
         
+
+        /* *****************************************************
+         * LIFE CYCLE & CONSTRUCTION
+         ******************************************************/
+
         /**
          * Constructor - initialize FilePane
          *
          * @param app   EmperorCore application object.
          * @param pane_designation Either "left" or "right" -- used for preferences
          */
-        public FilePane (EmperorCore app, string pane_designation)
+        public
+        FilePane (EmperorCore app, string pane_designation)
         {
             Object ( application : app,
                      owning_window : app.main_window,
@@ -90,10 +99,142 @@ namespace Emperor.Application {
             m_list.key_press_event.connect (on_key_event);
             m_list.motion_notify_event.connect (on_motion_notify);
 
-            /*
-             * Create tree columns based on configuration file.
-             */
+            
+            // Create tree columns based on configuration file.
+            initialize_tree_columns ();
+            
+            // Attributes: join up string that we can pass to query_info
+            recreate_file_attributes_string ();
 
+            // Add TreeView widget, within a ScrolledWindow to make it behave.
+            var scrwnd = new ScrolledWindow (null, null);
+            if (designation.has_prefix ("left")) {
+                scrwnd.set_placement (CornerType.TOP_RIGHT);
+            }
+            scrwnd.add(m_list);
+            m_list.set_search_equal_func (search_equal_func);
+            m_list.search_column = COL_STYLE_SET + 1;
+            m_list.enable_search = true;
+            m_list.row_activated.connect ( (path, col) => {
+	           activate_row (path); 
+            });
+            pack_start (scrwnd, true, true);
+            
+            // Add toolbars
+            add_file_pane_toolbars ();
+        }
+
+        private void
+        on_destroy ()
+        {
+            // Give modules the chance to do some clean-up work and ensure archive
+            // mounts are correctly cleaned up.
+            m_mnt_ref = null;
+            m_mnt = null;
+            notify_property ("mnt");
+
+            // Doing the same thing for pwd and parent_dir might not be safe:
+            // they're usually never null.
+        }
+
+        public override void
+        show_all ()
+        {
+            base.show_all ();
+            hide_error ();
+        }
+
+        private bool m_active = false;
+        /**
+         * Whether or not this pane is active. Setting this property
+         * will change the other pane's state accordingly.
+         */
+        public override bool active {
+            get { 
+                return m_active;
+            }
+            set {
+                if (m_active != value) {
+                    m_active = value;
+
+                    // Restyle the list items where the style depends on the focus.
+                    if (application.ui_manager.style_info.other_styles_use_focus) {
+                        // Every item's style is focus-dependent.
+                        // NB: This kind of styling is possible, but it should be avoided
+                        //     since switching panels takes much longer this way.
+                        restyle_complete_list ();
+                    } else {
+                        if (application.ui_manager.style_info.selected_style_uses_focus) {
+                            // restyle selected items
+                            m_data_store.@foreach ((model, path, iter) => {
+                                    Value selected;
+                                    model.get_value (iter, COL_SELECTED, out selected);
+                                    if (selected.get_boolean()) {
+                                        restyle (iter, false);
+                                    }
+                                    return false;
+                                });
+                        }
+                        if (application.ui_manager.style_info.cursor_style_uses_focus
+                                && m_cursor_path != null) {
+                            // restyle cursor item
+                            restyle_path(m_cursor_path, true);
+                        }
+                    }
+                    
+                    // Ensure everything makes sense.
+                    other_pane.active = !m_active;
+                }
+                if (m_active) {
+                    // Active pane has focus.
+                    m_list.grab_focus ();
+                }
+            }
+        }
+
+
+        /* *****************************************************
+         * COLUMN MANAGEMENT
+         ******************************************************/
+
+        /**
+         * Saves column widths to preferences.
+         */
+        private void
+        check_column_sizes ()
+        {
+            int colidx = 0;
+            TreeViewColumn last_col = null;
+            foreach (var tvcol in m_list.get_columns()) {
+                var pref_w_name = "%s-col-width-%d".printf(designation, colidx);
+                application.prefs.set_int32 (pref_w_name, tvcol.width);
+                last_col = tvcol;
+                colidx ++;
+            }
+            last_col.sizing = TreeViewColumnSizing.GROW_ONLY;
+        }
+
+        /**
+         * Make columns fixed-width so that they aren't resized to fit new content.
+         */
+        private void
+        fix_column_sizes ()
+        {
+            TreeViewColumn last_col = null;
+            foreach (var tvcol in m_list.get_columns()) {
+                tvcol.fixed_width = tvcol.width;
+                tvcol.sizing = TreeViewColumnSizing.FIXED;
+                last_col = tvcol;
+            }
+            last_col.sizing = TreeViewColumnSizing.GROW_ONLY;
+        }
+
+        /**
+         * Create TreeView columns based on configuration file
+         */
+        private void
+        initialize_tree_columns ()
+        {
             var store_cells = new LinkedList<FileInfoColumn?>();
             var store_types = new LinkedList<Type>();
             m_cmp_funcs = new HashMap<int,TreeIterCompareFuncWrapper>();
@@ -211,69 +352,45 @@ namespace Emperor.Application {
             // convert lists to arrays.
             m_store_cells = store_cells.to_array();
             m_store_types = store_types.to_array();
-            // Attributes: join up string that we can pass to query_info
-            recreate_file_attributes_string ();
-
-            // Add TreeView widget, within a ScrolledWindow to make it behave.
-            var scrwnd = new ScrolledWindow (null, null);
-            if (designation.has_prefix ("left")) {
-                scrwnd.set_placement (CornerType.TOP_RIGHT);
-            }
-            scrwnd.add(m_list);
-            m_list.set_search_equal_func (search_equal_func);
-            m_list.search_column = COL_STYLE_SET + 1;
-            m_list.enable_search = true;
-            m_list.row_activated.connect ( (path, col) => {
-	           activate_row (path); 
-            });
-            pack_start (scrwnd, true, true);
-            
-            // Add toolbars
-            add_file_pane_toolbars ();
-        }
-
-        private void on_destroy ()
-        {
-            // Give modules the chance to do some clean-up work and ensure archive
-            // mounts are correctly cleaned up.
-            m_mnt_ref = null;
-            m_mnt = null;
-            notify_property ("mnt");
-
-            // Doing the same thing for pwd and parent_dir might not be safe:
-            // they're usually never null.
-        }
-
-
-        /**
-         * Saves column widths to preferences.
-         */
-        private void check_column_sizes ()
-        {
-            int colidx = 0;
-            TreeViewColumn last_col = null;
-            foreach (var tvcol in m_list.get_columns()) {
-                var pref_w_name = "%s-col-width-%d".printf(designation, colidx);
-                application.prefs.set_int32 (pref_w_name, tvcol.width);
-                last_col = tvcol;
-                colidx ++;
-            }
-            last_col.sizing = TreeViewColumnSizing.GROW_ONLY;
         }
 
         /**
-         * Make columns fixed-width so that they aren't resized to fit new content.
+         * Wraps an Emperor CompareFunc (for a column to produce a
+         * TreeIterCompareFunc that also sorts based on the global sort functions.
          */
-        private void fix_column_sizes ()
+        private class TreeIterCompareFuncWrapper : Object
         {
-            TreeViewColumn last_col = null;
-            foreach (var tvcol in m_list.get_columns()) {
-                tvcol.fixed_width = tvcol.width;
-                tvcol.sizing = TreeViewColumnSizing.FIXED;
-                last_col = tvcol;
+            int m_col;
+            unowned CompareFunc m_cmp;
+            unowned TreeIterCompareFunc m_prio_sort;
+
+            public
+            TreeIterCompareFuncWrapper (int column, CompareFunc cmp, TreeIterCompareFunc priosort)
+            {
+                m_col = column;
+                m_cmp = cmp;
+                m_prio_sort = priosort;
             }
-            last_col.sizing = TreeViewColumnSizing.GROW_ONLY;
+
+            public int
+            compare_treeiter (TreeModel model, TreeIter it_a, TreeIter it_b)
+            {
+                int prio_d = m_prio_sort (model, it_a, it_b);
+                if (prio_d != 0) {
+                    return prio_d;
+                }
+
+                Value a, b;
+                model.get_value(it_a, m_col, out a);
+                model.get_value(it_b, m_col, out b);
+                return m_cmp(a, b);
+            }
         }
+
+
+        /* *****************************************************
+         * FILTERING, SEARCHING & SORTING
+         ******************************************************/
 
         /**
          * Reapply list filters
@@ -289,7 +406,8 @@ namespace Emperor.Application {
         /**
          * "TreeModelFilterVisibleFunc" that applies Emperor filters
          */
-        private bool filter_list_row (TreeModel model, TreeIter iter)
+        private bool
+        filter_list_row (TreeModel model, TreeIter iter)
         {
             bool visible = true;
 
@@ -325,7 +443,8 @@ namespace Emperor.Application {
          * This ignores the column number, and simply checks if the file name starts
          * with the query string
          */
-        private bool search_equal_func (TreeModel model, int column, string query, TreeIter iter)
+        private bool
+        search_equal_func (TreeModel model, int column, string query, TreeIter iter)
         {
 	        Value finfo_val;
 	        
@@ -362,8 +481,11 @@ namespace Emperor.Application {
 
         /**
          * Apply permanent sort functions installed with {@link add_sort}
+         *
+         * This is a {@link TreeIterCompareFunc}.
          */
-        private int compare_using_global_sort (TreeModel model, TreeIter it1, TreeIter it2)
+        private int
+        compare_using_global_sort (TreeModel model, TreeIter it1, TreeIter it2)
         {
             Value finfo1_val, finfo2_val;
             model.get_value (it1, COL_FILEINFO, out finfo1_val);
@@ -383,6 +505,42 @@ namespace Emperor.Application {
             return d;
         }
 
+        /**
+         * Change how the list is sorted when the user requests it.
+         */
+        private void
+        sort_column_changed ()
+        {
+            int sort_column;
+            SortType sort_type;
+
+            m_sorted_list.get_sort_column_id (out sort_column, out sort_type);
+
+            application.prefs.set_int32 (designation + "-sort-column", (int32) sort_column);
+            application.prefs.set_string (designation + "-sort-type", 
+                                    sort_type == SortType.ASCENDING ? "asc" : "desc");
+        }
+
+        /**
+         * Set sort column from preferences file
+         */
+        private void
+        get_sort_from_prefs (TreeSortable model)
+        {
+            int sort_column = (int) application.prefs.get_int32 (designation + "-sort-column", -1);
+            string sort_type_str = application.prefs.get_string (designation + "-sort-type", null);
+            if (sort_column == -1 || sort_type_str == null) {
+                return;
+            }
+
+            model.set_sort_column_id (sort_column, (sort_type_str == "asc") ? SortType.ASCENDING
+                                                                            : SortType.DESCENDING);
+        }
+
+
+        /* *****************************************************
+         * USER INTERACTION
+         ******************************************************/
 
         /**
          * Grab focus
@@ -392,6 +550,170 @@ namespace Emperor.Application {
         {
             m_list.grab_focus ();
         }
+
+        private TreePath m_select_cache = null;
+
+        private Ref<bool> _right_button_pressed_marker = null;
+
+        /**
+         * Button press or release within the TreeView area
+         */
+        private bool
+        on_mouse_event (EventButton e)
+        {
+            // Was the click in the header?
+            if (e.window != m_list.get_bin_window()) {
+                if (e.type == EventType.BUTTON_RELEASE) {
+                    // The columns may have been resized. Save this.
+                    check_column_sizes ();
+                }
+                return false;
+            }
+
+            // The click was in the actual list area. Find out on which item.
+            TreePath path = null;
+            if (! m_list.get_path_at_pos((int)e.x, (int)e.y, out path, null, null, null)) {
+                path = null;
+            }
+
+            if (e.type == EventType.BUTTON_PRESS) {
+                hide_error ();
+                switch (e.button) {
+                case 1:
+                    // left-click
+                    if (path != null) {
+                        m_list.set_cursor (path, null, false);
+                    }
+                    this.active = true;
+                    return true;
+                case 3:
+                    // right-click
+                    if (path != null) {
+                        toggle_selected (path);
+                        m_select_cache = path;
+
+                        // This reference is changed when the button is newly pressed,
+                        // set to false when it is released, and unset when one second
+                        // has elapsed and the popup menu has been displayed.
+                        var press_marker = new Ref<bool>(true);
+                        _right_button_pressed_marker = press_marker;
+                        Timeout.add(1000, () => {
+                                if (press_marker.val) {
+                                    // right mouse button was pressed for one second.
+                                    popup_menu_for (path);
+                                }
+                                if (_right_button_pressed_marker == press_marker) {
+                                    _right_button_pressed_marker = null;
+                                }
+                                return false;
+                            });
+                    }
+                    this.active = true;
+                    return true;
+                }
+            } else if (e.type == EventType.2BUTTON_PRESS) {
+                // double click.
+                activate_row(path);
+                return true;
+            } else if (e.type == EventType.BUTTON_RELEASE) {
+                switch (e.button) {
+                case 3:
+                    // right-click released
+                    if (_right_button_pressed_marker != null) {
+                        _right_button_pressed_marker.val = false;
+                        _right_button_pressed_marker = null;
+                    }
+                    break;
+                }
+            }
+
+            return false;
+        }
+
+
+        /**
+         * Mouse is being moved. Enabled right-button-drag selecting.
+         */
+        private bool
+        on_motion_notify (EventMotion e)
+        {
+            if ((e.state & ModifierType.BUTTON3_MASK) != 0) {
+                // right-click drag. (de)select.
+                TreePath path;
+                if (m_list.get_path_at_pos((int)e.x, (int)e.y, out path, null, null, null)) {
+                    if (m_select_cache == null || path.compare(m_select_cache) != 0) {
+                        toggle_selected (path);
+                        m_select_cache = path;
+                        // Since this is now a drag, and not a hold, cancel the right
+                        // button press marker, so that no popup menu is shown.
+                        _right_button_pressed_marker = null;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private bool
+        on_key_event (EventKey e)
+        {
+            if (e.type == EventType.KEY_PRESS) {
+                hide_error ();
+                switch (e.keyval) {
+                case Key.Tab:
+                    // activate other panel.
+                    active = false;
+                    return true;
+                case Key.space:
+                    if (m_cursor_path != null) {
+                        toggle_selected (m_cursor_path);
+                    }
+                    return true;
+                case Key.Return:
+                    if (m_cursor_path != null) {
+                        activate_row (m_cursor_path);
+                    }
+                    return true;
+                case Key.Menu:
+                    if (m_cursor_path != null) {
+                        popup_menu_for (m_cursor_path);
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Open popup menu (not yet implemented)
+         */
+        private void
+        popup_menu_for (TreePath path)
+        {
+            // TODO: popup menu!
+        }
+
+        /**
+         * Activate row - double-click or return key; open file.
+         */
+        public void
+        activate_row (TreePath path)
+        {
+            // get the FileInfo:
+            TreeIter? iter = null;
+            m_sorted_list.get_iter (out iter, path);
+            if (iter != null) {
+                Value file_info_val;
+                m_sorted_list.get_value (iter, COL_FILEINFO, out file_info_val);
+                FileInfo file_info = (FileInfo) file_info_val.get_object ();
+
+                activate_file.begin (file_info, null);
+            }
+        }
+
+
+        /* *****************************************************
+         * DISPLAYING FILES IN THE LIST
+         ******************************************************/
 
         /**
          * Provide implementation specific parts of the chdir
@@ -418,7 +740,8 @@ namespace Emperor.Application {
             TreeIter? prev_iter = null;
             ListStore store;
 
-            public DirectoryLoadHelper (FilePane pane, File dir, string? prev_name)
+            public
+            DirectoryLoadHelper (FilePane pane, File dir, string? prev_name)
             {
                 Object ( fp : pane,
                          directory : dir,
@@ -486,15 +809,18 @@ namespace Emperor.Application {
 
                 fp.restyle_complete_list ();
             }
-
         }
 
+
+        /* *****************************************************
+         * UPDATING THE FILE LIST
+         ******************************************************/
          
         /**
          * Extract data from a FileInfo object into a row in the file list
          */
-        private void update_row (TreeIter iter, FileInfo file,
-                                 ListStore store, File? pwd=null)
+        private void
+        update_row (TreeIter iter, FileInfo file, ListStore store, File? pwd=null)
         {
             if (pwd == null) {
                 pwd = m_pwd;
@@ -514,12 +840,16 @@ namespace Emperor.Application {
             }
         }
 
+        /**
+         * Used internally by {@link query_and_update}
+         */
         private HashSet<string> m_uris_being_updated = null;
 
         /**
          * Get file info and display.
          */
-        private async void query_and_update (TreeIter unsorted_iter, File file)
+        private async void
+        query_and_update (TreeIter unsorted_iter, File file)
         {
             // Make sure that files are only queried once at a time.
             if (m_uris_being_updated == null) {
@@ -544,21 +874,6 @@ namespace Emperor.Application {
 
             // Done.
             m_uris_being_updated.remove (uri);
-        }
-
-        public TreePath cursor_path {
-            get {
-                return m_cursor_path;
-            }
-        }
-
-        public FileInfo get_fileinfo (TreePath path)
-        {
-            Value finfo_val;
-            TreeIter iter;
-            m_sorted_list.get_iter (out iter, path);
-            m_sorted_list.get_value (iter, COL_FILEINFO, out finfo_val);
-            return (FileInfo) finfo_val.get_object ();
         }
 
         /**
@@ -679,50 +994,23 @@ namespace Emperor.Application {
 
         }
 
-        private void toplevel_iter_to_data_iter (out TreeIter data_iter,
-                                                 TreeIter toplevel_iter)
-        {
-            TreeIter filter_iter;
-            m_sorted_list.convert_iter_to_child_iter (out filter_iter, toplevel_iter);
-            m_list_filter.convert_iter_to_child_iter (out data_iter, filter_iter);
-        }
 
-        /**
-         * Change how the list is sorted when the user requests it.
-         */
-        private void sort_column_changed ()
-        {
-            int sort_column;
-            SortType sort_type;
+        /* *****************************************************
+         * CURSOR AND SELECTION
+         ******************************************************/
 
-            m_sorted_list.get_sort_column_id (out sort_column, out sort_type);
-
-            application.prefs.set_int32 (designation + "-sort-column", (int32) sort_column);
-            application.prefs.set_string (designation + "-sort-type", 
-                                    sort_type == SortType.ASCENDING ? "asc" : "desc");
-        }
-
-        /**
-         * Set sort column from preferences file
-         */
-        private void get_sort_from_prefs (TreeSortable model)
-        {
-            int sort_column = (int) application.prefs.get_int32 (designation + "-sort-column", -1);
-            string sort_type_str = application.prefs.get_string (designation + "-sort-type", null);
-            if (sort_column == -1 || sort_type_str == null) {
-                return;
+        public TreePath cursor_path {
+            get {
+                return m_cursor_path;
             }
-
-            model.set_sort_column_id (sort_column, (sort_type_str == "asc") ? SortType.ASCENDING
-                                                                            : SortType.DESCENDING);
-
         }
 
         /**
          * Routine housekeeping tasks when the cursor moves. Emits {@link cursor_changed} signal
          * when done.
          */
-        private void handle_cursor_change ()
+        private void
+        handle_cursor_change ()
         {
             TreePath new_cursor_path = null;
 
@@ -739,205 +1027,10 @@ namespace Emperor.Application {
 
             cursor_changed ();
         }
-    
-        private TreePath m_select_cache = null;
-
-        private Ref<bool> _right_button_pressed_marker = null;
-
-        /**
-         * Button press or release within the TreeView area
-         */
-        private bool on_mouse_event (EventButton e)
-        {
-            // Was the click in the header?
-            if (e.window != m_list.get_bin_window()) {
-                if (e.type == EventType.BUTTON_RELEASE) {
-                    // The columns may have been resized. Save this.
-                    check_column_sizes ();
-                }
-                return false;
-            }
-
-            // The click was in the actual list area. Find out on which item.
-            TreePath path = null;
-            if (! m_list.get_path_at_pos((int)e.x, (int)e.y, out path, null, null, null)) {
-                path = null;
-            }
-
-            if (e.type == EventType.BUTTON_PRESS) {
-                hide_error ();
-                switch (e.button) {
-                case 1:
-                    // left-click
-                    if (path != null) {
-                        m_list.set_cursor (path, null, false);
-                    }
-                    this.active = true;
-                    return true;
-                case 3:
-                    // right-click
-                    if (path != null) {
-                        toggle_selected (path);
-                        m_select_cache = path;
-
-                        // This reference is changed when the button is newly pressed,
-                        // set to false when it is released, and unset when one second
-                        // has elapsed and the popup menu has been displayed.
-                        var press_marker = new Ref<bool>(true);
-                        _right_button_pressed_marker = press_marker;
-                        Timeout.add(1000, () => {
-                                if (press_marker.val) {
-                                    // right mouse button was pressed for one second.
-                                    popup_menu_for (path);
-                                }
-                                if (_right_button_pressed_marker == press_marker) {
-                                    _right_button_pressed_marker = null;
-                                }
-                                return false;
-                            });
-                    }
-                    this.active = true;
-                    return true;
-                }
-            } else if (e.type == EventType.2BUTTON_PRESS) {
-                // double click.
-                activate_row(path);
-                return true;
-            } else if (e.type == EventType.BUTTON_RELEASE) {
-                switch (e.button) {
-                case 3:
-                    // right-click released
-                    if (_right_button_pressed_marker != null) {
-                        _right_button_pressed_marker.val = false;
-                        _right_button_pressed_marker = null;
-                    }
-                    break;
-                }
-            }
-
-            return false;
-        }
-
-        private bool m_active = false;
-        /**
-         * Whether or not this pane is active. Setting this property
-         * will change the other pane's state accordingly.
-         */
-        public override bool active {
-            get { return m_active; }
-            set {
-                if (m_active != value) {
-                    m_active = value;
-
-                    // Restyle the list items where the style depends on the focus.
-                    if (application.ui_manager.style_info.other_styles_use_focus) {
-                        // Every item's style is focus-dependent.
-                        // NB: This kind of styling is possible, but it should be avoided
-                        //     since switching panels takes much longer this way.
-                        restyle_complete_list ();
-                    } else {
-                        if (application.ui_manager.style_info.selected_style_uses_focus) {
-                            // restyle selected items
-                            m_data_store.@foreach ((model, path, iter) => {
-                                    Value selected;
-                                    model.get_value (iter, COL_SELECTED, out selected);
-                                    if (selected.get_boolean()) {
-                                        restyle (iter, false);
-                                    }
-                                    return false;
-                                });
-                        }
-                        if (application.ui_manager.style_info.cursor_style_uses_focus
-                                && m_cursor_path != null) {
-                            // restyle cursor item
-                            restyle_path(m_cursor_path, true);
-                        }
-                    }
-                    
-                    // Ensure everything makes sense.
-                    other_pane.active = !m_active;
-                }
-                if (m_active) {
-                    // Active pane has focus.
-                    m_list.grab_focus ();
-                }
-            }
-        }
-
-        /**
-         * Mouse is being moved. Enabled right-button-drag selecting.
-         */
-        private bool on_motion_notify (EventMotion e)
-        {
-            if ((e.state & ModifierType.BUTTON3_MASK) != 0) {
-                // right-click drag. (de)select.
-                TreePath path;
-                if (m_list.get_path_at_pos((int)e.x, (int)e.y, out path, null, null, null)) {
-                    if (m_select_cache == null || path.compare(m_select_cache) != 0) {
-                        toggle_selected (path);
-                        m_select_cache = path;
-                    }
-                }
-            }
-            return false;
-        }
-
-        private bool on_key_event (EventKey e)
-        {
-            if (e.type == EventType.KEY_PRESS) {
-                hide_error ();
-                switch (e.keyval) {
-                case Key.Tab:
-                    // activate other panel.
-                    active = false;
-                    return true;
-                case Key.space:
-                    if (m_cursor_path != null) {
-                        toggle_selected (m_cursor_path);
-                    }
-                    return true;
-                case Key.Return:
-                    if (m_cursor_path != null) {
-                        activate_row (m_cursor_path);
-                    }
-                    return true;
-                case Key.Menu:
-                    if (m_cursor_path != null) {
-                        popup_menu_for (m_cursor_path);
-                    }
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /**
-         * Open popup menu (not yet implemented)
-         */
-        private void popup_menu_for (TreePath path)
-        {
-            // TODO: popup menu!
-        }
-
-        /**
-         * Activate row - double-click or return key; open file.
-         */
-        public void activate_row (TreePath path)
-        {
-            // get the FileInfo:
-            TreeIter? iter = null;
-            m_sorted_list.get_iter (out iter, path);
-            if (iter != null) {
-                Value file_info_val;
-                m_sorted_list.get_value (iter, COL_FILEINFO, out file_info_val);
-                FileInfo file_info = (FileInfo) file_info_val.get_object ();
-
-                activate_file.begin (file_info, null);
-            }
-        }
 
 
-        private void toggle_selected (TreePath path)
+        private void
+        toggle_selected (TreePath path)
         {
             TreeIter? iter;
             m_sorted_list.get_iter (out iter, path);
@@ -1001,7 +1094,37 @@ namespace Emperor.Application {
             }
         }
 
-        private void restyle_complete_list ()
+
+        /* *****************************************************
+         * TreePath & TreeIter HANDLING
+         ******************************************************/
+
+        public FileInfo
+        get_fileinfo (TreePath path)
+        {
+            Value finfo_val;
+            TreeIter iter;
+            m_sorted_list.get_iter (out iter, path);
+            m_sorted_list.get_value (iter, COL_FILEINFO, out finfo_val);
+            return (FileInfo) finfo_val.get_object ();
+        }
+
+        
+        private void
+        toplevel_iter_to_data_iter (out TreeIter data_iter, TreeIter toplevel_iter)
+        {
+            TreeIter filter_iter;
+            m_sorted_list.convert_iter_to_child_iter (out filter_iter, toplevel_iter);
+            m_list_filter.convert_iter_to_child_iter (out data_iter, filter_iter);
+        }
+
+
+        /* *****************************************************
+         * LINE STYLING
+         ******************************************************/
+
+        private void
+        restyle_complete_list ()
         {
 
             // If there is nothing there, give up.
@@ -1021,7 +1144,8 @@ namespace Emperor.Application {
             }
         }
 
-        private void restyle_path (TreePath path, bool cursor=false)
+        private void
+        restyle_path (TreePath path, bool cursor=false)
         {
             if (path != null) {
                 TreeIter? iter;
@@ -1034,7 +1158,8 @@ namespace Emperor.Application {
             }
         }
 
-        private void restyle (TreeIter unsorted_iter, bool cursor=false)
+        private void
+        restyle (TreeIter unsorted_iter, bool cursor=false)
         {
             // Dummy GLib.Value objects
             var falsevalue = Value(typeof(bool));
@@ -1126,50 +1251,5 @@ namespace Emperor.Application {
                 }
             }
         }
-
-        public override void
-        show_all ()
-        {
-            base.show_all ();
-            hide_error ();
-        }
-
-
-        /**
-         * Wraps an Emperor CompareFunc (for a column to produce a
-         * TreeIterCompareFunc that also sorts based on the global sort functions.
-         */
-        private class TreeIterCompareFuncWrapper : Object
-        {
-            int m_col;
-            unowned CompareFunc m_cmp;
-            unowned TreeIterCompareFunc m_prio_sort;
-
-            public TreeIterCompareFuncWrapper (int column, CompareFunc cmp,
-                                               TreeIterCompareFunc priosort)
-            {
-                m_col = column;
-                m_cmp = cmp;
-                m_prio_sort = priosort;
-            }
-
-            public int compare_treeiter (TreeModel model, TreeIter it_a, TreeIter it_b)
-            {
-                int prio_d = m_prio_sort (model, it_a, it_b);
-                if (prio_d != 0) {
-                    return prio_d;
-                }
-
-                Value a, b;
-                model.get_value(it_a, m_col, out a);
-                model.get_value(it_b, m_col, out b);
-                return m_cmp(a, b);
-            }
-        }
-
-        
     }
-
 }
-
-
