@@ -5,8 +5,8 @@ echo +++ Running intltoolize ... &&
 intltoolize --force --copy &&
 cat >>po/Makefile.in.in <<EOF
 
-../xml/_config_xml_strings.h:
-	cd ../xml && \$(MAKE) _config_xml_strings.h
+../data/_column_names.h:
+	cd ../data && \$(MAKE) _column_names.h
 
 EOF
 echo +++ Running libtoolize ... &&
