@@ -1,5 +1,6 @@
 #!/bin/sh
 
+mkdir -p m4 &&
 echo +++ Running intltoolize ... &&
 intltoolize --force --copy &&
 cat >>po/Makefile.in.in <<EOF

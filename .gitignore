@@ -16,6 +16,7 @@ Makefile.in
 .deps
 .libs
 /autom4te.cache
+/m4
 /INSTALL
 /intltool-extract
 /intltool-extract.in
