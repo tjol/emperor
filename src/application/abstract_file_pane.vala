@@ -411,7 +411,7 @@ namespace Emperor.App {
             }
             
             // save pwd to prefs
-            application.prefs.set_string (designation + "-pwd", pwd.get_parse_name());
+            application.config["preferences"].set_string (designation + "-pwd", pwd.get_parse_name());
 
             set_busy_state (false);
 

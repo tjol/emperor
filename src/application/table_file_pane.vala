@@ -48,6 +48,10 @@ namespace Emperor.App {
         FileInfoColumn[] m_store_cells;
         Type[] m_store_types;
         Map<int,TreeIterCompareFuncWrapper> m_cmp_funcs;
+
+        int m_default_sort_column = -1;
+        SortType m_default_sort_type;
+        bool m_fix_columns_flag = false;
         
         
         // Indices of well-known data columns in the TreeModel
@@ -79,7 +83,7 @@ namespace Emperor.App {
         {
             Object ( application : app,
                      owning_window : app.main_window,
-                     designation : designation );
+                     designation : pane_designation );
         }
 
         construct {
@@ -207,11 +211,12 @@ namespace Emperor.App {
             TreeViewColumn last_col = null;
             foreach (var tvcol in m_list.get_columns()) {
                 var pref_w_name = "%s-col-width-%d".printf(designation, colidx);
-                application.prefs.set_int32 (pref_w_name, tvcol.width);
+                application.config["preferences"].set_int (pref_w_name, tvcol.width);
                 last_col = tvcol;
                 colidx ++;
             }
             last_col.sizing = TreeViewColumnSizing.GROW_ONLY;
+            m_fix_columns_flag = true;
         }
 
         /**
@@ -220,13 +225,19 @@ namespace Emperor.App {
         private void
         fix_column_sizes ()
         {
-            TreeViewColumn last_col = null;
-            foreach (var tvcol in m_list.get_columns()) {
-                tvcol.fixed_width = tvcol.width;
-                tvcol.sizing = TreeViewColumnSizing.FIXED;
-                last_col = tvcol;
+            if (m_fix_columns_flag) {
+
+                TreeViewColumn last_col = null;
+                foreach (var tvcol in m_list.get_columns()) {
+                    tvcol.fixed_width = tvcol.width;
+                    tvcol.sizing = TreeViewColumnSizing.FIXED;
+                    last_col = tvcol;
+                }
+                last_col.sizing = TreeViewColumnSizing.GROW_ONLY;
             }
-            last_col.sizing = TreeViewColumnSizing.GROW_ONLY;
+            // by the next time this method is called, the columns will have sensible
+            // sizes, and we won't need Gtk's help any more.
+            m_fix_columns_flag = true;
         }
 
         /**
@@ -306,13 +317,15 @@ namespace Emperor.App {
 
                 // get width from prefs
                 var pref_w_name = "%s-col-width-%d".printf(designation,colidx);
-                var pref_w = application.prefs.get_int32 (pref_w_name, -1);
+                var pref_w = application.config["preferences"].get_int_default (pref_w_name, -1);
                 if (pref_w > 0) {
                     tvcol.sizing = TreeViewColumnSizing.FIXED;
-                    tvcol.fixed_width = pref_w;
-                } else if (col.default_width > 0) {
-                    tvcol.sizing = TreeViewColumnSizing.FIXED;
-                    tvcol.fixed_width = col.default_width;
+                    tvcol.fixed_width = (int) pref_w;
+                    m_fix_columns_flag = true;
+                } else if (col.expand) {
+                    tvcol.sizing = TreeViewColumnSizing.GROW_ONLY;
+                } else {
+                    tvcol.sizing = TreeViewColumnSizing.AUTOSIZE;
                 }
                 
                 // Add cells within column
@@ -335,6 +348,12 @@ namespace Emperor.App {
                     }
                     // next cell / column of data
                     idx++;
+                }
+
+                // Is sorting by this column recommended?
+                if (col.default_sort != null) {
+                    m_default_sort_type = col.default_sort;
+                    m_default_sort_column = tvcol.get_sort_column_id();
                 }
 
                 // done with column.
@@ -516,8 +535,8 @@ namespace Emperor.App {
 
             m_sorted_list.get_sort_column_id (out sort_column, out sort_type);
 
-            application.prefs.set_int32 (designation + "-sort-column", (int32) sort_column);
-            application.prefs.set_string (designation + "-sort-type", 
+            application.config["preferences"].set_int (designation + "-sort-column", (int64) sort_column);
+            application.config["preferences"].set_string (designation + "-sort-type", 
                                     sort_type == SortType.ASCENDING ? "asc" : "desc");
         }
 
@@ -527,9 +546,13 @@ namespace Emperor.App {
         private void
         get_sort_from_prefs (TreeSortable model)
         {
-            int sort_column = (int) application.prefs.get_int32 (designation + "-sort-column", -1);
-            string sort_type_str = application.prefs.get_string (designation + "-sort-type", null);
+            int sort_column = (int) application.config["preferences"].get_int_default (designation + "-sort-column", -1);
+            string sort_type_str = application.config["preferences"].get_string (designation + "-sort-type", null);
             if (sort_column == -1 || sort_type_str == null) {
+                // There is no user preference. If there's a default, go with that.
+                if (m_default_sort_column >= 0) {
+                    model.set_sort_column_id (m_default_sort_column, m_default_sort_type);
+                }
                 return;
             }
 

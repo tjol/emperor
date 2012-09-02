@@ -67,10 +67,11 @@ namespace Emperor.App {
         internal class FilePaneColumn
         {
             internal string title;
-            internal int default_width;
+            internal bool expand;
             internal LinkedList<FileInfoColumn> cells;
             internal FileInfoColumn sort_column;
             internal unowned CompareFunc cmp_function;
+            internal SortType? default_sort;
         }
 
         /**
@@ -107,6 +108,7 @@ namespace Emperor.App {
 
         EmperorCore m_app;
         internal LinkedList<FilePaneColumn> panel_columns { get; private set; }
+        internal HashMap<string,FilePaneColumn>? standard_columns { get; private set; }
         internal LinkedList<StyleDirective> style_directives { get; private set; }
         internal AboutStyle style_info { get; private set; }
         internal LinkedList<Gtk.Action> command_buttons { get; private set; }
@@ -137,13 +139,8 @@ namespace Emperor.App {
             m_app = app;
             create_style_context ();
 
-            style_directives = new LinkedList<StyleDirective> ();
-            style_info = new AboutStyle();
-            style_info.selected_style_uses_focus = false;
-            style_info.cursor_style_uses_focus = false;
-            style_info.other_styles_use_focus = false;
-
             panel_columns = new LinkedList<FilePaneColumn> ();
+            standard_columns = null;
             command_buttons = new LinkedList<Gtk.Action> ();
 
             m_menus = new HashMap<string,Gtk.Menu> ();
@@ -218,249 +215,331 @@ namespace Emperor.App {
         }
 
 
-        FilePaneColumn? _current_column = null;
-
-        internal void handle_config_xml_nodes (Xml.Node* parent)
-                        throws ConfigurationError
+        internal void
+        load_style_configuration ()
+            throws ConfigurationError
         {
-            for (Xml.Node* node = parent->children; node != null; node = node->next) {
-                switch (parent->name) {
+            
+            var style_cfg_node = m_app.config["user-interface"]["file-pane-style"];
 
-                case "user-interface":
-                    if (node->type == Xml.ElementType.ELEMENT_NODE) {
-                        if (node->name == "file-pane" || node->name == "command-bar") {
-                            handle_config_xml_nodes (node);
-                        } else {
-                            throw new ConfigurationError.INVALID_ERROR(
-                                        _("Unexpected element: %s").printf(node->name));
-                        }
+            reconfigure_style (style_cfg_node);
+
+            m_app.config["user-interface"].property_changed["file-pane-style"].connect (
+                (style_data) => {
+                    try {
+                        reconfigure_style (style_data);
+                    } catch (ConfigurationError style_err) {
+                        warning (_("New UI configuration is invalid. Reverting."));
+                        m_app.config["user-interface"].reset_to_default("file-pane-style");
                     }
-                    break;
+                });
+        }
 
-                case "file-pane":
-                    if (node->type == Xml.ElementType.ELEMENT_NODE) {
-                        switch (node->name) {
-                        case "columns":
-                        case "style":
-                            handle_config_xml_nodes (node);
-                            break;
-                        default:
-                            throw new ConfigurationError.INVALID_ERROR(
-                                        _("Unexpected element: %s").printf(node->name));
-                        }
-                    }
-                    break;
+        private void
+        reconfigure_style (Json.Node style_data)
+            throws ConfigurationError
+        {
+            var new_style_directives = new LinkedList<StyleDirective> ();
+            var new_style_info = new AboutStyle();
+            new_style_info.selected_style_uses_focus = false;
+            new_style_info.cursor_style_uses_focus = false;
+            new_style_info.other_styles_use_focus = false;
 
-                case "columns":
-                    if (node->type == Xml.ElementType.ELEMENT_NODE) {
-                        if (node->name == "column") {
-                            
-                            _current_column = new FilePaneColumn();
+            if (style_data.get_node_type () != Json.NodeType.ARRAY) {
+                throw new ConfigurationError.INVALID_ERROR (_("UI configuration is invalid."));
+            }
 
-                            var title = node->get_prop("title");
-                            if (title == null) {
-                                var xtitle = node->get_prop("xtitle");
-                                if (xtitle != null) {
-                                    title = _(xtitle);
-                                } else {
-                                    title = "";
-                                }
-                            }
-                            var width_s = node->get_prop("default-width");
-                            if (width_s == null) {
-                                width_s = "0";
-                            }
-                            _current_column.title = title;
-                            _current_column.default_width = int.parse(width_s);
-                            _current_column.cells = new LinkedList<FileInfoColumn>();
-                            handle_config_xml_nodes (node);
-                            panel_columns.add(_current_column);
-
-                        } else {
-                            throw new ConfigurationError.INVALID_ERROR(
-                                        _("Unexpected element: %s").printf(node->name));
-                        }
-                    }
-                    break;
-
-                case "column":
-                    if (node->type == Xml.ElementType.ELEMENT_NODE) {
-                        if (node->name == "cell") {
-
-                            var data = node->get_prop("data");
-                            if (data == null) {
-                                throw new ConfigurationError.INVALID_ERROR(
-                                            _("Cannot have cell without data"));
-                            }
-
-                            var coldata = m_app.modules.get_column(data);
-                            if (coldata == null) {
-                                throw new ConfigurationError.MODULE_ERROR(
-                                            _("Unknown column type: %s").printf(data));
-                            }
-
-                            var sortflag = node->get_prop("sort");
-                            if (sortflag != null) {
-                                if (_current_column.sort_column == null) {
-                                    unowned CompareFunc? sortfunc = m_app.modules.get_sort_function(sortflag);
-                                    if (sortfunc == null) {
-                                        throw new ConfigurationError.INVALID_ERROR(
-                                               _("Illegal value for \"sort\": \"%s\"").printf(sortflag));
-                                    } else {
-                                        _current_column.sort_column = coldata;
-                                        _current_column.cmp_function = sortfunc;
-                                    }
-                                } else {
-                                    throw new ConfigurationError.INVALID_ERROR(
-                                        _("There can be only one sorting cell per column."));
-                                }
-                            }
-
-                            _current_column.cells.add(coldata);
-
-                        } else {
-                            throw new ConfigurationError.INVALID_ERROR(
-                                        _("Unexpected element: %s").printf(node->name));
-                        }
-                    }
-                    break;
-
-                case "style":
-                    if (node->type == Xml.ElementType.ELEMENT_NODE) {
-                        var style = new StyleDirective();
-
-                        // Defaults
-                        style.target = StyleDirective.Target.ANY;
-                        style.file_type = (FileType)(-1);
-
-                        switch (node->name) {
-                        case "cursor":
-                            style.target = StyleDirective.Target.CURSOR;
-                            break;
-                        case "selected":
-                            style.target = StyleDirective.Target.SELECTED;
-                            break;
-                        case "directory":
-                            style.file_type = FileType.DIRECTORY;
-                            break;
-                        case "symlink":
-                            style.file_type = FileType.SYMBOLIC_LINK;
-                            break;
-                        case "special":
-                            style.file_type = FileType.SPECIAL;
-                            break;
-                        case "shortcut":
-                            style.file_type = FileType.SHORTCUT;
-                            break;
-                        case "mountable":
-                            style.file_type = FileType.MOUNTABLE;
-                            break;
-                        case "regular":
-                            style.file_type = FileType.REGULAR;
-                            break;
-                        case "unknown-type":
-                            style.file_type = FileType.UNKNOWN;
-                            break;
-                        default:
-                            throw new ConfigurationError.INVALID_ERROR(
-                                    _("Unexpected element: %s").printf(node->name));
-                        }
-
-                        var pane_str = node->get_prop("pane");
-                        switch (pane_str) {
-                        case "active":
-                            style.pane = FilePaneState.ACTIVE;
-                            break;
-                        case "inactive":
-                        case "passive":
-                            style.pane = FilePaneState.PASSIVE;
-                            break;
-                        case "either":
-                        case null:
-                            style.pane = FilePaneState.EITHER;
-                            break;
-                        default:
-                            throw new ConfigurationError.INVALID_ERROR(
-                                    _("Illegal value for \"pane\": \"%s\"").printf(pane_str));
-                        }
-
-                        if (style.pane != FilePaneState.EITHER) {
-                            if (style.target == StyleDirective.Target.CURSOR) {
-                                style_info.cursor_style_uses_focus = true;
-                            } else if (style.target == StyleDirective.Target.SELECTED) {
-                                style_info.selected_style_uses_focus = true;
-                            } else {
-                                style_info.other_styles_use_focus = true;
-                            }
-                        }
-
-                        style.fg = make_color(node->get_prop("fg"));
-                        style.bg = make_color(node->get_prop("bg"));
-
-                        var weight_str = node->get_prop ("weight");
-                        if (weight_str == "bold") {
-                            style.weight = 600;
-                        } else if (weight_str == null) {
-                            // pass.
-                        } else {
-                            throw new ConfigurationError.INVALID_ERROR(
-                                    _("Illegal value for \"weight\": \"%s\"").printf(weight_str));
-                        }
-                        var style_str = node->get_prop ("style");
-                        switch (style_str) {
-                        case null:
-                        case "normal":
-                            style.style = Pango.Style.NORMAL;
-                            break;
-                        case "oblique":
-                            style.style = Pango.Style.OBLIQUE;
-                            break;
-                        case "italic":
-                            style.style = Pango.Style.ITALIC;
-                            break;
-                        default:
-                            throw new ConfigurationError.INVALID_ERROR(
-                                    _("Illegal value for \"style\": \"%s\"").printf(style));
-                        }
-
-                        style_directives.add(style);
-
-                    }
-                    break;
-
-                case "command-bar":
-                    if (node->type == Xml.ElementType.ELEMENT_NODE) {
-                        if (node->name == "command-button") {
-                            var commandname = node->get_prop ("action");
-                            Gtk.Action action = null;
-
-                            if (commandname == null) {
-                                throw new ConfigurationError.INVALID_ERROR (
-                                    _("Each command button must an associated action."));
-                            } else {
-                                action = m_app.modules.actions.get_action (commandname);
-                                if (action == null) {
-                                    throw new ConfigurationError.MODULE_ERROR (
-                                        _("Unknown action: %s").printf(commandname));
-                                }
-                            }
-
-                            command_buttons.add (action);
-
-                        } else {
-                            throw new ConfigurationError.INVALID_ERROR(
-                                        _("Unexpected element: %s").printf(node->name));
-                        }
-                    }
-                    break;
-
-                default:
-                    throw new ConfigurationError.INVALID_ERROR(
-                                _("Unexpected element: %s").printf(parent->name));
-
+            foreach (var style_directive_node in style_data.get_array ().get_elements ()) {
+                if (style_directive_node.get_node_type () != Json.NodeType.OBJECT) {
+                    throw new ConfigurationError.INVALID_ERROR (_("UI configuration is invalid."));
                 }
+                var style_directive_obj = style_directive_node.get_object ();
+
+                var style = new StyleDirective ();
+
+                // Target?
+                var target_node = style_directive_obj.get_member ("target");
+                style.target = StyleDirective.Target.ANY;
+                if (target_node != null && target_node.get_value_type () == typeof(string)) {
+                    if (target_node.get_string () == "cursor") {
+                        style.target = StyleDirective.Target.CURSOR;
+                    } else if (target_node.get_string () == "selected") {
+                        style.target = StyleDirective.Target.SELECTED;
+                    }
+                }
+
+                // File type?
+                var file_type_node = style_directive_obj.get_member ("file-type");
+                style.file_type = (FileType) (-1);
+                if (file_type_node != null && file_type_node.get_value_type () == typeof(string)) {
+                    if (file_type_node.get_string () == "directory") {
+                        style.file_type = FileType.DIRECTORY;
+                    } else if (file_type_node.get_string () == "symlink") {
+                        style.file_type = FileType.SYMBOLIC_LINK;
+                    } else if (file_type_node.get_string () == "special") {
+                        style.file_type = FileType.SPECIAL;
+                    } else if (file_type_node.get_string () == "shortcut") {
+                        style.file_type = FileType.SHORTCUT;
+                    } else if (file_type_node.get_string () == "mountable") {
+                        style.file_type = FileType.MOUNTABLE;
+                    } else if (file_type_node.get_string () == "regular") {
+                        style.file_type = FileType.REGULAR;
+                    } else if (file_type_node.get_string () == "unknown-type") {
+                        style.file_type = FileType.UNKNOWN;
+                    } else {
+                        throw new ConfigurationError.INVALID_ERROR (_("UI configuration is invalid."));
+                    }
+                }
+
+                // Pane state?
+                var pane_node = style_directive_obj.get_member ("pane");
+                style.pane = FilePaneState.EITHER;
+                if (pane_node != null && pane_node.get_value_type () == typeof(string)) {
+                    if (pane_node.get_string () == "either") {
+                        style.pane = FilePaneState.EITHER;
+                    } else {
+                        if (pane_node.get_string () == "active") {
+                            style.pane = FilePaneState.ACTIVE;
+                        } else if (pane_node.get_string () == "passive") {
+                            style.pane = FilePaneState.PASSIVE;
+                        } else {
+                            throw new ConfigurationError.INVALID_ERROR (_("UI configuration is invalid."));
+                        }
+                        // This style uses focus. Record this exciting news!
+                        switch (style.target) {
+                        case StyleDirective.Target.CURSOR:
+                            new_style_info.cursor_style_uses_focus = true;
+                            break;
+                        case StyleDirective.Target.SELECTED:
+                            new_style_info.selected_style_uses_focus = true;
+                            break;
+                        default:
+                            new_style_info.other_styles_use_focus = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Foreground color?
+                var fg_node = style_directive_obj.get_member ("color");
+                if (fg_node != null && fg_node.get_value_type () == typeof(string)) {
+                    style.fg = make_color (fg_node.get_string ());
+                } else {
+                    style.fg = null;
+                }
+
+                // Background color?
+                var bg_node = style_directive_obj.get_member ("background-color");
+                if (bg_node != null && bg_node.get_value_type () == typeof(string)) {
+                    style.bg = make_color (bg_node.get_string ());
+                } else {
+                    style.bg = null;
+                }
+
+                // Font weight?
+                var weight_node = style_directive_obj.get_member ("weight");
+                if (weight_node != null) {
+                    if (weight_node.get_value_type () == typeof(string) &&
+                            weight_node.get_string () == "bold") {
+                        style.weight = 600;
+                    } else if (weight_node.get_value_type () == typeof(int64)) {
+                        style.weight = (int) weight_node.get_int ();
+                    }
+                }
+
+                // Font style?
+                var font_style_node = style_directive_obj.get_member ("style");
+                style.style = Pango.Style.NORMAL;
+                if (font_style_node != null && font_style_node.get_value_type () == typeof(string)) {
+                    if (font_style_node.get_string () == "oblique") {
+                        style.style = Pango.Style.OBLIQUE;
+                    } else if (font_style_node.get_string () == "italic") {
+                        style.style = Pango.Style.ITALIC;
+                    }
+                }
+
+                new_style_directives.add (style);
+            }
+
+            style_directives = new_style_directives;
+            style_info = new_style_info;
+
+            styles_changed ();
+        }
+
+        public signal void styles_changed ();
+
+        /**
+         * Load column-types.json into {@link standard_columns}
+         */
+        private void
+        load_column_types ()
+            throws ConfigurationError
+        {
+            standard_columns = new HashMap<string,FilePaneColumn> ();
+            var parser = new Json.Parser ();
+            var coltypes_filename = m_app.get_config_file_path ("column-types.json");
+            try {
+                parser.load_from_file (coltypes_filename);
+            } catch (Error load_err) {
+                throw new ConfigurationError.PARSE_ERROR (load_err.message);
+            }
+
+            var root_node = parser.get_root ();
+            if (root_node.get_node_type () != Json.NodeType.OBJECT) {
+                throw new ConfigurationError.INVALID_ERROR (_("Column type configuration is invalid!"));
+            }
+
+            var root_object = root_node.get_object ();
+            foreach (string col_name in root_object.get_members ()) {
+                var col_node = root_object.get_member (col_name);
+
+                if (col_node.get_node_type () != Json.NodeType.OBJECT) {
+                    throw new ConfigurationError.INVALID_ERROR (_("Column type configuration is invalid!"));
+                }
+
+                var col_object = col_node.get_object ();
+                var column = read_json_column_object (col_object, true);
+
+                standard_columns[col_name] = column;
             }
         }
+
+        private FilePaneColumn
+        read_json_column_object (Json.Object col_object, bool use_gettext)
+            throws ConfigurationError
+        {
+            var column = new FilePaneColumn ();
+
+            // Title
+            if (col_object.has_member ("title") &&
+                col_object.get_member ("title").get_value_type () == typeof(string)) {
+                if (use_gettext) {
+                    column.title = _(col_object.get_string_member ("title"));
+                } else {
+                    column.title = col_object.get_string_member ("title");
+                }
+            } else {
+                throw new ConfigurationError.INVALID_ERROR (_("Column type configuration is invalid!"));
+            }
+
+            // Expand?
+            if (col_object.has_member ("expand") &&
+                    col_object.get_member ("expand").get_value_type () == typeof(bool)) {
+                column.expand = col_object.get_boolean_member ("expand");
+            } else {
+                column.expand = false;
+            }
+
+            // Sort by default?
+            column.default_sort = null;
+            if (col_object.has_member ("sort-by-default") &&
+                    col_object.get_member ("sort-by-default").get_value_type () == typeof(string)) {
+                var sort_recommendation_string = col_object.get_string_member ("sort-by-default");
+                if (sort_recommendation_string == "ascending") {
+                    column.default_sort = SortType.ASCENDING;
+                } else if (sort_recommendation_string == "descending") {
+                    column.default_sort = SortType.DESCENDING;
+                } 
+            }
+
+            // Cells.
+            if (col_object.has_member ("cells") &&
+                    col_object.get_member ("cells").get_node_type () == Json.NodeType.ARRAY) {
+
+                column.cells = new LinkedList<FileInfoColumn> ();
+                
+                foreach (var cell_node in col_object.get_array_member ("cells").get_elements ()) {
+                    if (cell_node.get_node_type () != Json.NodeType.OBJECT) {
+                        throw new ConfigurationError.INVALID_ERROR (_("Column type configuration is invalid!"));        
+                    }
+                    var cell_object = cell_node.get_object ();
+                    FileInfoColumn coldata = null;
+
+                    if (cell_object.has_member ("data") &&
+                            cell_object.get_member ("data").get_value_type () == typeof(string)) {
+                        
+                        coldata = m_app.modules.get_column (cell_object.get_string_member ("data"));
+                        column.cells.add (coldata);
+
+                    } else {
+                        throw new ConfigurationError.INVALID_ERROR (_("Column type configuration is invalid!"));
+                    }
+
+                    if (cell_object.has_member ("sort") &&
+                            cell_object.get_member ("sort").get_value_type () == typeof(string)) {             
+                        var sortflag = cell_object.get_string_member ("sort");
+                        unowned CompareFunc sortfunc = m_app.modules.get_sort_function (sortflag);
+                        if (sortfunc == null) {
+                            throw new ConfigurationError.INVALID_ERROR(
+                                _("Illegal value for \"sort\": \"%s\"").printf(sortflag));
+                        }
+                        column.sort_column = coldata;
+                        column.cmp_function = sortfunc;
+                    }
+                }
+            } else {
+                throw new ConfigurationError.INVALID_ERROR (_("Column type configuration is invalid!"));
+            }
+
+            return column;
+        }
+
+        internal void
+        load_column_configuration ()
+            throws ConfigurationError
+        {
+            if (standard_columns == null) {
+                load_column_types ();
+            }
+
+            var col_cfg_node = m_app.config["user-interface"]["file-pane-columns"];
+
+            reload_columns (col_cfg_node);
+
+            m_app.config["user-interface"].property_changed["file-pane-columns"].connect (
+                (col_config) => {
+                    try {
+                        reload_columns (col_config);
+                    } catch (ConfigurationError style_err) {
+                        warning (_("New UI configuration is invalid. Reverting."));
+                        m_app.config["user-interface"].reset_to_default("file-pane-columns");
+                    }
+                });
+        }
+
+        private void
+        reload_columns (Json.Node col_config)
+            throws ConfigurationError
+        {
+            var new_columns = new LinkedList<FilePaneColumn> ();
+
+            if (col_config.get_node_type () != Json.NodeType.ARRAY) {
+                throw new ConfigurationError.INVALID_ERROR (_("UI configuration is invalid."));
+            }
+
+            foreach (var column_node in col_config.get_array ().get_elements ()) {
+                if (column_node.get_node_type () == Json.NodeType.OBJECT) {
+                    new_columns.add (read_json_column_object (column_node.get_object (), false));
+                } else if (column_node.get_value_type () == typeof(string)) {
+                    var col_name = column_node.get_string ();
+                    if (standard_columns.has_key (col_name)) {
+                        new_columns.add (standard_columns[col_name]);
+                    } else {
+                        throw new ConfigurationError.MODULE_ERROR (
+                            _("Unknown column ID: %s").printf (col_name));
+                    }
+                } else {
+                    throw new ConfigurationError.INVALID_ERROR (_("UI configuration is invalid."));
+                }
+            }
+
+            panel_columns = new_columns;
+
+            columns_changed ();
+        }
+
+        public signal void columns_changed ();
 
         private StyleContext m_style_context;
         private WidgetPath m_entry_path;

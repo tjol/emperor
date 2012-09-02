@@ -32,44 +32,38 @@ namespace Emperor.App {
         public MountManager mount_manager { get; private set; }
         public MainWindow main_window { get; private set; }
         public AppManager external_apps { get; private set; }
-        public PrefsMachine prefs { get; private set; }
+        public ConfigurationManager config { get; private set; }
 
         private string? m_config_dir;
 
         public EmperorCore (string? module_location, string? config_dir)
                 throws ConfigurationError
         {
-            Object ( application_id : "de.jollybox.Emperor", flags : ApplicationFlags.FLAGS_NONE);
+            Object ( application_id : "de.jollybox.Emperor", flags : ApplicationFlags.FLAGS_NONE );
 
             // Initialize the essentials
-
-            Xml.Parser.init ();
             m_config_dir = config_dir;
 
-            prefs = new PrefsMachine ();
-            if (!prefs.load ()) {
-                stderr.printf ("Failed to load preferences file.\n");
+            config = new ConfigurationManager (this);
+
+            // get system config file
+            config.load_config_file (get_config_file_path ("config.json", false, true));
+            config.set_baseline_configuration ();
+            // get user config file
+            try {
+                config.load_config_file (get_config_file_path("config.json", true, false));
+            } catch (ConfigurationError user_config_err) {
+                warning (_("Failed to load user configuration file."));
             }
+
             modules = new ModuleRegistry (this, module_location);
             ui_manager = new UserInterfaceManager (this);
             external_apps = new AppManager (this);
             mount_manager = new MountManager (this);
 
-            // read the XML configuration.
-
-            var config_fname = get_config_file_path ("config.xml");
-            
-            Xml.Doc* document = Xml.Parser.read_file (config_fname);
-            if (document == null) {
-                throw new ConfigurationError.PARSE_ERROR (config_fname);
-            }
-
-            try {
-                Xml.Node* root = document->get_root_element ();
-                handle_config_xml_nodes(root);
-            } finally {
-                delete document;
-            }
+            modules.load_config_modules ();
+            ui_manager.load_style_configuration ();
+            ui_manager.load_column_configuration ();
 
             // Set up about dialog
 
@@ -86,41 +80,29 @@ namespace Emperor.App {
             this.application_quit.connect (on_quit);
         }
 
-        ~EmperorCore ()
-        {
-            Xml.Parser.cleanup ();
-        }
-
         /**
          * Find configuration file name. Looks in the directory supplied
          * on the command line, and in the default user and system config
          * locations.
          */
-        public string get_config_file_path (string basename)
+        public string get_config_file_path (string basename, bool for_user=true, bool for_system=true)
             throws ConfigurationError
         {
             string path;
             File file;
 
-            // First, try the config dir set on the command line.
-            path = "%s/%s".printf (m_config_dir, basename);
-            file = File.new_for_path (path);
-            if (file.query_exists() == true) {
-                return path;
+            if (for_system) {
+                // First, try the config dir set on the command line.
+                path = "%s/%s".printf (m_config_dir, basename);
+                file = File.new_for_path (path);
+                if (file.query_exists() == true) {
+                    return path;
+                }
             }
 
-            // Next, try the XDG data home dir
-            path = "%s/%s/%s".printf (Environment.get_user_data_dir (),
-                                      Config.PACKAGE_NAME,
-                                      basename);
-            file = File.new_for_path (path);
-            if (file.query_exists() == true) {
-                return path;
-            }
-
-            // Now, the XDG system data dirs.
-            foreach (var datadir in Environment.get_system_data_dirs ()) {
-                path = "%s/%s/%s".printf (datadir,
+            if (for_user) {
+                // Next, try the XDG data home dir
+                path = "%s/%s/%s".printf (Environment.get_user_config_dir (),
                                           Config.PACKAGE_NAME,
                                           basename);
                 file = File.new_for_path (path);
@@ -129,12 +111,25 @@ namespace Emperor.App {
                 }
             }
 
-            // Finally, the autoconf-set data dir.
-            path = "%s/%s".printf (Config.DATA_DIR,
-                                   basename);
-            file = File.new_for_path (path);
-            if (file.query_exists() == true) {
-                return path;
+            if (for_system) {
+                // Now, the XDG system data dirs.
+                foreach (var datadir in Environment.get_system_data_dirs ()) {
+                    path = "%s/%s/%s".printf (datadir,
+                                              Config.PACKAGE_NAME,
+                                              basename);
+                    file = File.new_for_path (path);
+                    if (file.query_exists() == true) {
+                        return path;
+                    }
+                }
+
+                // Finally, the autoconf-set data dir.
+                path = "%s/%s".printf (Config.DATA_DIR,
+                                       basename);
+                file = File.new_for_path (path);
+                if (file.query_exists() == true) {
+                    return path;
+                }
             }
 
             throw new ConfigurationError.NOT_FOUND_ERROR (
@@ -153,32 +148,7 @@ namespace Emperor.App {
                 return "%s/res/%s".printf (Config.DATA_DIR, path);
             }
         }
-
-        private void handle_config_xml_nodes (Xml.Node* parent)
-                        throws ConfigurationError
-        {
-            if (parent->name != "emperor-config") {
-                throw new ConfigurationError.INVALID_ERROR(
-                            _("Unexpected root element: %s").printf(parent->name));
-            }
-
-            for (Xml.Node* node = parent->children; node != null; node = node->next) {
-                if (node->type == Xml.ElementType.ELEMENT_NODE) {
-                    switch (node->name) {
-                    case "modules":
-                        modules.handle_config_xml_nodes (node);
-                        break;
-                    case "user-interface":
-                        ui_manager.handle_config_xml_nodes (node);
-                        break;
-                    default:
-                        throw new ConfigurationError.INVALID_ERROR(
-                                    _("Unexpected element: %s").printf(node->name));
-                    }
-                }
-            }
-        }
-
+ 
         /**
          * Refer a file to the operating system.
          *
@@ -224,7 +194,21 @@ namespace Emperor.App {
 
         private void on_quit ()
         {
-            prefs.save ();
+            // Save the configuration file to the user's config directory.
+            var cfg_dir = "%s/%s".printf (Environment.get_user_config_dir (),
+                                          Config.PACKAGE_NAME);
+            var cfg_path = "%s/%s".printf (cfg_dir,
+                                           "config.json");
+
+            var gio_cfg_dir = File.new_for_path (cfg_dir);
+            try {
+                if (!gio_cfg_dir.query_exists ()) {
+                    gio_cfg_dir.make_directory_with_parents ();
+                }
+                config.save_changes (cfg_path);
+            } catch (Error err) {
+                warning (_("Error writing configuration file: %s").printf(err.message));
+            }
         }
 
         public void show_about_dialog ()

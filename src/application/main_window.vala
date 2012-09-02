@@ -31,10 +31,15 @@ namespace Emperor.App {
 
         VBox m_main_box;
         HPaned m_panes;
-        HBox m_command_buttons;
 
         public FilePane left_pane { get; private set; }
         public FilePane right_pane { get; private set; }
+
+        public VBox main_vbox {
+            get {
+                return m_main_box;
+            }
+        }
 
         /**
          * Returns the active pane. This property does NOT notify. Setting this property
@@ -84,29 +89,11 @@ namespace Emperor.App {
 
             m_main_box.pack_start (m_panes, true, true, 0);
 
-            // Get command buttons from UI configuration.
-            m_command_buttons = new HBox (false, 3);
-            foreach (var act in m_app.ui_manager.command_buttons) {
-                AccelKey key;
-                AccelMap.lookup_entry (act.get_accel_path(), out key);
-                var btn = new Button.with_label ("%s %s".printf(
-                        accelerator_get_label (key.accel_key, key.accel_mods),
-                        act.short_label.replace("_","")));
-                btn.clicked.connect (() => {
-                        act.activate ();
-                    });
-                m_command_buttons.pack_start (btn, true, true, 0);
-            }
-            //m_command_buttons.halign = Align.START;
-            m_command_buttons.margin = 3;
-
-            m_main_box.pack_start (m_command_buttons, false, true, 0);
-
             add (m_main_box);
 
             // Window size, from prefs.
-            set_default_size (m_app.prefs.get_int32("window-x", 900),
-                              m_app.prefs.get_int32("window-y", 500));
+            set_default_size ((int) m_app.config["preferences"].get_int_default ("window-x", 900),
+                              (int) m_app.config["preferences"].get_int_default ("window-y", 500));
             this.title = _("Emperor");
 
             destroy.connect (on_destroy);
@@ -173,8 +160,8 @@ namespace Emperor.App {
 
         void on_destroy ()
         {
-            m_app.prefs.set_int32 ("window-x", get_allocated_width());
-            m_app.prefs.set_int32 ("window-y", get_allocated_height());
+            m_app.config["preferences"].set_int ("window-x", get_allocated_width());
+            m_app.config["preferences"].set_int ("window-y", get_allocated_height());
         }
 
     }

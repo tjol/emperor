@@ -1,0 +1,86 @@
+{
+    "core": {
+        "modules":  [
+            "basic_columns",
+            "filters",
+            "basic_actions",
+            "file_transfer",
+            "sort",
+            "file_pane_title_bar",
+            "volume_toolbar",
+            "netmenu",
+            "monitor_directory",
+            "externalist",
+            "preview",
+            "quick_filter",
+            "command_button_bar"
+        ]
+    },
+    "user-interface": {
+        "file-pane-style": [
+            {   "target": "cursor",
+                "pane": "active",
+                "color": "gtk:entry:color:selected",
+                "background-color": "gtk:entry:background-color:selected"
+            },
+            {   "target": "cursor",
+                "pane": "passive",
+                "color": "gtk:entry:color:selected|backdrop",
+                "background-color": "gtk:entry:background-color:selected|backdrop"
+            },
+            {   "target": "selected",
+                "color": "red"
+            },
+            {   "file-type": "symlink",
+                "style": "italic"
+            }
+            
+        ],
+        "file-pane-columns": [
+            "filename-with-hint",
+            "file-size",
+            "date",
+            "mode"
+        ]
+    },
+    "command-button-bar": {
+        "buttons": [
+            "rename",
+            "view",
+            "edit",
+            "copy",
+            "move",
+            "mkdir",
+            "delete",
+            "openterm"
+        ]
+    },
+    "apps": {
+        "edit": [
+            {   "content-types": [
+                    "text/*",
+                    "application/json",
+                    "application/javascript",
+                    "application/*+xml",
+                    "application/xml"
+                ],
+                "launch-default-for-type": "text/plain"
+            },
+            {   "content-types": [
+                    "image/*"
+                ],
+                "launch-desktop-application": "gimp.desktop"
+            },
+            {   "content-types": [
+                    "image/svg+xml"
+                ],
+                "launch-desktop-application": "inkscape.desktop"
+            },
+            {   "content-types": [
+                    "audio/*"
+                ],
+                "launch-desktop-application": "audacity.desktop"
+            }
+        ]
+    }
+}

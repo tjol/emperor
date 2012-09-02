@@ -1,0 +1,55 @@
+{
+    "filename": {
+        "title": "Name",
+        "description": "File name with icon.",
+        "expand": true,
+        "sort-by-default": "ascending",
+        "cells": [
+            {   "data": "icon"
+            },
+            {   "data": "filename",
+                "sort": "filename-collation"
+            }
+        ]
+    },
+    "filename-with-hint": {
+        "title": "Name",
+        "description": "File name with icon and file-type hint.",
+        "expand": true,
+        "sort-by-default": "ascending",
+        "cells": [
+            {   "data": "icon"
+            },
+            {   "data": "filename-F",
+                "sort": "filename-collation"
+            }
+        ]
+    },
+    "file-size": {
+        "title": "Size",
+        "description": "File size.",
+        "cells": [
+            {   "data": "size",
+                "sort": "size"
+            }
+        ]
+    },
+    "date": {
+        "title": "Date",
+        "description": "File modification date and time.",
+        "cells": [
+            {   "data": "mtime",
+                "sort": "datetime"
+            }
+        ]
+    },
+    "mode": {
+        "title": "Mode",
+        "description": "UNIX file mode (permissions), in numeric format",
+        "cells": [
+            {   "data": "mode",
+                "sort": "text"
+            }
+        ]
+    }
+}

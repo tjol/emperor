@@ -141,12 +141,13 @@ public void load_module (ModuleRegistry reg)
                 mw.left_pane.remove_sort ("directories-first");
                 mw.right_pane.remove_sort ("directories-first");
             }
-            reg.application.prefs.set_boolean ("sort/directories-first", flag);
+            reg.application.config["preferences"].set_boolean ("sort/directories-first", flag);
         } );
     reg.application.ui_manager.add_action_to_menu (_("_View"), dir_first_act);
 
     reg.application.ui_manager.main_window_ready.connect ( (main_window) => {
-        bool dir_first = reg.application.prefs.get_boolean ("sort/directories-first", true);
+        bool dir_first = reg.application.config["preferences"]
+                .get_boolean_default ("sort/directories-first", true);
         dir_first_act.active = dir_first;
     } );
 }

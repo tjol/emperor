@@ -230,7 +230,7 @@ namespace Emperor.App {
          */
         public async bool chdir_from_pref ()
         {
-            var old_pwd_str = application.prefs.get_string (designation + "-pwd", null);
+            var old_pwd_str = application.config["preferences"].get_string (designation + "-pwd");
             File old_pwd;
             if (old_pwd_str != null) {
                 old_pwd = File.parse_name (old_pwd_str);

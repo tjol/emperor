@@ -43,19 +43,7 @@ namespace Emperor.App {
             m_view_apps = new GLib.List<AppCfgEntry> ();
             m_edit_apps = new GLib.List<AppCfgEntry> ();
 
-            var apps_xml_fname = m_app.get_config_file_path ("apps.xml");
-
-            Xml.Doc* document = Xml.Parser.read_file (apps_xml_fname);
-            if (document == null) {
-                throw new ConfigurationError.PARSE_ERROR (apps_xml_fname);
-            }
-
-            try {
-                Xml.Node* root = document->get_root_element ();
-                handle_apps_xml_nodes (root);
-            } finally {
-                delete document;
-            }
+            load_apps_from_config ();
         }
 
         private class AppCfgEntry
@@ -110,92 +98,95 @@ namespace Emperor.App {
         private GLib.List<AppCfgEntry> m_view_apps;
         private GLib.List<AppCfgEntry> m_edit_apps;
 
-        private AppCfgEntry _current_entry;
-
-        private void handle_apps_xml_nodes (Xml.Node* parent)
-                        throws ConfigurationError
+        internal void
+        load_apps_from_config ()
+            throws ConfigurationError
         {
-            for (Xml.Node* node = parent->children; node != null; node = node->next) {
-                switch (parent->name) {
-                case "emperor-apps":
-                    if (node->type == Xml.ElementType.ELEMENT_NODE) {
-                        if (node->name == "binding") {
-                            var s_action = node->get_prop ("action");
-                            if (s_action == "edit") {
-                                _current_entry = new AppCfgEntry (FileAction.EDIT);
-                            } else if (s_action == "view") {
-                                _current_entry = new AppCfgEntry (FileAction.VIEW);
-                            } else {
-                                throw new ConfigurationError.INVALID_ERROR (
-                                    _("Illegal value for binding action: %s").printf(s_action));
-                            }
-
-                            handle_apps_xml_nodes (node);
-
-                            if (_current_entry.action == FileAction.EDIT) {
-                                m_edit_apps.prepend (_current_entry);
-                            } else {
-                                m_view_apps.prepend (_current_entry);
-                            }
-
-                        } else {
-                            throw new ConfigurationError.INVALID_ERROR (
-                                        _("Unexpected element: %s").printf(node->name));
-                        }
-                    }
-                    break;
-
-                case "binding":
-                    if (node->type == Xml.ElementType.ELEMENT_NODE) {
-                        if (node->name == "match") {
-                            var ctype = node->get_prop ("content-type");
-                            if (ctype == null) {
-                                throw new ConfigurationError.INVALID_ERROR (
-                                            _("Empty match"));
-                            }
-                            _current_entry.content_types.add (ctype);
-
-                        } else if (node->name == "default-application") {
-                            var for_ctype = node->get_prop ("content-type");
-                            if (for_ctype == null) {
-                                throw new ConfigurationError.INVALID_ERROR (
-                                        _("default-application requires content-type"));
-                            }
-                            try {
-                                _current_entry.set_handler(get_default_for_type (for_ctype));
-                            } catch (Error e) {
-                                stderr.printf(_("Warning: no default application found for type: %s\n"),
-                                              for_ctype);
-                            }
-
-                        } else if (node->name == "desktop-application") {
-                            AppInfo appinfo = null;
-
-                            var app_name = node->get_prop ("name");
-                            var desktop_file_name = node->get_prop ("filename");
-                            if (app_name != null) {
-                                appinfo = new DesktopAppInfo (app_name);
-                            } else if (desktop_file_name != null) {
-                                appinfo = new DesktopAppInfo.from_filename (desktop_file_name);
-                            } else {
-                                throw new ConfigurationError.INVALID_ERROR (
-                                        _("desktop-application without source/reference"));
-                            }
-
-                            if (appinfo != null) {
-                                _current_entry.use_appinfo (appinfo);
-                            } else {
-                                stderr.printf(_("Warning: Application not found.\n"));
-                            }
-
-                        } else {
-                            throw new ConfigurationError.INVALID_ERROR (
-                                        _("Unexpected element: %s").printf(node->name));
-                        }
-                    }
-                    break;
-                }
+            var edit_apps_node = m_app.config["apps"]["edit"];
+            if (edit_apps_node == null) {
+                m_edit_apps = new GLib.List<AppCfgEntry> ();
+            } else if (edit_apps_node.get_node_type () == Json.NodeType.ARRAY) {
+                m_edit_apps = load_apps_from_json_array (edit_apps_node.get_array (),
+                                                         FileAction.EDIT);
+            } else {
+                throw new ConfigurationError.INVALID_ERROR (_("Default application configuration invalid."));
             }
+
+            var view_apps_node = m_app.config["apps"]["view"];
+            if (view_apps_node == null) {
+                m_view_apps = new GLib.List<AppCfgEntry> ();
+            } else if (view_apps_node.get_node_type () == Json.NodeType.ARRAY) {
+                m_view_apps = load_apps_from_json_array (edit_apps_node.get_array (),
+                                                         FileAction.VIEW);
+            } else {
+                throw new ConfigurationError.INVALID_ERROR (_("Default application configuration invalid."));
+            }
+        }
+
+        private GLib.List<AppCfgEntry>
+        load_apps_from_json_array (Json.Array apps_json, FileAction action)
+            throws ConfigurationError
+        {
+            var result_list = new GLib.List<AppCfgEntry> ();
+
+            foreach (var app_node in apps_json.get_elements ()) {
+                if (app_node.get_node_type () != Json.NodeType.OBJECT) {
+                    throw new ConfigurationError.INVALID_ERROR (_("Default application configuration invalid."));
+                }
+
+                result_list.prepend (load_app_from_json_object (app_node.get_object (),
+                                                                action));
+            }
+
+            return result_list;
+        }
+
+        private AppCfgEntry
+        load_app_from_json_object (Json.Object app_obj, FileAction action)
+            throws ConfigurationError
+        {
+            var appcfg = new AppCfgEntry (action);
+
+            // get the content types.
+            var types_node = app_obj.get_member ("content-types");
+            if (types_node == null || types_node.get_node_type () != Json.NodeType.ARRAY) {
+                throw new ConfigurationError.INVALID_ERROR (_("Default application configuration invalid."));
+            }
+            foreach (var type_node in types_node.get_array ().get_elements ()) {
+                if (type_node.get_value_type () != typeof (string)) {
+                    throw new ConfigurationError.INVALID_ERROR (_("Default application configuration invalid."));
+                }
+                appcfg.content_types.add (type_node.get_string ());
+            }
+
+            // What to do?
+            if (app_obj.has_member ("launch-default-for-type")) {
+                var ref_type_node = app_obj.get_member ("launch-default-for-type");
+                if (ref_type_node.get_value_type () != typeof(string)) {
+                    throw new ConfigurationError.INVALID_ERROR (_("Default application configuration invalid."));
+                }
+                try {
+                    appcfg.set_handler(get_default_for_type (ref_type_node.get_string ()));
+                } catch (Error e) {
+                    stderr.printf(_("Warning: no default application found for type: %s\n"),
+                                  ref_type_node.get_string ());
+                }
+            } else if (app_obj.has_member ("launch-desktop-application")) {
+                var appname_node = app_obj.get_member ("launch-desktop-application");
+                if (appname_node.get_value_type () != typeof(string)) {
+                    throw new ConfigurationError.INVALID_ERROR (_("Default application configuration invalid."));
+                }
+                var appinfo = new DesktopAppInfo (appname_node.get_string ());
+                if (appinfo == null) {
+                    stderr.printf(_("Warning: Application not found.\n"));
+                } else {
+                    appcfg.use_appinfo (appinfo);
+                }
+            } else {
+                throw new ConfigurationError.INVALID_ERROR (_("Default application configuration invalid."));
+            }
+
+            return appcfg;
         }
 
         public FileHandler get_default_for_type (string content_type)

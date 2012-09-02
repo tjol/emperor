@@ -3,8 +3,6 @@ src/application/archive_types.c
 src/application/mountwait-notification.c
 src/application/keynames.c
 src/application/keysyms_stamp.c
-src/application/prefs_machine.c
-src/application/file_pane.c
 src/application/emperor_core.c
 src/application/file_info_column.c
 src/application/mountwait.c
@@ -14,6 +12,10 @@ src/application/module_registry.c
 src/application/main_window.c
 src/application/user_interface_manager.c
 src/application/module_delegates.c
+src/application/abstract_file_pane.c
+src/application/configuration_manager.c
+src/application/mount_manager.c
+src/application/table_file_pane.c
 src/modules/netmenu.c
 src/modules/filters.c
 src/modules/file_transfer.c
@@ -24,3 +26,7 @@ src/modules/externalist.c
 src/modules/sort.c
 src/modules/basic_columns.c
 src/modules/preview.c
+src/modules/command_button_bar.c
+src/modules/file_pane_title_bar.c
+src/modules/quick_filter.c
+data/emperor.desktop.in.in

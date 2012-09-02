@@ -1,4 +1,4 @@
-SUBDIRS = xml po src data
+SUBDIRS = data po src
 
 INTLTOOL_FILES = intltool-extract.in \
 		 intltool-merge.in \
@@ -19,13 +19,13 @@ MAINTAINERCLEANFILES = $(INTLTOOL_FILES)
 ACLOCAL_AMFLAGS = -I m4
 
 run: all-recursive
-	EMPEROR_RES_LOCATION=data src/application/emperor --module-path=src/modules/.libs -c xml
+	EMPEROR_RES_LOCATION=data src/application/emperor --module-path=src/modules/.libs -c data
 
 debug-nemiver: all-recursive
-	nemiver --env="EMPEROR_RES_LOCATION=data" src/application/emperor --module-path=src/modules/.libs -c xml
+	nemiver --env="EMPEROR_RES_LOCATION=data" src/application/emperor --module-path=src/modules/.libs -c data
 
 debug-gdb: all-recursive
-	EMPEROR_RES_LOCATION=data gdb --args src/application/emperor --module-path=src/modules/.libs -c xml
+	EMPEROR_RES_LOCATION=data gdb --args src/application/emperor --module-path=src/modules/.libs -c data
 
 debug:
 	( which nemiver >/dev/null 2>&1 && $(MAKE) debug-nemiver ) \

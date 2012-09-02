@@ -51,7 +51,8 @@ namespace Emperor.Modules {
         }
         
         // save to prefs
-        ((EmperorCore) main_window.application).prefs.set_boolean ("use-filter:"+filter, flag);
+        ((EmperorCore) main_window.application)
+            .config["preferences"].set_boolean ("use-filter:"+filter, flag);
     }
 }
 
@@ -98,8 +99,8 @@ public void load_module (ModuleRegistry reg)
             main_window.right_pane.add_query_attribute (FileAttribute.STANDARD_IS_HIDDEN);
             main_window.right_pane.add_query_attribute (FileAttribute.STANDARD_IS_BACKUP);
 
-            var hide_hidden = app.prefs.get_boolean ("use-filter:filters/hidden", true);
-            var hide_backup = app.prefs.get_boolean ("use-filter:filters/backup", true);
+            var hide_hidden = app.config["preferences"].get_boolean_default ("use-filter:filters/hidden", true);
+            var hide_backup = app.config["preferences"].get_boolean_default ("use-filter:filters/backup", true);
 
             Emperor.Modules.toggle_filter (main_window,
                 "filters/hidden", Emperor.Modules.filter_hidden,

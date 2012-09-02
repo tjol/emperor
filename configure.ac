@@ -37,7 +37,7 @@ dnl
 PKG_CHECK_MODULES([GTK], [gtk+-3.0])
 PKG_CHECK_MODULES([GIO], [gio-unix-2.0])
 PKG_CHECK_MODULES([GMODULE], [gmodule-2.0])
-PKG_CHECK_MODULES([LIBXML], [libxml-2.0])
+PKG_CHECK_MODULES([JSON_GLIB], [json-glib-1.0])
 PKG_CHECK_MODULES([GEE], [gee-0.8 >= 0.7.0])
 
 dnl Check for libnotify unless disabled.
@@ -71,8 +71,8 @@ GEE_VALAFLAGS="--pkg=gee-0.8"
 AC_SUBST([GEE_VALAFLAGS])
 GMODULE_VALAFLAGS="--pkg=gmodule-2.0"
 AC_SUBST([GMODULE_VALAFLAGS])
-LIBXML_VALAFLAGS="--pkg=libxml-2.0"
-AC_SUBST([LIBXML_VALAFLAGS])
+JSON_GLIB_VALAFLAGS="--pkg=json-glib-1.0"
+AC_SUBST([JSON_GLIB_VALAFLAGS])
 
 if test x$HAVE_LIBNOTIFY = xyes
 then
@@ -96,10 +96,10 @@ EMPEROREXT_CFLAGS=""
 CONFIG_VALAFLAGS="--vapidir=${SOURCE_ROOT}/src/config --pkg=emperor_config"
 CONFIG_CFLAGS="-I${BUILD_ROOT}/src/config"
 
-VALA_PACKAGES="$GIO_VALAFLAGS $UNIX_VALAFLAGS $GTK_VALAFLAGS $GEE_VALAFLAGS $CONFIG_VALAFLAGS --vapidir=${SOURCE_ROOT}/src/application"
+VALA_PACKAGES="$GIO_VALAFLAGS $UNIX_VALAFLAGS $GTK_VALAFLAGS $GEE_VALAFLAGS $CONFIG_VALAFLAGS $JSON_GLIB_VALAFLAGS --vapidir=${SOURCE_ROOT}/src/application"
 VALAFLAGS="$VALA_PACKAGES -g $VALAFLAGS"
 
-GLOBAL_CFLAGS="$GLIB_CFLAGS $GIO_CFLAGS $GTK_CFLAGS $GEE_CFLAGS $CONFIG_CFLAGS -I${SOURCE_ROOT}/src/application"
+GLOBAL_CFLAGS="$GLIB_CFLAGS $GIO_CFLAGS $GTK_CFLAGS $GEE_CFLAGS $CONFIG_CFLAGS $JSON_GLIB_CFLAGS -I${SOURCE_ROOT}/src/application"
 
 AC_SUBST([EMPEROREXT_VALAFLAGS])
 AC_SUBST([EMPEROREXT_CFLAGS])
@@ -113,8 +113,7 @@ AC_CONFIG_FILES([Makefile po/Makefile.in
                  src/config/Makefile
                  src/application/Makefile
                  src/modules/Makefile
-                 xml/Makefile
                  data/Makefile
-                 data/emperor.desktop])
+                 data/emperor.desktop.in])
 AC_OUTPUT
 

@@ -130,24 +130,20 @@ namespace Emperor.App {
             actions.add_action (action);
         }
 
-
-        internal void handle_config_xml_nodes (Xml.Node* parent)
-                        throws ConfigurationError
+        internal void
+        load_config_modules ()
+            throws ConfigurationError
         {
-            for (Xml.Node* node = parent->children; node != null; node = node->next) {
-                switch (parent->name) {
-                case "modules":
-                    if (node->type == Xml.ElementType.ELEMENT_NODE) {
-                        if (node->name == "load") {
-                            var module_name = node->get_prop("name");
-                            load_module (module_name);
-                        }
-                    }
-                    break;
-                default:
-                    throw new ConfigurationError.INVALID_ERROR(
-                                _("Unexpected element: %s").printf(parent->name));
+            var modules_cfg_node = application.config["core"]["modules"];
+            if (modules_cfg_node.get_node_type () != Json.NodeType.ARRAY) {
+                throw new ConfigurationError.INVALID_ERROR (_("Module configuration is invalid."));
+            }
+
+            foreach (var module_node in modules_cfg_node.get_array ().get_elements ()) {
+                if (module_node.get_value_type () != typeof(string)) {
+                    throw new ConfigurationError.INVALID_ERROR (_("Module configuration is invalid."));       
                 }
+                load_module (module_node.get_string ());
             }
         }
 

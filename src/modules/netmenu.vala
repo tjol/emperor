@@ -60,11 +60,7 @@ namespace Emperor.Modules {
 
         public NetMenuModule (EmperorCore app)
         {
-            Object ( application : app,
-                     server_list_file_path :
-                            "%s/%s/%s".printf (Environment.get_user_config_dir (),
-                                          Config.PACKAGE_NAME,
-                                          "network_servers.xml") );
+            Object ( application : app );
         }
 
         public struct SavedServer
@@ -84,80 +80,69 @@ namespace Emperor.Modules {
             // Load old saved servers.
             saved_servers = new ArrayList<SavedServer?> ();
 
-            Xml.Doc* document = Xml.Parser.read_file (server_list_file_path);
-            if (document == null) {
-                return;
-            }
-            Xml.Node* root = document->get_root_element ();
-            if (root->name == "emperor-network-server-list") {
-                for (Xml.Node* node = root->children; node != null; node = node->next) {
-                    if (node->type != Xml.ElementType.ELEMENT_NODE) {
+            var server_cfg = application.config["preferences"]["network-servers"];
+            if (server_cfg != null && server_cfg.get_node_type () == Json.NodeType.ARRAY) {
+                foreach (var server_node in server_cfg.get_array ().get_elements ()) {
+                    if (server_node.get_node_type() != Json.NodeType.OBJECT) {
+                        warning (_("Can't parse network server list."));
                         continue;
                     }
-                    if (node->name == "server") {
-                        var name = node->get_prop ("name");
-                        var uri = node->get_prop ("uri");
-                        var user = node->get_prop ("user");
-                        var domain = node->get_prop ("domain");
-                        var anon_s = node->get_prop ("anon");
-                        if (name == null || uri == null) {
-                            // be forgiving.
-                            continue;
-                        }
-                        bool anon = false;
-                        if (anon_s == "true") {
-                            anon = true;
-                        }
-                        var server = SavedServer () {
-                                name = name, 
-                                uri = uri,
-                                user = user,
-                                domain = domain,
-                                anon = anon
-                            };
-                        saved_servers.add (server);
+                    var server_obj = server_node.get_object ();
+                    string name = null;
+                    string uri = null;
+                    string user = null;
+                    string domain = null;
+                    bool anon = false;
+
+                    if (server_obj.has_member ("name")) 
+                        name = server_obj.get_string_member ("name");
+                    if (server_obj.has_member ("uri"))
+                        uri = server_obj.get_string_member ("uri");
+                    if (server_obj.has_member ("user"))
+                        user = server_obj.get_string_member ("user");
+                    if (server_obj.has_member ("domain"))
+                        domain = server_obj.get_string_member ("domain");
+                    if (server_obj.has_member ("anon"))
+                        anon = server_obj.get_boolean_member ("anon");
+
+                    if (name == null || uri == null) {
+                        // be forgiving.
+                        continue;
                     }
+                    var server = SavedServer () {
+                            name = name, 
+                            uri = uri,
+                            user = user,
+                            domain = domain,
+                            anon = anon
+                        };
+                    saved_servers.add (server);
                 }
             }
-            delete document;
         }
 
         public void save_servers ()
         {
-            var document = new Xml.Doc ("1.0");
-            var root = document.new_node (null, "emperor-network-server-list");
-            document.set_root_element (root);
+            var server_json_array = new Json.Array ();
 
             foreach (var server in saved_servers) {
-                var server_node = document.new_raw_node (null, "server");
-                server_node->set_prop ("name", server.name);
-                server_node->set_prop ("uri", server.uri);
+                var server_obj = new Json.Object ();
+
+                server_obj.set_string_member ("name", server.name);
+                server_obj.set_string_member ("uri", server.uri);
                 if (server.domain != null) 
-                    server_node->set_prop ("domain", server.domain);
+                    server_obj.set_string_member ("domain", server.domain);
                 if (server.user != null) 
-                    server_node->set_prop ("user", server.user);
-                if (server.anon)
-                    server_node->set_prop ("anon", "true");
+                    server_obj.set_string_member ("user", server.user);
+                server_obj.set_boolean_member ("anon", server.anon);
 
-                root->add_child (server_node);
+                server_json_array.add_object_element (server_obj);
             }
 
-            var server_list_file = File.new_for_path (server_list_file_path);
-            var server_list_dir = server_list_file.get_parent ();
-            if (!server_list_dir.query_exists()) {
-                try {
-                    server_list_dir.make_directory_with_parents();
-                } catch (Error e) {
-                    stderr.printf("Failed to create directory: %s (%s)\n",
-                        server_list_dir.get_parse_name(), e.message);
-                }
-            }
-            var file_stream = FileStream.open (server_list_file_path, "w");
-            if (file_stream != null) {
-                document.dump_format (file_stream, true);
-            } else {
-                stderr.printf("Failed to open file for writing: %s\n", server_list_file_path);
-            }
+            var server_list_node = new Json.Node (Json.NodeType.ARRAY);
+            server_list_node.take_array (server_json_array);
+
+            application.config["preferences"]["network-servers"] = server_list_node;
         }
 
         public class ConnectionDialog : Dialog

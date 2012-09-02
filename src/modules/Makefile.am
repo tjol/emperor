@@ -11,7 +11,8 @@ pkglib_LTLIBRARIES = libbasic_columns.la libbasic_actions.la \
 		     libexternalist.la \
 		     libpreview.la \
 		     libquick_filter.la \
-		     libfile_pane_title_bar.la
+		     libfile_pane_title_bar.la \
+		     libcommand_button_bar.la
 
 libbasic_columns_la_SOURCES=basic_columns.vala
 
@@ -30,8 +31,6 @@ libquick_filter_la_SOURCES=quick_filter.vala
 libfile_pane_title_bar_la_SOURCES=file_pane_title_bar.vala
 
 libnetmenu_la_SOURCES=netmenu.vala
-libnetmenu_la_VALAFLAGS=$(AM_VALAFLAGS) @LIBXML_VALAFLAGS@
-libnetmenu_la_CFLAGS=$(AM_CFLAGS) @LIBXML_CFLAGS@
 
 libmonitor_directory_la_SOURCES=monitor_directory.vala
 
@@ -39,3 +38,4 @@ libexternalist_la_SOURCES=externalist.vala
 
 libpreview_la_SOURCES=preview.vala
 
+libcommand_button_bar_la_SOURCES=command_button_bar.vala
