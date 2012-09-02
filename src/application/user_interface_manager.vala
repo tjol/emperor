@@ -509,7 +509,15 @@ namespace Emperor.App {
          * Get a colour from a colour specification string. This can have the
          * format:
          *
-         *  * //gtk:flags// where //flags// has the format //flag1|flag2|...// with the possible flags being:
+         *  * //gtk:control:property:flags// where //flags// has the format //flag1|flag2|...//.
+         *    The possible controls are:
+         *    * entry
+         *    * button
+         *    The possible properties are:
+         *    * color
+         *    * background-color
+         *    * border-color
+         *    The possible flags are:
          *    * normal
          *    * active
          *    * prelight
