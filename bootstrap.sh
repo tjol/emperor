@@ -18,7 +18,6 @@ echo +++ Running automake --add-missing ... &&
 automake --add-missing --copy --gnu &&
 echo +++ Running automake ... &&
 automake Makefile src/Makefile &&
-touch config/config.rpath &&
 echo You may now run ./configure ||
 ( echo ERROR.; false )
 

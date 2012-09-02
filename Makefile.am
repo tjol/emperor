@@ -4,8 +4,7 @@ INTLTOOL_FILES = intltool-extract.in \
 		 intltool-merge.in \
 		 intltool-update.in
 
-EXTRA_DIST = config/config.rpath \
-	     config/gitlog-to-changelog \
+EXTRA_DIST = config/gitlog-to-changelog \
 	     bootstrap.sh \
 	     $(INTLTOOL_FILES)
 
