@@ -30,4 +30,3 @@ src/modules/file_transfer.vala
 src/modules/volume_toolbar.vala
 src/modules/monitor_directory.vala
 data/_column_names.h
-data/emperor.desktop.in

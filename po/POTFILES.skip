@@ -29,4 +29,8 @@ src/modules/preview.c
 src/modules/command_button_bar.c
 src/modules/file_pane_title_bar.c
 src/modules/quick_filter.c
+# emperor.desktop.in is added to POTFILES by the configure script after the
+# intltool macros have been run.
 data/emperor.desktop.in.in
+data/emperor.desktop.in
+

@@ -28,6 +28,10 @@ AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], ["$GETTEXT_PACKAGE"],
                                       [The domain to use with gettext])
 AM_GLIB_GNU_GETTEXT
 
+AC_CONFIG_COMMANDS_POST([
+  echo ../data/emperor.desktop.in >> po/POTFILES
+])
+
 PROGRAMNAME_LOCALEDIR=[${datadir}/locale]
 AC_SUBST(PROGRAMNAME_LOCALEDIR)
 
@@ -116,4 +120,3 @@ AC_CONFIG_FILES([Makefile po/Makefile.in
                  data/Makefile
                  data/emperor.desktop.in])
 AC_OUTPUT
-
