@@ -2,8 +2,8 @@ iconsdir = $(datadir)/icons/hicolor/256x256/apps
 icons_DATA = emperor-fm.png
 
 desktopdir = $(datadir)/applications
-desktop_in_files = emperor.desktop.in
-desktop_DATA = $(desktop_in_files:.desktop.in=.desktop)
+desktop_in_files = emperor-template.desktop.in
+desktop_DATA = emperor.desktop
 @INTLTOOL_DESKTOP_RULE@
 
 resdir = $(pkgdatadir)/res
@@ -27,11 +27,14 @@ update-icon-cache:
 _column_names.h: column-types.json
 	python $(srcdir)/gen_header.py < $< > $@
 
-DISTCLEANFILES = emperor.desktop
+emperor.desktop: emperor-template.desktop
+	sed -e "s|@""prefix""@|$(prefix)|g" < $< > $@
+
+DISTCLEANFILES = emperor.desktop emperor-template.desktop
 MAINTAINERCLEANFILES = _column_names.h
 EXTRA_DIST = $(icons_DATA) \
 	     $(res_DATA) \
 	     $(pkgdata_DATA) \
-	     emperor.desktop.in.in \
+	     $(desktop_in_files) \
 	     _column_names.h
 

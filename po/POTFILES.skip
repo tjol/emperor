@@ -29,5 +29,4 @@ src/modules/preview.c
 src/modules/command_button_bar.c
 src/modules/file_pane_title_bar.c
 src/modules/quick_filter.c
-data/emperor.desktop.in.in
 
