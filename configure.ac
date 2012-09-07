@@ -28,8 +28,9 @@ AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], ["$GETTEXT_PACKAGE"],
                                       [The domain to use with gettext])
 AM_GLIB_GNU_GETTEXT
 
-AC_CONFIG_COMMANDS_POST([
-  echo ../data/emperor.desktop.in >> po/POTFILES
+AC_DEFUN([EMPEROR_POST_OUTPUT_GETTEXT],[
+  sed -i -e "s,\S*\(data/emperor.desktop.in\),../\1," \
+         -e "s,\S*\(data/_column_names.h\),../\1," po/POTFILES po/Makefile
 ])
 
 PROGRAMNAME_LOCALEDIR=[${datadir}/locale]
@@ -120,3 +121,5 @@ AC_CONFIG_FILES([Makefile po/Makefile.in
                  data/Makefile
                  data/emperor.desktop.in])
 AC_OUTPUT
+
+EMPEROR_POST_OUTPUT_GETTEXT

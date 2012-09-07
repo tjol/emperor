@@ -25,7 +25,7 @@ update-icon-cache:
 	fi
 
 _column_names.h: column-types.json
-	python gen_header.py < $< > $@
+	python $(srcdir)/gen_header.py < $< > $@
 
 DISTCLEANFILES = emperor.desktop
 MAINTAINERCLEANFILES = _column_names.h

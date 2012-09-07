@@ -5,7 +5,7 @@ echo +++ Running intltoolize ... &&
 intltoolize --force --copy &&
 cat >>po/Makefile.in.in <<EOF
 
-../data/_column_names.h:
+\$(top_srcdir)/data/_column_names.h:
 	cd ../data && \$(MAKE) _column_names.h
 
 EOF
