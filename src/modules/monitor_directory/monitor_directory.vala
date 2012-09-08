@@ -72,7 +72,7 @@ namespace Emperor.Modules {
                 return;
             }
 
-            file_pane.update_file (File.new_for_uri(file.get_uri()));
+            file_pane.update_file (file);
         }
    }
 

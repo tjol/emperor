@@ -910,7 +910,11 @@ namespace Emperor.App {
             requires (m_pwd != null)
         {
             if (new_file == null) {
+                // Increase the reference count because Vala gets
+                // confused otherwise, with that massive closure going on.
+                // See https://bugzilla.gnome.org/show_bug.cgi?id=683646
                 new_file = file;
+                file.@ref ();
             }
 
             // Is the file in the current directory?
