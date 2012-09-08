@@ -9,5 +9,5 @@ libcommand_button_bar_la_SOURCES = command_button_bar.vala
 
 pkgdata_DATA = command_button_bar.config.json
 
-EXTRA_DIST = $(module_in_files)
+EXTRA_DIST = $(module_in_files) $(pkgdata_DATA)
 CLEANFILES = $(module_files)
