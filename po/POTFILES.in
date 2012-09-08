@@ -31,16 +31,16 @@ src/modules/preview/preview.vala
 src/modules/quick_filter/quick_filter.vala
 src/modules/sort/sort.vala
 src/modules/volume_toolbar/volume_toolbar.vala
-[type:gettext/ini]src/modules/basic_actions/basic_actions.module.in
-[type:gettext/ini]src/modules/basic_columns/basic_columns.module.in
-[type:gettext/ini]src/modules/command_button_bar/command_button_bar.module.in
-[type:gettext/ini]src/modules/externalist/externalist.module.in
-[type:gettext/ini]src/modules/file_pane_title_bar/file_pane_title_bar.module.in
-[type:gettext/ini]src/modules/file_transfer/file_transfer.module.in
-[type:gettext/ini]src/modules/filters/filters.module.in
-[type:gettext/ini]src/modules/monitor_directory/monitor_directory.module.in
-[type:gettext/ini]src/modules/netmenu/netmenu.module.in
-[type:gettext/ini]src/modules/preview/preview.module.in
-[type:gettext/ini]src/modules/quick_filter/quick_filter.module.in
-[type:gettext/ini]src/modules/sort/sort.module.in
-[type:gettext/ini]src/modules/volume_toolbar/volume_toolbar.module.in
+[type: gettext/ini]src/modules/basic_actions/basic_actions.module.in
+[type: gettext/ini]src/modules/basic_columns/basic_columns.module.in
+[type: gettext/ini]src/modules/command_button_bar/command_button_bar.module.in
+[type: gettext/ini]src/modules/externalist/externalist.module.in
+[type: gettext/ini]src/modules/file_pane_title_bar/file_pane_title_bar.module.in
+[type: gettext/ini]src/modules/file_transfer/file_transfer.module.in
+[type: gettext/ini]src/modules/filters/filters.module.in
+[type: gettext/ini]src/modules/monitor_directory/monitor_directory.module.in
+[type: gettext/ini]src/modules/netmenu/netmenu.module.in
+[type: gettext/ini]src/modules/preview/preview.module.in
+[type: gettext/ini]src/modules/quick_filter/quick_filter.module.in
+[type: gettext/ini]src/modules/sort/sort.module.in
+[type: gettext/ini]src/modules/volume_toolbar/volume_toolbar.module.in
