@@ -30,7 +30,7 @@ _column_names.h: column-types.json
 emperor.desktop: emperor-template.desktop
 	sed -e "s|@""prefix""@|$(prefix)|g" < $< > $@
 
-DISTCLEANFILES = emperor.desktop emperor-template.desktop
+CLEANFILES = emperor.desktop emperor-template.desktop
 MAINTAINERCLEANFILES = _column_names.h
 EXTRA_DIST = $(icons_DATA) \
 	     $(res_DATA) \
