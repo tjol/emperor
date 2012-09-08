@@ -36,7 +36,7 @@ debug-nemiver: .run
 		--module-path=$(abs_builddir)/.run$(pkglibdir) \
 		-c $(abs_builddir)/.run$(pkgdatadir)
 
-debug-gdb: all-recursive
+debug-gdb: .run
 	EMPEROR_RES_LOCATION=$(abs_builddir)/.run$(pkgdatadir)/res \
 		gdb --args \
 		$(abs_builddir)/.run$(bindir)/emperor \
