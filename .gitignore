@@ -25,3 +25,4 @@ Makefile.in
 /intltool-update
 /intltool-update.in
 /valadoc
+/.run

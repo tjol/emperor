@@ -17,14 +17,31 @@ MAINTAINERCLEANFILES = $(INTLTOOL_FILES)
 
 ACLOCAL_AMFLAGS = -I m4
 
-run: all-recursive
-	EMPEROR_RES_LOCATION=data src/application/emperor --module-path=src/modules/.libs -c data
+mostlyclean-local:
+	rm -rf .run
 
-debug-nemiver: all-recursive
-	nemiver --env="EMPEROR_RES_LOCATION=data" src/application/emperor --module-path=src/modules/.libs -c data
+.run: all-recursive
+	$(MAKE) DESTDIR=$(abs_builddir)/.run install
+
+run: .run
+	EMPEROR_RES_LOCATION=$(abs_builddir)/.run$(pkgdatadir)/res \
+		$(abs_builddir)/.run$(bindir)/emperor \
+		--module-path=$(abs_builddir)/.run$(pkglibdir) \
+		-c $(abs_builddir)/.run$(pkgdatadir)
+
+debug-nemiver: .run
+	nemiver \
+		--env="EMPEROR_RES_LOCATION=$(abs_builddir)/.run$(pkgdatadir)/res" \
+		$(abs_builddir)/.run$(bindir)/emperor \
+		--module-path=$(abs_builddir)/.run$(pkglibdir) \
+		-c $(abs_builddir)/.run$(pkgdatadir)
 
 debug-gdb: all-recursive
-	EMPEROR_RES_LOCATION=data gdb --args src/application/emperor --module-path=src/modules/.libs -c data
+	EMPEROR_RES_LOCATION=$(abs_builddir)/.run$(pkgdatadir)/res \
+		gdb --args \
+		$(abs_builddir)/.run$(bindir)/emperor \
+		--module-path=$(abs_builddir)/.run$(pkglibdir) \
+		-c $(abs_builddir)/.run$(pkgdatadir)
 
 debug:
 	( which nemiver >/dev/null 2>&1 && $(MAKE) debug-nemiver ) \
