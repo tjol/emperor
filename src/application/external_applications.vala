@@ -222,7 +222,7 @@ namespace Emperor.App {
                 break;
             default:
                 throw new AppManagementError.APPLICATION_NOT_FOUND (
-                        _("Major mess. This should never happen."));
+                            "Major mess. This should never happen.");
             }
 
             unowned FileHandler? last_glob_result = null;
