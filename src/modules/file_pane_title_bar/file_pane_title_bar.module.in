@@ -1,0 +1,4 @@
+[Emperor Module]
+_Name=File pane title bar
+_Description=Simple title bar above the file pane
+Module=file_pane_title_bar

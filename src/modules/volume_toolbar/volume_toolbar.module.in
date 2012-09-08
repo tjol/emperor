@@ -1,0 +1,5 @@
+[Emperor Module]
+_Name=Volume toolbar
+_Description=Toolbar that displays volume information
+Module=volume_toolbar
+PleaseLoadAfter=file_pane_title_bar

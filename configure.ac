@@ -113,5 +113,18 @@ AC_CONFIG_FILES([Makefile po/Makefile.in
                  src/config/Makefile
                  src/application/Makefile
                  src/modules/Makefile
+                 src/modules/basic_actions/Makefile
+                 src/modules/basic_columns/Makefile
+                 src/modules/command_button_bar/Makefile
+                 src/modules/externalist/Makefile
+                 src/modules/file_pane_title_bar/Makefile
+                 src/modules/file_transfer/Makefile
+                 src/modules/filters/Makefile
+                 src/modules/monitor_directory/Makefile
+                 src/modules/netmenu/Makefile
+                 src/modules/preview/Makefile
+                 src/modules/quick_filter/Makefile
+                 src/modules/sort/Makefile
+                 src/modules/volume_toolbar/Makefile
                  data/Makefile])
 AC_OUTPUT

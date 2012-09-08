@@ -1,0 +1,5 @@
+[Emperor Module]
+_Name=Core actions
+_Description=Provides basic file management functionality
+Module=basic_actions
+IsCore=true

@@ -1,0 +1,5 @@
+[Emperor Module]
+_Name=Sort
+_Description=Provides basic sort methods
+Module=sort
+IsCore=true

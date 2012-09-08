@@ -1,0 +1,5 @@
+[Emperor Module]
+_Name=Standard columns
+_Description=Implements default file pane column types
+Module=basic_columns
+IsCore=true

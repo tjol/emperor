@@ -1,0 +1,5 @@
+[Emperor Module]
+_Name=File transfer
+_Description=Copy and move files
+Module=file_transfer
+IsCore=true

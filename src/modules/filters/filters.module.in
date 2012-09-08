@@ -1,0 +1,5 @@
+[Emperor Module]
+_Name=Filters
+_Description=Standard file list filters
+Module=filters
+IsCore=true

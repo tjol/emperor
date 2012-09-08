@@ -1,0 +1,4 @@
+[Emperor Module]
+_Name=Directory monitor
+_Description=Monitor the file system for changes
+Module=monitor_directory

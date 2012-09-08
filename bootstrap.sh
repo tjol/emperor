@@ -16,7 +16,7 @@ aclocal -I m4 &&
 echo +++ Running autoconf ... &&
 autoconf && 
 echo +++ Running automake --add-missing ... &&
-automake --add-missing --copy --gnu &&
+automake --add-missing --copy --gnu -Wno-portability &&
 echo +++ Running automake ... &&
 automake Makefile src/Makefile &&
 echo You may now run ./configure ||

@@ -1,0 +1,4 @@
+[Emperor Module]
+_Name=Preview
+_Description=Display a preview for image files
+Module=preview

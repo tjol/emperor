@@ -1,0 +1,4 @@
+[Emperor Module]
+_Name=Net menu
+_Description=Connect to remote servers
+Module=netmenu

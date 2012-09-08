@@ -1,0 +1,4 @@
+[Emperor Module]
+_Name=External applications
+_Description=Launch a terminal emulator and Meld directly from Emperor.
+Module=externalist
