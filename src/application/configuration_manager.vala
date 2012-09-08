@@ -40,7 +40,7 @@ namespace Emperor.App {
          * Load a JSON config file. This method may be called multiple times.
          */
         public void
-        load_config_file (string config_file_path)
+        load_config_file (string config_file_path, bool is_baseline=false)
             throws ConfigurationError
         {
             var parser = new Json.Parser ();
@@ -66,6 +66,9 @@ namespace Emperor.App {
                 foreach (string property_name in member_object.get_members()) {
                     var property_node = member_object.get_member (property_name);
                     set_config_property (member_name, property_name, property_node);
+                    if (is_baseline) {
+                        this.get(member_name).property_is_baseline_configuration (property_name);
+                    }
                 }
             }
         }
@@ -165,6 +168,13 @@ namespace Emperor.App {
                 foreach (var key in m_baseline.keys) {
                     m_cfg_props.unset (key);
                 }
+            }
+
+            internal void
+            property_is_baseline_configuration (string key)
+            {
+                m_baseline[key] = m_cfg_props[key];
+                m_cfg_props.unset (key);
             }
 
             public void

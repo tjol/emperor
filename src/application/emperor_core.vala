@@ -47,8 +47,7 @@ namespace Emperor.App {
             config = new ConfigurationManager (this);
 
             // get system config file
-            config.load_config_file (get_config_file_path ("config.json", false, true));
-            config.set_baseline_configuration ();
+            config.load_config_file (get_config_file_path ("config.json", false, true), true);
             // get user config file
             try {
                 config.load_config_file (get_config_file_path("config.json", true, false));

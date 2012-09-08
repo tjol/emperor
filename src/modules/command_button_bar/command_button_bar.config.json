@@ -1,0 +1,14 @@
+{
+    "command-button-bar": {
+        "buttons": [
+            "rename",
+            "view",
+            "edit",
+            "copy",
+            "move",
+            "mkdir",
+            "delete",
+            "openterm"
+        ]
+    }
+}

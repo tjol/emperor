@@ -48,6 +48,7 @@ namespace Emperor.App {
             public string display_name { get; construct; }
             public string description { get; construct; }
             public string module { get; construct; }
+            public string? config { get; construct; }
 
             public bool is_core { get; construct; }
 
@@ -90,11 +91,17 @@ namespace Emperor.App {
                     }
                 }
 
+                string? config = null;
+                if (keys.has_key ("Emperor Module", "Configuration")) {
+                    config = keys.get_string ("Emperor Module", "Configuration");
+                }
+
                 Object ( name : name,
                          module : keys.get_string ("Emperor Module", "Module"),
                          display_name : keys.get_locale_string ("Emperor Module", "Name"),
                          description : keys.get_locale_string ("Emperor Module", "Description"),
                          is_core : is_core,
+                         config : config,
                          requirements : requirements,
                          load_before : load_before,
                          load_after : load_after,
@@ -362,6 +369,12 @@ namespace Emperor.App {
                 if (!(requirement in loaded_modules)) {
                     load_module (requirement);
                 }
+            }
+
+            if (minfo.config != null) {
+                application.config.load_config_file (
+                    application.get_config_file_path (minfo.config),
+                    true);
             }
 
             string filename;

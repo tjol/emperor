@@ -2,3 +2,4 @@
 _Name=Button bar
 _Description=A traditional command button bar at the bottom of the window
 Module=command_button_bar
+Configuration=command_button_bar.config.json
