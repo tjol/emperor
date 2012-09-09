@@ -31,8 +31,7 @@ namespace Emperor.Modules {
             Gtk.Action action;
 
             // Ensure menu exists.
-            app.ui_manager.get_menu (_("_File"), 0);
-            app.ui_manager.get_menu (_("_View"), 2);
+            app.ui_manager.get_menu (_("_Tools"), 4);
 
             // F9: Open Terminal.
             action = reg.new_action ("openterm");
@@ -42,7 +41,7 @@ namespace Emperor.Modules {
                                     Gdk.Key.F9, 0);
             action.activate.connect ( () => { module.do_open_term.begin (); } );
             action.connect_accelerator ();
-            app.ui_manager.add_action_to_menu (_("_File"), action, 80);
+            app.ui_manager.add_action_to_menu (_("_Tools"), action, 1);
 
             // Does Meld exist?
             if (module.meld_appinfo != null) {
@@ -50,13 +49,13 @@ namespace Emperor.Modules {
                 action = reg.new_action ("melddirs");
                 action.label = _("Compare directories with Meld");
                 action.activate.connect ( () => { module.do_run_meld_dirs.begin (); } );
-                app.ui_manager.add_action_to_menu (_("_View"), action, 80);
+                app.ui_manager.add_action_to_menu (_("_Tools"), action, 30);
 
                 // Meld Files.
                 action = reg.new_action ("meldfiles");
                 action.label = _("Compare files with Meld");
                 action.activate.connect ( () => { module.do_run_meld_files.begin (); } );
-                app.ui_manager.add_action_to_menu (_("_View"), action, 81);
+                app.ui_manager.add_action_to_menu (_("_Tools"), action, 31);
             }
         }
 
