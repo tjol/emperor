@@ -55,6 +55,9 @@ namespace Emperor.Modules {
             action.activate.connect (module.display_server_list);
             app.ui_manager.add_action_to_menu (_("_Net"), action, 1);
 
+            // There is no reference to the module object around. Other modules
+            // keep references in closures, or provide widgets - this one
+            // doesn't and has to keep a reference dangling in mid-air.
             module.@ref ();
         }
 
