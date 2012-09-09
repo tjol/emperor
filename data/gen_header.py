@@ -29,4 +29,7 @@ for col_name, col_def in column_types.items():
     if "title" in col_def:
         sys.stdout.write ('char *title{0} = _("{1}");\n'.format(idx,
                                                         col_def["title"]))
+    if "description" in col_def:
+        sys.stdout.write ('char *description{0} = _("{1}");\n'.format(idx,
+                                                        col_def["description"]))
     idx += 1
