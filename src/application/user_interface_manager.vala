@@ -115,7 +115,6 @@ namespace Emperor.App {
         internal HashMap<string,FilePaneColumn>? standard_columns { get; private set; }
         internal LinkedList<StyleDirective> style_directives { get; private set; }
         internal AboutStyle style_info { get; private set; }
-        internal LinkedList<Gtk.Action> command_buttons { get; private set; }
 
         private Gdk.RGBA m_default_foreground;
         private Gdk.RGBA m_default_background;
@@ -145,7 +144,6 @@ namespace Emperor.App {
 
             panel_columns = new LinkedList<FilePaneColumn> ();
             standard_columns = null;
-            command_buttons = new LinkedList<Gtk.Action> ();
 
             m_menus = new HashMap<string,Gtk.Menu> ();
             menu_bar = new Gtk.MenuBar ();
