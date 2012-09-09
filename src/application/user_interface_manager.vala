@@ -33,6 +33,10 @@ namespace Emperor.App {
          */
         public signal void main_window_ready (MainWindow main_window);
 
+        /**
+         * This is necessary due to dependency issues in Vala-generated C code.
+         * See https://bugzilla.gnome.org/show_bug.cgi?id=682748
+         */
         public delegate Widget FilePaneToolbarFactoryProper (EmperorCore app, FilePane fpane);
         
         public void add_filepane_toolbar (string id,

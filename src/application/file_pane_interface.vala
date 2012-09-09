@@ -38,6 +38,7 @@ namespace Emperor.App {
      * This causes some dependency issues in the generated C code, however,
      * so this delegate uses Object, and, as a workaround, another delagate
      * is defined in `user_interface_manager.vala` for public use.
+     * See https://bugzilla.gnome.org/show_bug.cgi?id=682748
      *
      * @param app   The Emperor application object
      * @param fpane The file pane the toolbar is associated with
