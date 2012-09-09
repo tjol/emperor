@@ -122,6 +122,7 @@ AC_CONFIG_FILES([Makefile po/Makefile.in
                  src/modules/filters/Makefile
                  src/modules/monitor_directory/Makefile
                  src/modules/netmenu/Makefile
+                 src/modules/preferences/Makefile
                  src/modules/preview/Makefile
                  src/modules/quick_filter/Makefile
                  src/modules/sort/Makefile

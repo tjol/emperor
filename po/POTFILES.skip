@@ -25,6 +25,8 @@ src/modules/volume_toolbar/volume_toolbar.c
 src/modules/externalist/externalist.c
 src/modules/sort/sort.c
 src/modules/basic_columns/basic_columns.c
+src/modules/preferences/preferences.c
+src/modules/preferences/columns.c
 src/modules/preview/preview.c
 src/modules/command_button_bar/command_button_bar.c
 src/modules/file_pane_title_bar/file_pane_title_bar.c

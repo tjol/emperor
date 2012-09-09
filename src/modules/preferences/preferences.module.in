@@ -1,0 +1,4 @@
+[Emperor Module]
+_Name=Preferences dialog
+_Description=Configure Emperor using a graphical interface
+Module=preferences

@@ -27,6 +27,9 @@ src/modules/file_transfer/file_transfer.vala
 src/modules/filters/filters.vala
 src/modules/monitor_directory/monitor_directory.vala
 src/modules/netmenu/netmenu.vala
+src/modules/preferences/preferences.vala
+src/modules/preferences/columns.vala
+src/modules/preferences/prefs_dialog.ui
 src/modules/preview/preview.vala
 src/modules/quick_filter/quick_filter.vala
 src/modules/sort/sort.vala
@@ -40,6 +43,7 @@ src/modules/volume_toolbar/volume_toolbar.vala
 [type: gettext/ini]src/modules/filters/filters.module.in
 [type: gettext/ini]src/modules/monitor_directory/monitor_directory.module.in
 [type: gettext/ini]src/modules/netmenu/netmenu.module.in
+[type: gettext/ini]src/modules/preferences/preferences.module.in
 [type: gettext/ini]src/modules/preview/preview.module.in
 [type: gettext/ini]src/modules/quick_filter/quick_filter.module.in
 [type: gettext/ini]src/modules/sort/sort.module.in

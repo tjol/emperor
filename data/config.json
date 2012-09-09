@@ -13,7 +13,8 @@
             "externalist",
             "preview",
             "quick_filter",
-            "command_button_bar"
+            "command_button_bar",
+            "preferences"
         ]
     },
     "user-interface": {

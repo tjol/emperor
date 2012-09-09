@@ -8,6 +8,7 @@ SUBDIRS = \
 	filters  \
 	monitor_directory  \
 	netmenu  \
+	preferences \
 	preview  \
 	quick_filter  \
 	sort  \
