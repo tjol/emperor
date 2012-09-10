@@ -126,6 +126,8 @@ namespace Emperor.App {
             
             // Add toolbars
             add_file_pane_toolbars ();
+
+            application.ui_manager.columns_changed.connect (reinitialize_columns);
         }
 
         private void
@@ -371,6 +373,18 @@ namespace Emperor.App {
             // convert lists to arrays.
             m_store_cells = store_cells.to_array();
             m_store_types = store_types.to_array();
+        }
+
+        private void
+        reinitialize_columns ()
+        {
+            foreach (var column in m_list.get_columns ()) {
+                m_list.remove_column (column);
+            }
+
+            initialize_tree_columns ();
+
+            recreate_file_attributes_string ();
         }
 
         /**
