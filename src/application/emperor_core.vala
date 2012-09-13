@@ -63,6 +63,7 @@ namespace Emperor.App {
             modules.load_config_modules ();
             ui_manager.load_style_configuration ();
             ui_manager.load_column_configuration ();
+            ui_manager.prepare_input_mode ();
 
             // Set up about dialog
 

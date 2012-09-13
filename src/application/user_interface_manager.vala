@@ -136,6 +136,8 @@ namespace Emperor.App {
         internal Gtk.MenuBar menu_bar { get; private set; }
         private Map<string,Gtk.Menu> m_menus;
 
+        public Type default_input_mode_type { get; set; }
+
         internal UserInterfaceManager (EmperorCore app)
                     throws ConfigurationError
         {
@@ -151,6 +153,18 @@ namespace Emperor.App {
             m_menu_items = new HashMap<string,TreeMap<int,Gtk.MenuItem> > ();
             
             filepane_toolbars = new GLib.List<FilePaneToolbarConfig> ();
+        }
+
+        public InputMode
+        get_input_mode ()
+        {
+            return Object.new (default_input_mode_type) as InputMode;
+        }
+
+        internal void
+        prepare_input_mode ()
+        {
+            default_input_mode_type = typeof (LeftSelectInputMode);
         }
 
         /**

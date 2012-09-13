@@ -564,6 +564,10 @@ namespace Emperor.App {
         public abstract File? get_file_at_cursor ();
         public abstract bool active { get; set; }
         protected abstract void give_focus_to_list ();
+        public abstract void clear_selection ();
+        public abstract bool is_selected (File file);
+        public abstract bool toggle_selected (File file);
+        public abstract void set_selected (File file, bool selected=true);
     }
 
 

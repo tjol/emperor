@@ -97,12 +97,13 @@ namespace Emperor.App {
             selector.set_mode(SelectionMode.NONE);
 
             m_list.cursor_changed.connect (handle_cursor_change);
-
+            
             m_list.button_press_event.connect (on_mouse_event);
             m_list.button_release_event.connect (on_mouse_event);
             m_list.key_press_event.connect (on_key_event);
-            m_list.motion_notify_event.connect (on_motion_notify);
-
+            configure_input_mode ();
+            application.ui_manager.notify["default_input_mode_type"]
+                       .connect ((p) => configure_input_mode ());
             
             // Create tree columns based on configuration file.
             initialize_tree_columns ();
@@ -588,9 +589,48 @@ namespace Emperor.App {
             m_list.grab_focus ();
         }
 
-        private TreePath m_select_cache = null;
+        InputMode m_input_mode = null;
 
-        private Ref<bool> _right_button_pressed_marker = null;
+        private void
+        configure_input_mode ()
+        {
+            m_input_mode = application.ui_manager.get_input_mode ();
+
+            m_input_mode.focus.connect (() => { active = true; });
+            m_input_mode.move_cursor_to.connect ((x,y) => {
+                var p = path_at (x,y);
+                if (p != null)
+                    m_list.set_cursor (path_at (x,y), null, false);
+                });
+            m_input_mode.toggle_selection_at.connect (
+                (x,y) => toggle_selected_at_path (path_at (x,y)));
+            m_input_mode.popup_menu_at.connect (
+                (x,y) => popup_menu_for (path_at (x,y)));
+            m_input_mode.is_different_file.connect_after (
+                (x1,y1,x2,y2) => {
+                    var p1 = path_at (x1, y1);
+                    var p2 = path_at (x2, y2);
+                    return p1 != null && p2 != null && p1.compare (p2) != 0;
+                });
+            m_input_mode.activate_file_at.connect (
+                (x,y) => activate_row (path_at (x,y)));
+            m_input_mode.select_all_from_cursor_to.connect (
+                (x,y) => select_range (m_cursor_path, path_at (x,y)));
+            m_input_mode.clear_selection.connect (clear_selection);
+
+            m_list.motion_notify_event.connect (m_input_mode.handle_motion_event);
+        }
+
+        private TreePath?
+        path_at (int x, int y)
+        {
+            TreePath path = null;
+            if (! m_list.get_path_at_pos(x, y, out path, null, null, null)) {
+                path = null;
+            }
+
+            return path;
+        }
 
         /**
          * Button press or release within the TreeView area
@@ -607,87 +647,9 @@ namespace Emperor.App {
                 return false;
             }
 
-            // The click was in the actual list area. Find out on which item.
-            TreePath path = null;
-            if (! m_list.get_path_at_pos((int)e.x, (int)e.y, out path, null, null, null)) {
-                path = null;
-            }
+            // The click was in the actual list area.
 
-            if (e.type == EventType.BUTTON_PRESS) {
-                hide_error ();
-                switch (e.button) {
-                case 1:
-                    // left-click
-                    if (path != null) {
-                        m_list.set_cursor (path, null, false);
-                    }
-                    this.active = true;
-                    return true;
-                case 3:
-                    // right-click
-                    if (path != null) {
-                        toggle_selected (path);
-                        m_select_cache = path;
-
-                        // This reference is changed when the button is newly pressed,
-                        // set to false when it is released, and unset when one second
-                        // has elapsed and the popup menu has been displayed.
-                        var press_marker = new Ref<bool>(true);
-                        _right_button_pressed_marker = press_marker;
-                        Timeout.add(1000, () => {
-                                if (press_marker.val) {
-                                    // right mouse button was pressed for one second.
-                                    popup_menu_for (path);
-                                }
-                                if (_right_button_pressed_marker == press_marker) {
-                                    _right_button_pressed_marker = null;
-                                }
-                                return false;
-                            });
-                    }
-                    this.active = true;
-                    return true;
-                }
-            } else if (e.type == EventType.2BUTTON_PRESS) {
-                // double click.
-                activate_row(path);
-                return true;
-            } else if (e.type == EventType.BUTTON_RELEASE) {
-                switch (e.button) {
-                case 3:
-                    // right-click released
-                    if (_right_button_pressed_marker != null) {
-                        _right_button_pressed_marker.val = false;
-                        _right_button_pressed_marker = null;
-                    }
-                    break;
-                }
-            }
-
-            return false;
-        }
-
-
-        /**
-         * Mouse is being moved. Enabled right-button-drag selecting.
-         */
-        private bool
-        on_motion_notify (EventMotion e)
-        {
-            if ((e.state & ModifierType.BUTTON3_MASK) != 0) {
-                // right-click drag. (de)select.
-                TreePath path;
-                if (m_list.get_path_at_pos((int)e.x, (int)e.y, out path, null, null, null)) {
-                    if (m_select_cache == null || path.compare(m_select_cache) != 0) {
-                        toggle_selected (path);
-                        m_select_cache = path;
-                        // Since this is now a drag, and not a hold, cancel the right
-                        // button press marker, so that no popup menu is shown.
-                        _right_button_pressed_marker = null;
-                    }
-                }
-            }
-            return false;
+            return m_input_mode.handle_mouse_event (e);
         }
 
         private bool
@@ -702,7 +664,7 @@ namespace Emperor.App {
                     return true;
                 case Key.space:
                     if (m_cursor_path != null) {
-                        toggle_selected (m_cursor_path);
+                        toggle_selected_at_path (m_cursor_path);
                     }
                     return true;
                 case Key.Return:
@@ -724,8 +686,10 @@ namespace Emperor.App {
          * Open popup menu (not yet implemented)
          */
         private void
-        popup_menu_for (TreePath path)
+        popup_menu_for (TreePath? path)
         {
+            if (path == null) return;
+
             // TODO: popup menu!
         }
 
@@ -733,8 +697,10 @@ namespace Emperor.App {
          * Activate row - double-click or return key; open file.
          */
         public void
-        activate_row (TreePath path)
+        activate_row (TreePath? path)
         {
+            if (path == null) return;
+
             // get the FileInfo:
             TreeIter? iter = null;
             m_sorted_list.get_iter (out iter, path);
@@ -1071,8 +1037,10 @@ namespace Emperor.App {
 
 
         private void
-        toggle_selected (TreePath path)
+        toggle_selected_at_path (TreePath? path, bool? new_state=null)
         {
+            if (path == null) return;
+
             TreeIter? iter;
             m_sorted_list.get_iter (out iter, path);
             if (iter != null) {
@@ -1080,7 +1048,10 @@ namespace Emperor.App {
                 toplevel_iter_to_data_iter (out data_iter, iter);
                 Value selected;
                 m_data_store.get_value (data_iter, COL_SELECTED, out selected);
-                selected.set_boolean (!selected.get_boolean());
+                if (new_state == null)
+                    selected.set_boolean (!selected.get_boolean());
+                else
+                    selected.set_boolean (new_state);
                 m_data_store.set_value (data_iter, COL_SELECTED, selected);
                 restyle (data_iter, m_cursor_path != null && m_cursor_path.compare(path) == 0);
             }
@@ -1135,6 +1106,131 @@ namespace Emperor.App {
             }
         }
 
+        /**
+         * Clear selection
+         */
+        public override void
+        clear_selection ()
+        {
+            m_data_store.@foreach ((model, path, iter) => {
+                m_data_store.set (iter, COL_SELECTED, false, -1);
+                return false;
+            });
+            restyle_complete_list ();
+        }
+
+        /**
+         * Is this file selected?
+         */
+        public override bool
+        is_selected (File file)
+        {
+            bool is_selected = false;
+
+            if (file.has_parent (m_pwd)) {
+                var fname = file.get_basename ();
+
+                m_data_store.@foreach ((model, path, iter) => {
+                    Value finfo_val;
+                    model.get_value (iter, COL_FILEINFO, out finfo_val);
+                    assert ( finfo_val.holds (typeof (FileInfo)) );
+                    var finfo = finfo_val.get_object () as FileInfo;
+                    if (fname == finfo.get_name ()) {
+                        Value selected_val;
+                        model.get_value (iter, COL_SELECTED, out selected_val);
+                        is_selected = selected_val.get_boolean ();
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+            }
+            return is_selected;
+        }
+
+        /**
+         * Toggle file's selection state.
+         *
+         * @param file     The file to (de)select
+         * @return         The new selection state of the file
+         */
+        public override bool
+        toggle_selected (File file)
+        {
+            bool is_selected = false;
+
+            if (file.has_parent (m_pwd)) {
+                var fname = file.get_basename ();
+
+                m_data_store.@foreach ((model, path, iter) => {
+                    Value finfo_val;
+                    model.get_value (iter, COL_FILEINFO, out finfo_val);
+                    assert ( finfo_val.holds (typeof (FileInfo)) );
+                    var finfo = finfo_val.get_object () as FileInfo;
+                    if (fname == finfo.get_name ()) {
+                        Value selected_val;
+                        model.get_value (iter, COL_SELECTED, out selected_val);
+                        is_selected = ! selected_val.get_boolean ();
+                        selected_val.set_boolean (is_selected);
+                        m_data_store.set_value (iter, COL_SELECTED, selected_val);
+                        restyle (iter, m_cursor_path != null 
+                                      && m_cursor_path.compare(path) == 0);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+            }
+            return is_selected;
+        }
+
+        /**
+         * Set the selection state of a file.
+         */
+        public override void
+        set_selected (File file, bool selected=true)
+        {
+            if (file.has_parent (m_pwd)) {
+                var fname = file.get_basename ();
+
+                m_data_store.@foreach ((model, path, iter) => {
+                    Value finfo_val;
+                    model.get_value (iter, COL_FILEINFO, out finfo_val);
+                    assert ( finfo_val.holds (typeof (FileInfo)) );
+                    var finfo = finfo_val.get_object () as FileInfo;
+                    if (fname == finfo.get_name ()) {
+                        var selected_val = Value (typeof (bool));
+                        selected_val.set_boolean (selected);
+                        m_data_store.set_value (iter, COL_SELECTED, selected_val);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+            }
+        }
+
+
+        /**
+         * Select all files from A to B, inclusively
+         */
+        private void
+        select_range (TreePath a, TreePath b)
+        {
+            TreePath a_;
+
+            if (a.compare (b) > 0) {
+                a_ = b.copy ();
+                b = a;
+            } else {
+                a_ = a.copy ();
+            }
+
+            while (a_.compare (b) <= 0) {
+                toggle_selected_at_path (a_, true);
+                a_.next ();
+            }
+        }
 
         /* *****************************************************
          * TreePath & TreeIter HANDLING

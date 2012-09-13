@@ -12,6 +12,7 @@ emperor_SOURCES=emperor_core.vala \
 		module_registry.vala \
 		module_delegates.vala \
 		user_interface_manager.vala \
+		input_mode.vala \
 		mount_manager.vala \
         file_pane_interface.vala \
         abstract_file_pane.vala \

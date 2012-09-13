@@ -286,6 +286,29 @@ namespace Emperor.App {
          */
         public abstract File? get_file_at_cursor ();
 
+        /**
+         * Clear selection
+         */
+        public abstract void clear_selection ();
+
+        /**
+         * Is this file selected?
+         */
+        public abstract bool is_selected (File file);
+
+        /**
+         * Toggle file's selection state.
+         *
+         * @param file     The file to (de)select
+         * @return         The new selection state of the file
+         */
+        public abstract bool toggle_selected (File file);
+
+        /**
+         * Set the selection state of a file.
+         */
+        public abstract void set_selected (File file, bool selected=true);
+
     }
     
     /**
