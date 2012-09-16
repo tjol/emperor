@@ -161,10 +161,30 @@ namespace Emperor.App {
             return Object.new (default_input_mode_type) as InputMode;
         }
 
+        private void
+        handle_input_mode_config (Json.Node? node)
+        {
+            var type_name = node != null ? node.get_string() : null;
+            var type = Type.INVALID; // zero.
+
+            if (type_name != null) {
+                type = Type.from_name (type_name);
+            }
+
+            if (type == Type.INVALID || !type.is_a (typeof (InputMode))) {
+                warning (_("%s is not a valid input mode type."), type_name);
+                type = typeof (LeftSelectInputMode);
+            }
+
+            default_input_mode_type = type;
+        }
+
         internal void
         prepare_input_mode ()
         {
-            default_input_mode_type = typeof (LeftSelectInputMode);
+            handle_input_mode_config (m_app.config["preferences"]["input-mode"]);
+            m_app.config["preferences"].property_changed["input-mode"]
+                .connect (handle_input_mode_config);
         }
 
         /**

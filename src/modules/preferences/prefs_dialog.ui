@@ -193,6 +193,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="model">selectionModes</property>
+                    <property name="id_column">0</property>
                     <signal name="changed" handler="prefs_selection_mode_changed" swapped="no"/>
                     <child>
                       <object class="GtkCellRendererText" id="cellrenderertext4"/>
@@ -596,8 +597,8 @@
   </object>
   <object class="GtkListStore" id="selectionModes">
     <columns>
-      <!-- column-name id -->
-      <column type="gint"/>
+      <!-- column-name typename -->
+      <column type="gchararray"/>
       <!-- column-name text -->
       <column type="gchararray"/>
       <!-- column-name explanation -->
@@ -605,12 +606,12 @@
     </columns>
     <data>
       <row>
-        <col id="0">1</col>
+        <col id="0">EmperorAppLeftSelectInputMode</col>
         <col id="1" translatable="yes">Left mouse button</col>
         <col id="2" translatable="yes">Every click selects a file. To select multiple files at once, hold the Control or Shift keys. The right mouse button activates a context menu. Double-clicking opens a file.</col>
       </row>
       <row>
-        <col id="0">2</col>
+        <col id="0">EmperorAppRightSelectInputMode</col>
         <col id="1" translatable="yes">Right mouse button</col>
         <col id="2" translatable="yes">Select a file by right-clicking it. Clicking with the left mouse button does not change the selection. Hold the right mouse button pressed to open a context menu. Double-clicking opens a file.</col>
       </row>

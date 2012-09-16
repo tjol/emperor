@@ -211,7 +211,5 @@ namespace Emperor.App {
 
             return false;
         }
-
     }
-
 }

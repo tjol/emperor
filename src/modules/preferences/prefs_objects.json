@@ -1,0 +1,37 @@
+{
+    "right-select-default-style":
+        [
+            {   "target": "cursor",
+                "pane": "active",
+                "color": "gtk:entry:color:selected",
+                "background-color": "gtk:entry:background-color:selected"
+            },
+            {   "target": "cursor",
+                "pane": "passive",
+                "color": "gtk:entry:color:selected|backdrop",
+                "background-color": "gtk:entry:background-color:selected|backdrop"
+            },
+            {   "target": "selected",
+                "color": "red"
+            },
+            {   "file-type": "symlink",
+                "style": "italic"
+            }
+        ],
+    "left-select-default-style":
+        [
+            {   "target": "selected",
+                "pane": "active",
+                "color": "gtk:entry:color:selected",
+                "background-color": "gtk:entry:background-color:selected"
+            },
+            {   "target": "selected",
+                "pane": "passive",
+                "color": "gtk:entry:color:selected|backdrop",
+                "background-color": "gtk:entry:background-color:selected|backdrop"
+            },
+            {   "file-type": "symlink",
+                "style": "italic"
+            }
+        ]
+}

@@ -247,7 +247,8 @@ namespace Emperor.App {
                 comments : _("Orthodox File Manager for GNOME") );
         }
 
-        public static int main (string[] argv)
+        public static int
+        main (string[] argv)
         {
             // Set up gettext
 
@@ -280,6 +281,11 @@ namespace Emperor.App {
                      description = _("Location of configuration files"),
                      arg_description = _(".../config/directory/") }
             };
+
+            // Make sure types that must be registered are registered
+
+            typeof (LeftSelectInputMode).class_ref ();
+            typeof (RightSelectInputMode).class_ref ();
 
             // Let Gtk+ do the rest
 

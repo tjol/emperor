@@ -19,18 +19,15 @@
     },
     "user-interface": {
         "file-pane-style": [
-            {   "target": "cursor",
+            {   "target": "selected",
                 "pane": "active",
                 "color": "gtk:entry:color:selected",
                 "background-color": "gtk:entry:background-color:selected"
             },
-            {   "target": "cursor",
+            {   "target": "selected",
                 "pane": "passive",
                 "color": "gtk:entry:color:selected|backdrop",
                 "background-color": "gtk:entry:background-color:selected|backdrop"
-            },
-            {   "target": "selected",
-                "color": "red"
             },
             {   "file-type": "symlink",
                 "style": "italic"

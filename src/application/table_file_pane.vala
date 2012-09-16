@@ -102,8 +102,10 @@ namespace Emperor.App {
             m_list.button_release_event.connect (on_mouse_event);
             m_list.key_press_event.connect (on_key_event);
             configure_input_mode ();
-            application.ui_manager.notify["default_input_mode_type"]
+            application.ui_manager.notify["default-input-mode-type"]
                        .connect ((p) => configure_input_mode ());
+            application.ui_manager.styles_changed
+                        .connect ((p) => restyle_complete_list ());
             
             // Create tree columns based on configuration file.
             initialize_tree_columns ();

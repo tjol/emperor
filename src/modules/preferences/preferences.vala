@@ -29,8 +29,10 @@ namespace Emperor.Modules {
         public EmperorCore app { get; construct; }
         public Gtk.Builder builder { get; construct; }
         public Window dialog_window { get; construct; }
+        public Json.Object prefs_objects { get; construct; }
 
         public ColumnPrefs column_prefs { get; private set; }
+        public MousePrefs mouse_prefs { get; internal set; }
 
         public
         Preferences (EmperorCore app)
@@ -40,9 +42,15 @@ namespace Emperor.Modules {
             builder.add_from_file (app.get_resource_file_path ("prefs_dialog.ui"));
             var dialog_window = builder.get_object ("configDialog") as Window;
 
+            var parser = new Json.Parser ();
+            var objects_filename = app.get_resource_file_path ("prefs_objects.json");
+            parser.load_from_file (objects_filename);
+            var root = parser.get_root ();
+
             Object ( app : app,
                      builder : builder,
-                     dialog_window : dialog_window );
+                     dialog_window : dialog_window,
+                     prefs_objects : root.get_object () );
         }
 
         construct {
@@ -52,6 +60,7 @@ namespace Emperor.Modules {
 
             try {
                 column_prefs = new ColumnPrefs (this);
+                mouse_prefs = new MousePrefs (this);
             } catch (ConfigurationError cerr) {
                 error (_("Error loading preferences dialog."));
             }
@@ -123,6 +132,13 @@ namespace Emperor.Modules {
         column_active_toggled (CellRendererToggle cellrenderer, string path)
         {
             column_prefs.column_active_toggled (cellrenderer, path);
+        }
+
+        [CCode (instance_pos = -1)]
+        public void
+        selection_mode_changed (ComboBox source)
+        {
+            mouse_prefs.selection_mode_changed ();
         }
 
     }
