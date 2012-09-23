@@ -1124,10 +1124,16 @@ namespace Emperor.App {
         clear_selection ()
         {
             m_data_store.@foreach ((model, path, iter) => {
-                m_data_store.set (iter, COL_SELECTED, false, -1);
+                bool is_selected = false; 
+                m_data_store.get (iter, COL_SELECTED, out is_selected, -1);
+                if (is_selected) {
+                    m_data_store.set (iter, COL_SELECTED, false, -1);
+                    restyle (iter, false);
+                }
                 return false;
             });
-            restyle_complete_list ();
+
+            restyle_path (m_cursor_path, true);
         }
 
         /**
