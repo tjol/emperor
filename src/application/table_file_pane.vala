@@ -318,7 +318,6 @@ namespace Emperor.App {
                 // get column
                 var tvcol = new TreeViewColumn();
                 tvcol.title = col.title;
-                tvcol.resizable = true;
 
                 // get width from prefs
                 var pref_w_name = "%s-col-width-%d".printf(designation,colidx);
@@ -366,6 +365,9 @@ namespace Emperor.App {
                 last_col = tvcol;
                 // next visible column
                 colidx ++;
+
+                tvcol.resizable = true;
+
             }
             
             if (last_col != null) {
@@ -381,6 +383,11 @@ namespace Emperor.App {
         private void
         reinitialize_columns ()
         {
+            m_list.set_model (null);
+            m_data_store = null;
+            m_sorted_list = null;
+            m_list_filter = null;
+
             foreach (var column in m_list.get_columns ()) {
                 m_list.remove_column (column);
             }
@@ -388,6 +395,8 @@ namespace Emperor.App {
             initialize_tree_columns ();
 
             recreate_file_attributes_string ();
+
+            pwd = pwd;
         }
 
         /**
