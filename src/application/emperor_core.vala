@@ -72,10 +72,6 @@ namespace Emperor.App {
             about_action.activate.connect (show_about_dialog);
             ui_manager.add_action_to_menu (_("_Help"), about_action, 999);
 
-            // Create main window 
-
-            main_window = new MainWindow (this);
-
             this.activate.connect (run_program);
             this.application_quit.connect (on_quit);
         }
@@ -186,6 +182,9 @@ namespace Emperor.App {
 
         public void run_program ()
         {
+            // Create main window 
+            main_window = new MainWindow (this);
+
             main_window.show_all ();
             //Gtk.main ();
         }
